@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install --legacy-peer-deps"
+  "buildCommand": "npm run build && echo apps/web > /tmp/vercel_build_output.txt",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "npm install"
 }
-
 

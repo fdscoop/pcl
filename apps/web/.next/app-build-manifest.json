@@ -15,6 +15,16 @@
       "static/css/5670fddd2d3e09d1.css",
       "static/chunks/app/layout-7b9000cce0ff5ee7.js"
     ],
+    "/auth/login/page": [
+      "static/chunks/webpack-bad2b6e704a960c9.js",
+      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
+      "static/chunks/528-1d9d57691826a23d.js",
+      "static/chunks/main-app-2e64cd947fc40f88.js",
+      "static/chunks/845-cd44c70e2da975bb.js",
+      "static/chunks/494-e472adaf0499ea19.js",
+      "static/chunks/589-9c50f5198724679d.js",
+      "static/chunks/app/auth/login/page-089a8819ca52b9b8.js"
+    ],
     "/auth/forgot-password/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
       "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
@@ -25,15 +35,22 @@
       "static/chunks/589-9c50f5198724679d.js",
       "static/chunks/app/auth/forgot-password/page-26c15c0e3bbc746c.js"
     ],
-    "/auth/reset-password/page": [
+    "/dashboard/admin/kyc/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
       "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
       "static/chunks/528-1d9d57691826a23d.js",
       "static/chunks/main-app-2e64cd947fc40f88.js",
       "static/chunks/845-cd44c70e2da975bb.js",
       "static/chunks/494-e472adaf0499ea19.js",
-      "static/chunks/589-9c50f5198724679d.js",
-      "static/chunks/app/auth/reset-password/page-17b9191109015ea3.js"
+      "static/chunks/app/dashboard/admin/kyc/page-5a492e1a3b45427c.js"
+    ],
+    "/dashboard/page": [
+      "static/chunks/webpack-bad2b6e704a960c9.js",
+      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
+      "static/chunks/528-1d9d57691826a23d.js",
+      "static/chunks/main-app-2e64cd947fc40f88.js",
+      "static/chunks/845-cd44c70e2da975bb.js",
+      "static/chunks/app/dashboard/page-f6bef2a434c1ad2f.js"
     ],
     "/auth/signup/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
@@ -45,7 +62,16 @@
       "static/chunks/589-9c50f5198724679d.js",
       "static/chunks/app/auth/signup/page-ec6bc0f294cc5085.js"
     ],
-    "/club/create/page": [
+    "/dashboard/referee/page": [
+      "static/chunks/webpack-bad2b6e704a960c9.js",
+      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
+      "static/chunks/528-1d9d57691826a23d.js",
+      "static/chunks/main-app-2e64cd947fc40f88.js",
+      "static/chunks/845-cd44c70e2da975bb.js",
+      "static/chunks/494-e472adaf0499ea19.js",
+      "static/chunks/app/dashboard/referee/page-f559e3cd0238e5ec.js"
+    ],
+    "/auth/reset-password/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
       "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
       "static/chunks/528-1d9d57691826a23d.js",
@@ -53,16 +79,7 @@
       "static/chunks/845-cd44c70e2da975bb.js",
       "static/chunks/494-e472adaf0499ea19.js",
       "static/chunks/589-9c50f5198724679d.js",
-      "static/chunks/app/club/create/page-4f4988a6eba37241.js"
-    ],
-    "/dashboard/admin/kyc/page": [
-      "static/chunks/webpack-bad2b6e704a960c9.js",
-      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
-      "static/chunks/528-1d9d57691826a23d.js",
-      "static/chunks/main-app-2e64cd947fc40f88.js",
-      "static/chunks/845-cd44c70e2da975bb.js",
-      "static/chunks/494-e472adaf0499ea19.js",
-      "static/chunks/app/dashboard/admin/kyc/page-5a492e1a3b45427c.js"
+      "static/chunks/app/auth/reset-password/page-17b9191109015ea3.js"
     ],
     "/dashboard/club-owner/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
@@ -73,15 +90,7 @@
       "static/chunks/494-e472adaf0499ea19.js",
       "static/chunks/app/dashboard/club-owner/page-35dc50c3e033b05b.js"
     ],
-    "/dashboard/page": [
-      "static/chunks/webpack-bad2b6e704a960c9.js",
-      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
-      "static/chunks/528-1d9d57691826a23d.js",
-      "static/chunks/main-app-2e64cd947fc40f88.js",
-      "static/chunks/845-cd44c70e2da975bb.js",
-      "static/chunks/app/dashboard/page-f6bef2a434c1ad2f.js"
-    ],
-    "/auth/login/page": [
+    "/club/create/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
       "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
       "static/chunks/528-1d9d57691826a23d.js",
@@ -89,7 +98,7 @@
       "static/chunks/845-cd44c70e2da975bb.js",
       "static/chunks/494-e472adaf0499ea19.js",
       "static/chunks/589-9c50f5198724679d.js",
-      "static/chunks/app/auth/login/page-089a8819ca52b9b8.js"
+      "static/chunks/app/club/create/page-4f4988a6eba37241.js"
     ],
     "/dashboard/player/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
@@ -99,24 +108,6 @@
       "static/chunks/845-cd44c70e2da975bb.js",
       "static/chunks/494-e472adaf0499ea19.js",
       "static/chunks/app/dashboard/player/page-70737eb6ffd4b384.js"
-    ],
-    "/dashboard/staff/page": [
-      "static/chunks/webpack-bad2b6e704a960c9.js",
-      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
-      "static/chunks/528-1d9d57691826a23d.js",
-      "static/chunks/main-app-2e64cd947fc40f88.js",
-      "static/chunks/845-cd44c70e2da975bb.js",
-      "static/chunks/494-e472adaf0499ea19.js",
-      "static/chunks/app/dashboard/staff/page-8a13f9252aec92a2.js"
-    ],
-    "/kyc/upload/page": [
-      "static/chunks/webpack-bad2b6e704a960c9.js",
-      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
-      "static/chunks/528-1d9d57691826a23d.js",
-      "static/chunks/main-app-2e64cd947fc40f88.js",
-      "static/chunks/845-cd44c70e2da975bb.js",
-      "static/chunks/494-e472adaf0499ea19.js",
-      "static/chunks/app/kyc/upload/page-071144d77e247b7b.js"
     ],
     "/kyc/verify/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
@@ -148,14 +139,14 @@
       "static/chunks/main-app-2e64cd947fc40f88.js",
       "static/chunks/app/onboarding/referee/page-d99e915f715c20eb.js"
     ],
-    "/dashboard/stadium-owner/page": [
+    "/dashboard/staff/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
       "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
       "static/chunks/528-1d9d57691826a23d.js",
       "static/chunks/main-app-2e64cd947fc40f88.js",
       "static/chunks/845-cd44c70e2da975bb.js",
       "static/chunks/494-e472adaf0499ea19.js",
-      "static/chunks/app/dashboard/stadium-owner/page-a3a112e7e6f93775.js"
+      "static/chunks/app/dashboard/staff/page-8a13f9252aec92a2.js"
     ],
     "/onboarding/stadium-owner/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
@@ -171,6 +162,24 @@
       "static/chunks/main-app-2e64cd947fc40f88.js",
       "static/chunks/app/onboarding/staff/page-011351d625514519.js"
     ],
+    "/kyc/upload/page": [
+      "static/chunks/webpack-bad2b6e704a960c9.js",
+      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
+      "static/chunks/528-1d9d57691826a23d.js",
+      "static/chunks/main-app-2e64cd947fc40f88.js",
+      "static/chunks/845-cd44c70e2da975bb.js",
+      "static/chunks/494-e472adaf0499ea19.js",
+      "static/chunks/app/kyc/upload/page-071144d77e247b7b.js"
+    ],
+    "/dashboard/stadium-owner/page": [
+      "static/chunks/webpack-bad2b6e704a960c9.js",
+      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
+      "static/chunks/528-1d9d57691826a23d.js",
+      "static/chunks/main-app-2e64cd947fc40f88.js",
+      "static/chunks/845-cd44c70e2da975bb.js",
+      "static/chunks/494-e472adaf0499ea19.js",
+      "static/chunks/app/dashboard/stadium-owner/page-a3a112e7e6f93775.js"
+    ],
     "/profile/player/complete/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",
       "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
@@ -180,15 +189,6 @@
       "static/chunks/494-e472adaf0499ea19.js",
       "static/chunks/589-9c50f5198724679d.js",
       "static/chunks/app/profile/player/complete/page-4c293139eeb46583.js"
-    ],
-    "/dashboard/referee/page": [
-      "static/chunks/webpack-bad2b6e704a960c9.js",
-      "static/chunks/1dd3208c-4fd4ead55d24b4a9.js",
-      "static/chunks/528-1d9d57691826a23d.js",
-      "static/chunks/main-app-2e64cd947fc40f88.js",
-      "static/chunks/845-cd44c70e2da975bb.js",
-      "static/chunks/494-e472adaf0499ea19.js",
-      "static/chunks/app/dashboard/referee/page-f559e3cd0238e5ec.js"
     ],
     "/page": [
       "static/chunks/webpack-bad2b6e704a960c9.js",

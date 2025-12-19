@@ -1,0 +1,20 @@
+# Ignore non-web apps in the monorepo
+apps/api
+packages
+
+# Ignore documentation
+docs
+*.md
+
+# Ignore git files
+.git
+.github
+
+# Ignore temporary files
+.DS_Store
+*.log
+.turbo
+
+# Ignore node_modules from other workspaces
+apps/*/node_modules
+packages/*/node_modules

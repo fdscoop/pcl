@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import TournamentStatistics from '@/components/TournamentStatistics'
 
-export default function Home() {
+// Render this first - no client state needed
+function HomeContent() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [supabase, setSupabase] = useState<any>(null)
@@ -17,7 +18,7 @@ export default function Home() {
       try {
         // Check if environment variables are available
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-          setError('Supabase configuration is missing. Please check environment variables.')
+          console.warn('Supabase environment variables not configured')
           setLoading(false)
           return
         }
@@ -41,21 +42,12 @@ export default function Home() {
         await getUser()
       } catch (error) {
         console.error('Error initializing Supabase:', error)
-        setError('Failed to initialize Supabase client')
         setLoading(false)
       }
     }
 
     initializeSupabase()
   }, [])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-slate-600">Loading...</div>
-      </div>
-    )
-  }
 
   if (error) {
     return (
@@ -85,7 +77,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" />
+              <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" onError={(e) => {
+                // Fallback if logo doesn't exist
+                (e.target as HTMLImageElement).style.display = 'none'
+              }} />
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                 PCL
               </h1>
@@ -103,11 +98,9 @@ export default function Home() {
                         try {
                           await supabase.auth.signOut()
                           setUser(null)
-                          // Force a full page reload to clear all state
                           window.location.href = '/'
                         } catch (error) {
                           console.error('Error signing out:', error)
-                          // Still try to redirect even if sign out fails
                           window.location.href = '/'
                         }
                       }
@@ -304,4 +297,8 @@ export default function Home() {
       </footer>
     </div>
   )
+}
+
+export default function Home() {
+  return <HomeContent />
 }

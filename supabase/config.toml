@@ -1,0 +1,16 @@
+{
+  "version": "1.8.1",
+  "project_id": "your-supabase-project-id",
+  "default_branch": "main",
+  "db": {
+    "seed": {
+      "sql_paths": ["./migrations/002_seed_data.sql"]
+    }
+  },
+  "functions": [
+    {
+      "import_map_path": "../../import_map.json",
+      "verification_type": "fsentry"
+    }
+  ]
+}

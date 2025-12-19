@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import TournamentStatistics from '@/components/TournamentStatistics'
@@ -10,36 +9,71 @@ export default function Home() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [supabase, setSupabase] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Initialize Supabase client only on client side
-    try {
-      const client = createClient()
-      setSupabase(client)
-
-      const getUser = async () => {
-        try {
-          const {
-            data: { user },
-          } = await client.auth.getUser()
-          setUser(user)
-        } catch (error) {
-          console.error('Error fetching user:', error)
+    const initializeSupabase = async () => {
+      try {
+        // Check if environment variables are available
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+          setError('Supabase configuration is missing. Please check environment variables.')
+          setLoading(false)
+          return
         }
+
+        const { createClient } = await import('@/lib/supabase/client')
+        const client = createClient()
+        setSupabase(client)
+
+        const getUser = async () => {
+          try {
+            const {
+              data: { user },
+            } = await client.auth.getUser()
+            setUser(user)
+          } catch (error) {
+            console.error('Error fetching user:', error)
+          }
+          setLoading(false)
+        }
+
+        await getUser()
+      } catch (error) {
+        console.error('Error initializing Supabase:', error)
+        setError('Failed to initialize Supabase client')
         setLoading(false)
       }
-
-      getUser()
-    } catch (error) {
-      console.error('Error initializing Supabase:', error)
-      setLoading(false)
     }
+
+    initializeSupabase()
   }, [])
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-slate-600">Loading...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-red-600">Configuration Error</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-slate-600">{error}</p>
+            <p className="text-sm text-slate-500">
+              If you're the site owner, please ensure Supabase environment variables are set in your deployment settings.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }

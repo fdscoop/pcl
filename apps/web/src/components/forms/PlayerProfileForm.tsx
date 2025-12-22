@@ -66,13 +66,21 @@ export default function PlayerProfileForm() {
         if (!user) return
 
         // Get existing player data
-        const { data: player } = await supabase
+        // Note: Can't use .eq('user_id') with specific columns - fetch all and filter
+        const { data: allPlayers } = await supabase
           .from('players')
-          .select('*, users!inner(bio)')
-          .eq('user_id', user.id)
-          .single()
+          .select('id, user_id, position, photo_url, unique_player_id, jersey_number, height_cm, weight_kg, date_of_birth, nationality, preferred_foot, current_club_id, is_available_for_scout, address, district, state')
+
+        const player = allPlayers?.find(p => p.user_id === user.id)
 
         if (player) {
+          // Get user bio separately
+          const { data: userData } = await supabase
+            .from('users')
+            .select('bio')
+            .eq('id', user.id)
+            .single()
+
           // Pre-fill form with existing data
           reset({
             position: player.position as any,
@@ -85,7 +93,7 @@ export default function PlayerProfileForm() {
             height_cm: player.height_cm?.toString() || '',
             weight_kg: player.weight_kg?.toString() || '',
             preferred_foot: (player.preferred_foot?.charAt(0).toUpperCase() + player.preferred_foot?.slice(1)) as any,
-            bio: player.users?.bio || '',
+            bio: userData?.bio || '',
           })
           // Set existing photo
           setPhotoUrl(player.photo_url || '')
@@ -224,7 +232,7 @@ export default function PlayerProfileForm() {
             onUploadComplete={setPhotoUrl}
             bucket="player-photos"
             folder="profiles"
-            maxSizeMB={5}
+            maxSizeKB={5120}
           />
         </div>
         <p className="text-xs text-slate-500 text-center">

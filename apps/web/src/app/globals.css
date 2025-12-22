@@ -58,3 +58,54 @@
   }
 }
 
+@layer utilities {
+  /* Enhanced button hover effects */
+  .btn-lift {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
+  }
+
+  /* Enhanced card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  /* Smooth color transitions */
+  .color-transition {
+    @apply transition-colors duration-200;
+  }
+
+  /* Interactive elements with scale */
+  .interactive-scale {
+    @apply transition-transform duration-200 hover:scale-105 active:scale-95;
+  }
+
+  /* Glow effect on hover */
+  .glow-on-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:ring-4 hover:ring-blue-400/50;
+  }
+
+  /* Pulse animation for important elements */
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Smooth gradient transitions */
+  .gradient-shift {
+    background-size: 200% 200%;
+    transition: background-position 0.3s ease;
+  }
+
+  .gradient-shift:hover {
+    background-position: right center;
+  }
+}
+

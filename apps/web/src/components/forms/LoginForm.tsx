@@ -138,7 +138,7 @@ export default function LoginForm() {
               <Label htmlFor="password">Password</Label>
               <a
                 href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:underline"
+                className="text-sm text-blue-600 hover:underline hover:text-blue-800 font-medium transition-colors"
               >
                 Forgot password?
               </a>
@@ -169,7 +169,7 @@ export default function LoginForm() {
 
           <p className="text-sm text-center text-gray-600">
             Don't have an account?{' '}
-            <a href="/auth/signup" className="text-blue-600 hover:underline font-medium">
+            <a href="/auth/signup" className="text-blue-600 hover:underline hover:text-blue-800 font-medium transition-colors">
               Sign up
             </a>
           </p>

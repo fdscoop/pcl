@@ -144,20 +144,36 @@ export default function KYCVerificationPage() {
       }
 
       // Update player availability for scouting
-      if (user.players?.[0]?.id) {
-        await supabase
+      // Query player by user_id to ensure we update the correct player
+      const { data: playerData } = await supabase
+        .from('players')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (playerData?.id) {
+        const { error: playerError } = await supabase
           .from('players')
           .update({
             is_available_for_scout: true,
           })
-          .eq('id', user.players[0].id)
+          .eq('id', playerData.id)
+        
+        if (playerError) {
+          console.error('Error updating player availability:', playerError)
+          throw playerError
+        } else {
+          console.log('✅ Player marked as available for scouting with ID:', playerData.id)
+        }
+      } else {
+        console.warn('No player found for user:', user.id)
       }
 
       setSuccess('✅ KYC Verification Successful! You are now verified and searchable by clubs.')
 
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        router.push('/dashboard/player')
+        router.push('/dashboard/player?verified=true')
       }, 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to verify OTP')
@@ -209,23 +225,40 @@ export default function KYCVerificationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Info Alert */}
-            <Alert className="border-blue-200 bg-blue-50">
-              <div className="flex items-start gap-4">
-                <div className="text-2xl">ℹ️</div>
-                <div className="flex-1">
-                  <AlertTitle className="text-blue-900 mb-2">Why KYC Verification?</AlertTitle>
-                  <AlertDescription className="text-blue-800 space-y-2">
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>Verify your identity for tournament participation</li>
-                      <li>Become searchable by verified clubs in your district</li>
-                      <li>Receive contract offers from professional clubs</li>
-                      <li>Participate in DQL and other competitive tournaments</li>
-                    </ul>
-                  </AlertDescription>
+            {/* Info Alert - Why KYC is Important */}
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 rounded-lg p-4">
+              <div className="space-y-3">
+                <h3 className="text-blue-900 font-semibold flex items-center gap-2">
+                  <span className="text-xl">🎯</span> Why KYC Verification is MANDATORY
+                </h3>
+                <p className="text-sm text-blue-800">
+                  KYC verification is required for all players to ensure fair play and compliance with PCL regulations. Without it, you cannot:
+                </p>
+                <ul className="space-y-2 text-sm text-blue-800 ml-4">
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold mt-0.5">✗</span>
+                    <span>Be discovered by clubs in scout searches</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold mt-0.5">✗</span>
+                    <span>Receive professional contract offers from clubs</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold mt-0.5">✗</span>
+                    <span>Participate in PCL matches and tournaments</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold mt-0.5">✗</span>
+                    <span>Be registered as an official PCL player</span>
+                  </li>
+                </ul>
+                <div className="bg-white rounded p-3 mt-3 border-l-4 border-green-500">
+                  <p className="text-sm text-green-900 font-semibold">
+                    ✓ Once verified, you'll unlock all features and opportunities!
+                  </p>
                 </div>
               </div>
-            </Alert>
+            </div>
 
             {/* Success Message */}
             {success && (

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ToastProvider } from '@/context/ToastContext'
 
 export const metadata: Metadata = {
   title: 'Professional Club League - PCL',
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gradient-to-br from-slate-50 to-slate-100">
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

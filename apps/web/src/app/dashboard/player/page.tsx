@@ -1,64 +1,148 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { UnreadContractBadge } from '@/components/UnreadContractBadge'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { usePlayerNotifications } from '@/hooks/usePlayerNotifications'
 
 export default function PlayerDashboard() {
   const router = useRouter()
   const [userData, setUserData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [pendingContractsCount, setPendingContractsCount] = useState(0)
+  const [playerId, setPlayerId] = useState<string | null>(null)
+  const {
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    markAsRead,
+    markAllAsRead
+  } = usePlayerNotifications(playerId)
+
+  const loadUser = async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push('/auth/login')
+        return
+      }
+
+      // Get user profile data
+      const { data: profile, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (userError) {
+        console.error('Error loading user profile:', userError)
+        setUserData(null)
+        return
+      }
+
+      // Get player data separately
+      // Note: We can't use .eq('user_id') with specific columns - Supabase API limitation
+      // So we fetch all players first, then filter in code
+      const { data: allPlayers, error: playersError } = await supabase
+        .from('players')
+        .select('id, user_id, position, photo_url, unique_player_id, jersey_number, height_cm, weight_kg, date_of_birth, nationality, preferred_foot, current_club_id, is_available_for_scout')
+        .order('created_at', { ascending: false })
+      
+      // Filter to only this user's players
+      const players = allPlayers?.filter(p => p.user_id === user.id) || []
+
+      if (playersError) {
+        console.error('Error loading players:', playersError)
+      }
+
+      // Combine user and player data
+      const combinedData = {
+        ...profile,
+        players: players || []
+      }
+
+      setUserData(combinedData)
+
+      // Load pending contracts count for notification
+      if (players && players.length > 0) {
+        setPlayerId(players[0].id)
+        const { count } = await supabase
+          .from('contracts')
+          .select('*', { count: 'exact', head: true })
+          .eq('player_id', players[0].id)
+          .eq('status', 'pending')
+
+        setPendingContractsCount(count || 0)
+      }
+    } catch (error) {
+      console.error('Error loading user:', error)
+      setUserData(null)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const supabase = createClient()
+    loadUser()
+  }, [router])
 
-    const loadUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) {
-          router.push('/auth/login')
-          return
-        }
-
-        // Get user profile data with player data
-        const { data: profile} = await supabase
-          .from('users')
-          .select(`
-            *,
-            players (
-              id,
-              unique_player_id,
-              photo_url,
-              position,
-              jersey_number,
-              height_cm,
-              weight_kg,
-              date_of_birth,
-              nationality,
-              preferred_foot,
-              is_available_for_scout,
-              total_matches_played,
-              total_goals_scored,
-              total_assists
-            )
-          `)
-          .eq('id', user.id)
-          .single()
-
-        setUserData(profile)
-      } catch (error) {
-        console.error('Error loading user:', error)
-      } finally {
-        setLoading(false)
+  // Refetch data when page comes back into focus
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadUser()
       }
     }
 
-    loadUser()
-  }, [router])
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
+  // Refetch when returning from KYC verification
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('verified') === 'true') {
+      setLoading(true)
+      loadUser()
+      // Clean up the query param
+      window.history.replaceState({}, document.title, '/dashboard/player')
+    }
+  }, [])
+
+  // Subscribe to real-time contract updates
+  useEffect(() => {
+    if (!userData?.players?.[0]) return
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('player_contracts_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'contracts',
+          filter: `player_id=eq.${userData.players[0].id}`
+        },
+        () => {
+          // Reload pending contracts count when new contract is added
+          loadUser()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [userData?.players?.[0]?.id])
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -87,6 +171,13 @@ export default function PlayerDashboard() {
               </h1>
             </div>
             <div className="flex items-center gap-4">
+              <NotificationCenter
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                loading={notificationsLoading}
+              />
               <span className="text-sm text-slate-600">
                 {userData?.first_name} {userData?.last_name}
               </span>
@@ -103,12 +194,21 @@ export default function PlayerDashboard() {
         {/* Welcome Section with Photo */}
         <div className="mb-8 flex items-center gap-6">
           {/* Player Photo */}
-          {userData?.players?.[0]?.photo_url && (
-            <img
-              src={userData.players[0].photo_url}
-              alt={`${userData.first_name} ${userData.last_name}`}
-              className="w-24 h-24 rounded-full object-cover border-4 border-blue-200 shadow-lg"
-            />
+          {userData?.players?.[0]?.photo_url ? (
+            <div className="relative w-24 h-24">
+              <Image
+                src={userData.players[0].photo_url}
+                alt={`${userData.first_name} ${userData.last_name}`}
+                fill
+                className="rounded-full object-cover border-4 border-blue-200 shadow-lg"
+                priority
+                sizes="96px"
+              />
+            </div>
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center border-4 border-blue-200 shadow-lg">
+              <span className="text-4xl">⚽</span>
+            </div>
           )}
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">
@@ -202,46 +302,96 @@ export default function PlayerDashboard() {
           </Alert>
         )}
 
-        {/* KYC Pending Alert */}
+        {/* KYC Verification Status Alert */}
         {userData?.players?.[0] && userData?.kyc_status !== 'verified' && (
-          <Alert className="mb-8 border-yellow-200 bg-yellow-50">
+          <Alert className={`mb-8 border-red-200 bg-red-50`}>
             <div className="flex items-start gap-4">
-              <div className="text-4xl">⏳</div>
+              <div className="text-4xl">🚨</div>
               <div className="flex-1">
-                <AlertTitle className="text-lg font-semibold text-yellow-900 mb-2">
-                  {userData?.kyc_status === 'pending'
-                    ? 'KYC Verification in Progress'
-                    : 'Complete KYC Verification to Become Searchable'}
+                <AlertTitle className="text-lg font-semibold text-red-900 mb-2">
+                  ⚠️ KYC VERIFICATION REQUIRED (Mandatory)
                 </AlertTitle>
-                <AlertDescription className="text-yellow-800 space-y-2">
-                  {userData?.kyc_status === 'pending' ? (
+                <AlertDescription className="text-red-800 space-y-3">
+                  {userData?.kyc_status === 'rejected' ? (
                     <>
-                      <p>
-                        Your KYC documents are under review. Once approved, you'll be visible in club scout searches.
+                      <p className="font-semibold text-red-900 mb-2">
+                        Your KYC verification was rejected.
                       </p>
-                      <p className="text-sm">
-                        <strong>Note:</strong> Verification usually takes 24-48 hours.
-                      </p>
-                    </>
-                  ) : (
-                    <>
                       <p>
-                        Complete Aadhaar verification to appear in scout searches and receive contract offers from clubs.
+                        You can retry the verification process. Please ensure you provide valid Aadhaar details.
+                      </p>
+                      <p className="font-semibold text-sm mt-3">
+                        ✅ Retry verification now:
                       </p>
                       <div className="pt-2">
                         <Button
                           onClick={() => router.push('/kyc/verify')}
-                          variant="outline"
-                          className="border-yellow-600 text-yellow-900 hover:bg-yellow-100"
+                          className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
                         >
-                          Verify with Aadhaar →
+                          Retry KYC Verification
                         </Button>
                       </div>
-                      <p className="text-sm mt-2">
-                        ⚡ Instant verification via Aadhaar OTP
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold">
+                        WITHOUT KYC verification, you CANNOT:
                       </p>
+                      <ul className="space-y-1 ml-4 text-sm">
+                        <li>❌ Be discovered by clubs in scout searches</li>
+                        <li>❌ Receive contract offers</li>
+                        <li>❌ Participate in tournaments</li>
+                        <li>❌ Get scouted for professional opportunities</li>
+                      </ul>
+                      <p className="font-semibold text-sm mt-3 text-red-900">
+                        ✅ Complete it now to unlock all features!
+                      </p>
+                      <div className="pt-3 flex gap-2">
+                        <Button
+                          onClick={() => router.push('/kyc/verify')}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                        >
+                          Start KYC Now
+                        </Button>
+                      </div>
+                      <div className="bg-white bg-opacity-50 rounded p-2 mt-2 text-xs">
+                        <p className="font-semibold text-red-900 mb-1">⚡ INSTANT VERIFICATION:</p>
+                        <ul className="space-y-1">
+                          <li>• Takes only 2-3 minutes</li>
+                          <li>• Verify with Aadhaar OTP</li>
+                          <li>• Instant approval (no waiting)</li>
+                        </ul>
+                      </div>
                     </>
                   )}
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        )}
+
+        {/* New Contract Notification Alert */}
+        {userData?.players?.[0] && pendingContractsCount > 0 && (
+          <Alert className="mb-8 border-blue-300 bg-blue-50 animate-pulse">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">📋</div>
+              <div className="flex-1">
+                <AlertTitle className="text-lg font-semibold text-blue-900 mb-2">
+                  🎉 You Have {pendingContractsCount} New Contract Offer{pendingContractsCount > 1 ? 's' : ''}!
+                </AlertTitle>
+                <AlertDescription className="text-blue-800 space-y-2">
+                  <p>
+                    Great news! Club{pendingContractsCount > 1 ? 's' : ''} ha{pendingContractsCount > 1 ? 've' : 's'} sent you contract offer{pendingContractsCount > 1 ? 's' : ''}. 
+                    Review the details and decide whether to accept or reject.
+                  </p>
+                  <div className="pt-3">
+                    <Button
+                      onClick={() => router.push('/dashboard/player/contracts')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    >
+                      View Contract Offers ({pendingContractsCount}) →
+                    </Button>
+                  </div>
                 </AlertDescription>
               </div>
             </div>
@@ -306,8 +456,8 @@ export default function PlayerDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-200">
             <CardHeader>
               <CardTitle>📝 {userData?.players?.[0] ? 'Update Your Profile' : 'Complete Your Profile'}</CardTitle>
               <CardDescription>
@@ -322,30 +472,33 @@ export default function PlayerDashboard() {
                   {/* Photo Preview */}
                   {userData.players[0].photo_url && (
                     <div className="flex justify-center">
-                      <img
-                        src={userData.players[0].photo_url}
-                        alt="Profile"
-                        className="w-16 h-16 rounded-full object-cover border-2 border-slate-200"
-                      />
+                      <div className="relative w-16 h-16">
+                        <Image
+                          src={userData.players[0].photo_url}
+                          alt="Profile"
+                          fill
+                          className="rounded-full object-cover border-2 border-slate-200"
+                          sizes="64px"
+                        />
+                      </div>
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-2 text-sm text-slate-600">
                     <div>
-                      <span className="font-medium">Position:</span> {userData.players[0].position}
+                      <span className="font-medium">Position:</span> {userData.players[0].position || 'N/A'}
                     </div>
                     <div>
-                      <span className="font-medium">Nationality:</span> {userData.players[0].nationality}
+                      <span className="font-medium">Nationality:</span> {userData.players[0].nationality || 'N/A'}
                     </div>
                     <div>
-                      <span className="font-medium">Height:</span> {userData.players[0].height_cm} cm
+                      <span className="font-medium">Height:</span> {userData.players[0].height_cm ? `${userData.players[0].height_cm} cm` : 'N/A'}
                     </div>
                     <div>
-                      <span className="font-medium">Weight:</span> {userData.players[0].weight_kg} kg
+                      <span className="font-medium">Weight:</span> {userData.players[0].weight_kg ? `${userData.players[0].weight_kg} kg` : 'N/A'}
                     </div>
                   </div>
                   <Button
-                    className="w-full"
-                    variant="outline"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => router.push('/profile/player/complete')}
                   >
                     Edit Profile
@@ -353,7 +506,7 @@ export default function PlayerDashboard() {
                 </div>
               ) : (
                 <Button
-                  className="w-full"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
                   onClick={() => router.push('/profile/player/complete')}
                 >
                   Complete Profile
@@ -362,17 +515,21 @@ export default function PlayerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className={`hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer ${userData?.kyc_status !== 'verified' ? 'border-2 border-red-400 bg-red-50 hover:border-red-500' : 'border-2 hover:border-blue-200'}`}>
             <CardHeader>
-              <CardTitle>✅ Verify Your Identity</CardTitle>
+              <CardTitle className={userData?.kyc_status !== 'verified' ? 'text-red-900' : ''}>
+                🔐 Verify Your Identity {userData?.kyc_status !== 'verified' ? '(REQUIRED)' : ''}
+              </CardTitle>
               <CardDescription>
-                Complete Aadhaar verification to appear in scout searches
+                {userData?.kyc_status === 'verified' 
+                  ? 'Your identity is verified' 
+                  : 'MANDATORY: Complete Aadhaar verification to get discovered'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {userData?.kyc_status === 'verified' ? (
                 <div className="space-y-2">
-                  <Button className="w-full" variant="outline" disabled>
+                  <Button className="w-full bg-green-600 hover:bg-green-700" disabled>
                     ✓ Verified
                   </Button>
                   {userData?.kyc_verified_at && (
@@ -382,22 +539,56 @@ export default function PlayerDashboard() {
                   )}
                 </div>
               ) : userData?.kyc_status === 'pending' ? (
-                <Button className="w-full" variant="outline" disabled>
-                  ⏳ Under Review
-                </Button>
-              ) : (
                 <div className="space-y-2">
-                  <Button
-                    className="w-full"
-                    onClick={() => router.push('/kyc/verify')}
-                  >
-                    Verify with Aadhaar
+                  <Button className="w-full" variant="outline" disabled>
+                    ⏳ Under Review
                   </Button>
-                  <p className="text-xs text-center text-slate-500">
-                    Instant verification via Aadhaar OTP
+                  <p className="text-xs text-center text-slate-600 font-medium">
+                    Verification in progress...
                   </p>
                 </div>
+              ) : (
+                <div className="space-y-3">
+                  <Button
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
+                    onClick={() => router.push('/kyc/info')}
+                  >
+                    🚀 Learn About KYC
+                  </Button>
+                  <Button
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    onClick={() => router.push('/kyc/verify')}
+                  >
+                    � Start KYC Now
+                  </Button>
+                  <div className="bg-white rounded p-2 text-xs text-slate-700 space-y-1">
+                    <p className="font-semibold text-blue-700">⚡ Quick Process:</p>
+                    <p>• 2-3 minutes</p>
+                    <p>• Aadhaar OTP</p>
+                    <p>• Instant approval</p>
+                  </div>
+                </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer relative border-2 hover:border-blue-200">
+            <CardHeader>
+              <CardTitle className="relative inline-block">
+                📋 My Contracts
+                <UnreadContractBadge userType="player" />
+              </CardTitle>
+              <CardDescription>
+                View and manage your contract offers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
+                onClick={() => router.push('/dashboard/player/contracts')}
+              >
+                View Contracts
+              </Button>
             </CardContent>
           </Card>
         </div>

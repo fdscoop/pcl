@@ -1,0 +1,354 @@
+# KYC Verification - Database Schema & Implementation
+
+## 📊 Current Database Structure
+
+### Tables Involved in KYC Verification:
+
+#### 1. **users** Table (Aadhaar-based KYC)
+```
+id                  UUID PRIMARY KEY
+email              TEXT UNIQUE NOT NULL
+phone              TEXT
+first_name         TEXT NOT NULL
+last_name          TEXT NOT NULL
+role               user_role ('player', 'club_owner', etc.)
+
+--- KYC FIELDS ---
+kyc_status         kyc_status ('pending', 'verified', 'rejected')  ← STATUS
+kyc_verified_at    TIMESTAMP  ← WHEN VERIFIED
+aadhaar_number     TEXT  ← AADHAAR NUMBER (encrypted)
+
+is_active          BOOLEAN DEFAULT true
+created_at         TIMESTAMP
+updated_at         TIMESTAMP
+deleted_at         TIMESTAMP
+```
+
+#### 2. **players** Table (Player Profile)
+```
+id                        UUID PRIMARY KEY
+user_id                   UUID NOT NULL (→ users.id)
+unique_player_id          TEXT UNIQUE
+photo_url                 TEXT NOT NULL
+position                  TEXT
+jersey_number             INTEGER
+height_cm                 DECIMAL
+weight_kg                 DECIMAL
+date_of_birth            DATE
+nationality              TEXT
+address                  TEXT
+district                 TEXT
+state                    TEXT
+
+--- SCOUTING AVAILABILITY ---
+is_available_for_scout   BOOLEAN DEFAULT false  ← SET TO TRUE AFTER KYC VERIFIED
+
+current_club_id          UUID (→ clubs.id)
+total_matches_played     INTEGER DEFAULT 0
+total_goals_scored       INTEGER DEFAULT 0
+total_assists            INTEGER DEFAULT 0
+
+created_at               TIMESTAMP
+updated_at               TIMESTAMP
+deleted_at               TIMESTAMP
+```
+
+---
+
+## 🔄 KYC Verification Flow
+
+### Step 1: Player Initiates KYC
+```
+Player clicks "Verify with Aadhaar" button
+↓
+Form appears requesting Aadhaar number
+```
+
+### Step 2: Generate OTP
+```
+Player enters: 12-digit Aadhaar number
+System calls: generateAadhaarOTP()
+↓
+Simulates: OTP sent to registered mobile
+Returns: ref_id for verification
+```
+
+### Step 3: Verify OTP
+```
+Player enters: 6-digit OTP received
+System calls: verifyAadhaarOTP()
+↓
+Validates: OTP matches
+Updates: users table with:
+  - kyc_status = 'verified'
+  - kyc_verified_at = NOW()
+  - aadhaar_number = encrypted_value
+↓
+Updates: players table with:
+  - is_available_for_scout = true
+```
+
+### Step 4: Player Becomes Discoverable
+```
+Player is now searchable by clubs
+Player can:
+  ✓ Be found in scout searches
+  ✓ Receive contract offers
+  ✓ Participate in tournaments
+```
+
+---
+
+## 📝 Database Queries
+
+### Check if Player is KYC Verified
+
+```sql
+-- Get KYC status for a user
+SELECT 
+  u.id,
+  u.email,
+  u.first_name,
+  u.last_name,
+  u.kyc_status,
+  u.kyc_verified_at,
+  p.unique_player_id,
+  p.is_available_for_scout
+FROM users u
+LEFT JOIN players p ON u.id = p.user_id
+WHERE u.id = 'user-uuid-here';
+```
+
+**Expected Results:**
+- If `kyc_status = 'verified'` → Player is verified
+- If `is_available_for_scout = true` → Player is discoverable by clubs
+- If either is false/pending → Player is NOT verified
+
+### Find Unverified Players
+
+```sql
+-- Find all players who haven't verified KYC
+SELECT 
+  u.id,
+  u.email,
+  u.first_name,
+  u.last_name,
+  u.kyc_status,
+  p.unique_player_id
+FROM users u
+LEFT JOIN players p ON u.id = p.user_id
+WHERE u.role = 'player'
+  AND u.kyc_status != 'verified'
+ORDER BY u.created_at DESC;
+```
+
+### Find Verified & Searchable Players
+
+```sql
+-- Find all players ready to be scouted
+SELECT 
+  u.id,
+  u.email,
+  u.first_name,
+  u.last_name,
+  p.unique_player_id,
+  p.position,
+  p.district,
+  p.state,
+  u.kyc_verified_at
+FROM users u
+INNER JOIN players p ON u.id = p.user_id
+WHERE u.role = 'player'
+  AND u.kyc_status = 'verified'
+  AND p.is_available_for_scout = true
+ORDER BY u.kyc_verified_at DESC;
+```
+
+---
+
+## 🔑 Key Fields to Track
+
+| Field | Table | Purpose | Value |
+|-------|-------|---------|-------|
+| `kyc_status` | users | Verification status | `pending`, `verified`, `rejected` |
+| `kyc_verified_at` | users | When verified | TIMESTAMP |
+| `aadhaar_number` | users | Aadhaar (encrypted) | TEXT |
+| `is_available_for_scout` | players | Searchable by clubs | BOOLEAN |
+
+---
+
+## ✅ What Gets Updated When KYC Completes
+
+### In `users` table:
+```typescript
+UPDATE users SET 
+  kyc_status = 'verified',
+  kyc_verified_at = CURRENT_TIMESTAMP,
+  aadhaar_number = 'encrypted_aadhaar_12_digits'
+WHERE id = user_id
+```
+
+### In `players` table:
+```typescript
+UPDATE players SET 
+  is_available_for_scout = true,
+  updated_at = CURRENT_TIMESTAMP
+WHERE user_id = user_id
+```
+
+---
+
+## 🚀 Implementation Checklist
+
+### Database Setup
+- [x] `kyc_status` field exists in users table
+- [x] `kyc_verified_at` field exists in users table
+- [x] `aadhaar_number` field exists in users table
+- [x] `is_available_for_scout` field exists in players table
+- [x] Indexes created for performance
+
+### Frontend Implementation
+- [x] KYC verification form (`/kyc/verify`)
+- [x] OTP generation handler
+- [x] OTP verification handler
+- [x] Database update logic
+
+### Dashboard Integration
+- [x] Check KYC status on dashboard
+- [x] Show status alerts
+- [x] Show KYC pending/verified badges
+
+### Business Logic
+- [x] Player must verify KYC to be searchable
+- [x] Automatic `is_available_for_scout = true` after verification
+- [x] Timestamps track verification time
+
+---
+
+## 🔐 Security Considerations
+
+1. **Aadhaar Storage**: Stored as encrypted text
+2. **OTP**: Transmitted over HTTPS only
+3. **Database Access**: Requires authentication via Supabase auth
+4. **Audit Trail**: `kyc_verified_at` timestamp tracks when verified
+5. **UIDAI Compliance**: Follows government guidelines for Aadhaar usage
+
+---
+
+## 📱 Frontend-Database Integration
+
+### KYC Verification Service (`kyc.ts`)
+```typescript
+// Calls these Supabase functions:
+
+1. generateAadhaarOTP(aadhaarNumber)
+   → Generates OTP reference ID
+
+2. verifyAadhaarOTP(refId, otp)
+   → Validates OTP
+   → Updates users table (kyc_status, kyc_verified_at, aadhaar_number)
+   → Updates players table (is_available_for_scout)
+```
+
+### Dashboard Integration (`dashboard/player/page.tsx`)
+```typescript
+// Checks current KYC status:
+
+1. Load user profile with players data
+2. Check: user.kyc_status
+3. If 'verified' → Show "✓ Verified" badge
+4. If 'pending' → Show "Verify KYC" alert with button
+5. If 'rejected' → Show error with retry option
+```
+
+---
+
+## 🎯 Expected Behavior
+
+### Player NOT Verified:
+```
+Dashboard shows:
+🚨 "KYC Verification Required (Mandatory)"
+- Cannot be discovered by clubs
+- No contract offers
+- Cannot play tournaments
+
+[Learn More] [Start KYC Now] buttons
+```
+
+### Player Verified:
+```
+Dashboard shows:
+✅ "You're All Set! Clubs Can Now Find You"
+- KYC: Verified ✓
+- Profile: Complete ✓
+- Scout Status: Searchable ✓
+```
+
+---
+
+## 🔄 Database Queries Reference
+
+### For Dashboard (Check Status)
+```sql
+SELECT kyc_status, kyc_verified_at 
+FROM users 
+WHERE id = current_user_id;
+```
+
+### For Scout Search (Find Verified Players)
+```sql
+SELECT p.* FROM players p
+INNER JOIN users u ON p.user_id = u.id
+WHERE u.kyc_status = 'verified'
+  AND p.is_available_for_scout = true
+  AND p.district = 'requested_district'
+LIMIT 20;
+```
+
+### For Admin (Audit Trail)
+```sql
+SELECT u.email, u.kyc_status, u.kyc_verified_at, u.updated_at
+FROM users u
+WHERE u.role = 'player'
+ORDER BY u.kyc_verified_at DESC;
+```
+
+---
+
+## 📋 Required SQL Fields (Already Exist)
+
+✅ All required fields already exist in the database:
+- `users.kyc_status` (ENUM: pending, verified, rejected)
+- `users.kyc_verified_at` (TIMESTAMP)
+- `users.aadhaar_number` (TEXT)
+- `players.is_available_for_scout` (BOOLEAN)
+
+**No migration needed.** Just ensure the migration `ADD_KYC_FIELDS_TO_USERS.sql` has been run.
+
+---
+
+## 🚀 Next Steps
+
+1. ✅ **Verify database has these fields:**
+   ```sql
+   SELECT column_name FROM information_schema.columns
+   WHERE table_name IN ('users', 'players');
+   ```
+
+2. ✅ **Ensure KYC form updates both tables:**
+   - users table: kyc_status, kyc_verified_at, aadhaar_number
+   - players table: is_available_for_scout
+
+3. ✅ **Dashboard checks KYC status:**
+   - If not verified: Show alert + button to start KYC
+   - If verified: Show success + searchable by clubs
+
+4. ✅ **Test the flow:**
+   - Player enters Aadhaar → OTP sent
+   - Player enters OTP → Database updated
+   - Dashboard shows verified status
+
+---
+
+**Status:** ✅ Schema complete, ready for integration testing

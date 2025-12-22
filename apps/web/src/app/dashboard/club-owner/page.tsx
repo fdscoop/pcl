@@ -5,12 +5,23 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { UnreadContractBadge } from '@/components/UnreadContractBadge'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { useClubNotifications } from '@/hooks/useClubNotifications'
 
 export default function ClubOwnerDashboard() {
   const router = useRouter()
   const [userData, setUserData] = useState<any>(null)
   const [club, setClub] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [clubId, setClubId] = useState<string | null>(null)
+  const { 
+    notifications, 
+    unreadCount, 
+    loading: notificationsLoading,
+    markAsRead,
+    markAllAsRead
+  } = useClubNotifications(clubId)
 
   useEffect(() => {
     const supabase = createClient()
@@ -45,6 +56,7 @@ export default function ClubOwnerDashboard() {
           }
         } else {
           setClub(clubData)
+          setClubId(clubData.id)
         }
       } catch (error) {
         console.error('Error loading user:', error)
@@ -119,7 +131,7 @@ export default function ClubOwnerDashboard() {
                 </p>
               </div>
               <Button
-                className="w-full"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
                 size="lg"
                 onClick={() => router.push('/club/create')}
               >
@@ -144,6 +156,13 @@ export default function ClubOwnerDashboard() {
               </h1>
             </div>
             <div className="flex items-center gap-4">
+              <NotificationCenter
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                loading={notificationsLoading}
+              />
               <span className="text-sm text-slate-600">
                 {userData?.first_name} {userData?.last_name}
               </span>
@@ -203,7 +222,7 @@ export default function ClubOwnerDashboard() {
             {/* Edit Button */}
             <div>
               <Button
-                variant="outline"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
                 onClick={() => router.push(`/club/${club?.id}/edit`)}
               >
                 Edit Profile
@@ -268,8 +287,8 @@ export default function ClubOwnerDashboard() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-200">
             <CardHeader>
               <CardTitle>👥 Manage Teams</CardTitle>
               <CardDescription>
@@ -283,7 +302,7 @@ export default function ClubOwnerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-200">
             <CardHeader>
               <CardTitle>🔍 Scout Players</CardTitle>
               <CardDescription>
@@ -291,13 +310,36 @@ export default function ClubOwnerDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline" disabled>
-                Coming Soon
+              <Button
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
+                onClick={() => router.push('/scout/players')}
+              >
+                Browse Players
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer relative border-2 hover:border-blue-200">
+            <CardHeader>
+              <CardTitle className="relative inline-block">
+                📋 Contracts
+                <UnreadContractBadge userType="club_owner" />
+              </CardTitle>
+              <CardDescription>
+                Manage player contracts and offers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
+                onClick={() => router.push('/dashboard/club-owner/contracts')}
+              >
+                View Contracts
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-200">
             <CardHeader>
               <CardTitle>⚽ Matches</CardTitle>
               <CardDescription>

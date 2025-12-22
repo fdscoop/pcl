@@ -3,13 +3,14 @@
 import { useState, useRef } from 'react'
 import { Button } from './button'
 import { createClient } from '@/lib/supabase/client'
+import { compressImage, validateImage, formatFileSize } from '@/lib/image-compression'
 
 interface ImageUploadProps {
   currentImageUrl?: string | null
   onUploadComplete: (url: string) => void
   bucket: string
   folder?: string
-  maxSizeMB?: number
+  maxSizeKB?: number
   acceptedTypes?: string[]
 }
 
@@ -18,54 +19,80 @@ export function ImageUpload({
   onUploadComplete,
   bucket,
   folder = '',
-  maxSizeMB = 5,
+  maxSizeKB = 100, // Changed to 100KB
   acceptedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null)
   const [error, setError] = useState<string | null>(null)
+  const [compression, setCompression] = useState<{ original: number; compressed: number } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setError(null)
+      setCompression(null)
       const file = event.target.files?.[0]
 
       if (!file) return
 
-      // Validate file type
-      if (!acceptedTypes.includes(file.type)) {
-        setError(`Please upload a valid image file (${acceptedTypes.map(t => t.split('/')[1]).join(', ')})`)
+      // Validate file type and size
+      const validation = validateImage(file)
+      if (!validation.valid) {
+        setError(validation.error || 'Invalid image')
         return
       }
 
-      // Validate file size
-      const fileSizeMB = file.size / (1024 * 1024)
-      if (fileSizeMB > maxSizeMB) {
-        setError(`File size must be less than ${maxSizeMB}MB`)
-        return
-      }
+      // Show original file size
+      const originalSizeKB = file.size / 1024
+      console.log(`Original file size: ${formatFileSize(file.size)}`)
+
+      // Compress image
+      setUploading(true)
+      const compressionResult = await compressImage(file, {
+        maxSizeKB,
+        targetQuality: 0.85,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      })
+
+      setCompression({
+        original: originalSizeKB,
+        compressed: compressionResult.sizeKB,
+      })
+
+      console.log(`
+        ✅ Image Compression Successful
+        Original: ${formatFileSize(Math.round(originalSizeKB * 1024))}
+        Compressed: ${formatFileSize(Math.round(compressionResult.sizeKB * 1024))}
+        Reduction: ${Math.round(((originalSizeKB - compressionResult.sizeKB) / originalSizeKB) * 100)}%
+        Dimensions: ${compressionResult.width}x${compressionResult.height}px
+      `)
 
       // Show preview
       const reader = new FileReader()
       reader.onloadend = () => {
         setPreview(reader.result as string)
       }
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(compressionResult.blob)
 
-      // Upload to Supabase Storage
-      setUploading(true)
+      // Upload compressed image to Supabase Storage
       const supabase = createClient()
 
       // Generate unique filename
-      const fileExt = file.name.split('.').pop()
+      const fileExt = 'jpg' // Always use JPG for better compression
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
       const filePath = folder ? `${folder}/${fileName}` : fileName
+
+      // Create a File object from the compressed blob
+      const compressedFile = new File([compressionResult.blob], fileName, {
+        type: 'image/jpeg',
+      })
 
       // Upload file
       const { data, error: uploadError } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, {
+        .upload(filePath, compressedFile, {
           cacheControl: '3600',
           upsert: false,
         })
@@ -80,10 +107,12 @@ export function ImageUpload({
         .getPublicUrl(data.path)
 
       onUploadComplete(publicUrl)
+      setError(null)
     } catch (err) {
       console.error('Upload error:', err)
       setError(err instanceof Error ? err.message : 'Failed to upload image')
       setPreview(currentImageUrl || null)
+      setCompression(null)
     } finally {
       setUploading(false)
     }
@@ -91,6 +120,7 @@ export function ImageUpload({
 
   const handleRemove = () => {
     setPreview(null)
+    setCompression(null)
     onUploadComplete('')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -162,8 +192,17 @@ export function ImageUpload({
             </Button>
           </label>
           <p className="text-xs text-slate-500 text-center">
-            Max {maxSizeMB}MB • JPG, PNG, WebP
+            Auto-compressed to max {maxSizeKB}KB • JPG, PNG, WebP
           </p>
+
+          {/* Compression Stats */}
+          {compression && (
+            <div className="text-xs bg-green-50 border border-green-200 rounded p-2 text-center text-green-700">
+              <p className="font-semibold">✅ Compressed Successfully</p>
+              <p>{formatFileSize(Math.round(compression.original * 1024))} → {formatFileSize(Math.round(compression.compressed * 1024))}</p>
+              <p>Saved: {Math.round(((compression.original - compression.compressed) / compression.original) * 100)}%</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -176,3 +215,4 @@ export function ImageUpload({
     </div>
   )
 }
+

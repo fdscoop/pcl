@@ -103,6 +103,18 @@ export interface Contract {
   terminated_by?: string;
   termination_reason?: string;
   deleted_at?: string;
+  // Signature fields
+  club_signature_name?: string;
+  club_signature_timestamp?: string;
+  player_signature_timestamp?: string;
+  player_signature_data?: Record<string, any>;
+  contract_html?: string;
+  signing_status?: string;
+  // Read status fields
+  read_by_club?: boolean;
+  read_by_player?: boolean;
+  club_read_at?: string;
+  player_read_at?: string;
 }
 
 export interface Referee {
@@ -193,3 +205,24 @@ export interface Match {
   ended_at?: string;
   deleted_at?: string;
 }
+
+export interface Notification {
+  id: string;
+  club_id?: string;
+  player_id?: string;
+  notification_type: 'contract_signed' | 'contract_created' | 'player_joined' | string;
+  title: string;
+  message: string;
+  contract_id?: string;
+  related_user_id?: string;
+  is_read: boolean; // Legacy field
+  read_at?: string;
+  read_by_club?: boolean; // Club-specific read status
+  read_by_player?: boolean; // Player-specific read status
+  club_read_at?: string; // When club read it
+  player_read_at?: string; // When player read it
+  action_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+

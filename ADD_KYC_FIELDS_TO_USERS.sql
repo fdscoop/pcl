@@ -1,6 +1,15 @@
 -- Add KYC-related fields to users table
 -- Run this in Supabase SQL Editor
 
+-- Add kyc_status enum type (if not already exists)
+DO $$ BEGIN
+  CREATE TYPE kyc_status AS ENUM ('pending', 'verified', 'rejected');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+-- Add kyc_status column
+ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_status kyc_status DEFAULT NULL;
+
 -- Add aadhaar_number column (encrypted, for KYC verification)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS aadhaar_number TEXT;
 
@@ -8,6 +17,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS aadhaar_number TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_verified_at TIMESTAMP;
 
 -- Add comments for documentation
+COMMENT ON COLUMN users.kyc_status IS 'KYC verification status: NULL (not started), verified, or rejected';
 COMMENT ON COLUMN users.aadhaar_number IS 'Encrypted Aadhaar number used for KYC verification';
 COMMENT ON COLUMN users.kyc_verified_at IS 'Timestamp when KYC was verified';
 
@@ -18,6 +28,11 @@ CREATE INDEX IF NOT EXISTS idx_users_kyc_status ON users(kyc_status);
 SELECT 'KYC fields added successfully! Users can now complete Aadhaar verification.' as status;
 
 -- Verify the changes
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'users' 
+AND column_name IN ('kyc_status', 'kyc_verified_at', 'aadhaar_number')
+ORDER BY column_name;
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_name = 'users'

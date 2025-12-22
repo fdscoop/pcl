@@ -151,10 +151,10 @@ export default function SignupForm() {
                     setValue('role', role.value)
                   }}
                   className={`
-                    cursor-pointer rounded-lg border-2 p-4 transition-all
+                    cursor-pointer rounded-lg border-2 p-4 transition-all duration-200
                     ${selectedRole === role.value
-                      ? 'border-blue-600 bg-blue-50 shadow-md'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                      ? 'border-blue-600 bg-blue-50 shadow-lg ring-2 ring-blue-200 transform scale-[1.02]'
+                      : 'border-gray-200 hover:border-blue-300 hover:shadow-md hover:bg-blue-50/30 bg-white'
                     }
                   `}
                 >
@@ -281,7 +281,7 @@ export default function SignupForm() {
 
           <p className="text-sm text-center text-gray-600">
             Already have an account?{' '}
-            <a href="/auth/login" className="text-blue-600 hover:underline font-medium">
+            <a href="/auth/login" className="text-blue-600 hover:underline hover:text-blue-800 font-medium transition-colors">
               Sign in
             </a>
           </p>

@@ -5,9 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { UnreadContractBadge } from '@/components/UnreadContractBadge'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import { RecruitmentProgress } from '@/components/RecruitmentProgress'
 
 export default function ClubOwnerDashboard() {
   const router = useRouter()
@@ -15,13 +19,16 @@ export default function ClubOwnerDashboard() {
   const [club, setClub] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [clubId, setClubId] = useState<string | null>(null)
-  const { 
-    notifications, 
-    unreadCount, 
+  const [userId, setUserId] = useState<string | null>(null)
+  const [activeContractsCount, setActiveContractsCount] = useState(0)
+  const {
+    notifications,
+    unreadCount,
     loading: notificationsLoading,
     markAsRead,
     markAllAsRead
   } = useClubNotifications(clubId)
+  const { unreadCount: unreadMessagesCount } = useUnreadMessages(userId)
 
   useEffect(() => {
     const supabase = createClient()
@@ -34,6 +41,8 @@ export default function ClubOwnerDashboard() {
           router.push('/auth/login')
           return
         }
+
+        setUserId(user.id)
 
         const { data: profile } = await supabase
           .from('users')
@@ -57,6 +66,17 @@ export default function ClubOwnerDashboard() {
         } else {
           setClub(clubData)
           setClubId(clubData.id)
+
+          // Fetch active contracts count
+          const { data: contractsData, error: contractsError } = await supabase
+            .from('contracts')
+            .select('id', { count: 'exact' })
+            .eq('club_id', clubData.id)
+            .eq('status', 'active')
+
+          if (!contractsError && contractsData) {
+            setActiveContractsCount(contractsData.length)
+          }
         }
       } catch (error) {
         console.error('Error loading user:', error)
@@ -77,7 +97,7 @@ export default function ClubOwnerDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-slate-600">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     )
   }
@@ -85,21 +105,21 @@ export default function ClubOwnerDashboard() {
   // If no club exists, show onboarding
   if (!loading && !club) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <nav className="bg-white border-b border-slate-200 shadow-sm">
+      <div className="min-h-screen bg-background">
+        <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center gap-3">
                 <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" />
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                  PCL
-                </h1>
+                <span className="text-lg font-semibold text-foreground hidden sm:inline">
+                  Professional Club League
+                </span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-slate-600">
+                <span className="text-sm text-muted-foreground">
                   {userData?.first_name} {userData?.last_name}
                 </span>
-                <Button onClick={handleSignOut} variant="outline" size="sm">
+                <Button onClick={handleSignOut} variant="outline" size="sm" className="btn-lift">
                   Sign Out
                 </Button>
               </div>
@@ -109,29 +129,30 @@ export default function ClubOwnerDashboard() {
 
         <main className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-slate-900 mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Welcome to PCL! 🏆
             </h1>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-muted-foreground">
               Create your club profile to get started
             </p>
           </div>
 
-          <Card className="shadow-lg">
+          <Card className="shadow-xl border-accent/20">
             <CardHeader>
-              <CardTitle>Create Your Club Profile</CardTitle>
+              <CardTitle className="text-primary">Create Your Club Profile</CardTitle>
               <CardDescription>
                 Set up your club to manage teams, scout players, and participate in tournaments
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-900">
+              <Alert variant="info">
+                <AlertDescription>
                   <strong>Note:</strong> Each account can create one club profile. Make sure to provide accurate information.
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
               <Button
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
+                variant="gradient"
+                className="w-full btn-lift"
                 size="lg"
                 onClick={() => router.push('/club/create')}
               >
@@ -145,15 +166,15 @@ export default function ClubOwnerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <nav className="bg-white border-b border-slate-200 shadow-sm">
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                PCL
-              </h1>
+              <span className="text-lg font-semibold text-foreground hidden sm:inline">
+                Professional Club League
+              </span>
             </div>
             <div className="flex items-center gap-4">
               <NotificationCenter
@@ -163,10 +184,10 @@ export default function ClubOwnerDashboard() {
                 onMarkAllAsRead={markAllAsRead}
                 loading={notificationsLoading}
               />
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-muted-foreground">
                 {userData?.first_name} {userData?.last_name}
               </span>
-              <Button onClick={handleSignOut} variant="outline" size="sm">
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="btn-lift">
                 Sign Out
               </Button>
             </div>
@@ -184,10 +205,10 @@ export default function ClubOwnerDashboard() {
                 <img
                   src={club.logo_url}
                   alt={`${club.club_name} logo`}
-                  className="h-24 w-24 rounded-lg object-cover border-2 border-slate-300 shadow-md"
+                  className="h-24 w-24 rounded-lg object-cover border-2 border-border shadow-md"
                 />
               ) : (
-                <div className="h-24 w-24 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center border-2 border-slate-300 shadow-md">
+                <div className="h-24 w-24 rounded-lg bg-gradient-to-br from-accent/20 to-accent/40 flex items-center justify-center border-2 border-border shadow-md">
                   <span className="text-4xl">🏆</span>
                 </div>
               )}
@@ -195,26 +216,26 @@ export default function ClubOwnerDashboard() {
 
             {/* Club Info */}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
                 {club?.club_name}
               </h1>
               <div className="flex flex-wrap gap-2 mb-3">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/20 text-accent border border-accent/30">
                   {club?.club_type}
                 </span>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success/20 text-success border border-success/30">
                   {club?.category}
                 </span>
                 {club?.is_active && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success/20 text-success border border-success/30">
                     Active
                   </span>
                 )}
               </div>
-              <p className="text-slate-600 mb-2">
+              <p className="text-muted-foreground mb-2">
                 📍 {club?.city}, {club?.state}, {club?.country}
               </p>
-              <p className="text-slate-600">
+              <p className="text-muted-foreground">
                 📧 {club?.email} • 📞 {club?.phone}
               </p>
             </div>
@@ -222,7 +243,8 @@ export default function ClubOwnerDashboard() {
             {/* Edit Button */}
             <div>
               <Button
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                variant="gradient"
+                className="btn-lift font-semibold"
                 onClick={() => router.push(`/club/${club?.id}/edit`)}
               >
                 Edit Profile
@@ -231,64 +253,96 @@ export default function ClubOwnerDashboard() {
           </div>
 
           {club?.description && (
-            <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <p className="text-slate-700">{club.description}</p>
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+              <p className="text-foreground">{club.description}</p>
             </div>
           )}
         </div>
 
+        {/* New Messages Alert */}
+        {unreadMessagesCount > 0 && (
+          <Alert className="mb-8 border-2 border-destructive bg-gradient-to-r from-destructive/20 via-destructive/15 to-destructive/10 shadow-xl shadow-destructive/30 animate-pulse">
+            <div className="flex items-start gap-4">
+              <div className="text-4xl">💬</div>
+              <div className="flex-1">
+                <AlertTitle className="text-xl font-bold mb-2 text-destructive">
+                  📬 You Have {unreadMessagesCount} New Message{unreadMessagesCount > 1 ? 's' : ''}!
+                </AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <p className="text-foreground font-medium">
+                    Player{unreadMessagesCount > 1 ? 's have' : ' has'} sent you new message{unreadMessagesCount > 1 ? 's' : ''}.
+                    Check your inbox to read and respond to communications.
+                  </p>
+                  <div className="pt-3">
+                    <Button
+                      onClick={() => router.push('/dashboard/club-owner/messages')}
+                      variant="destructive"
+                      size="lg"
+                      className="btn-lift shadow-lg font-bold"
+                    >
+                      📬 Read Messages ({unreadMessagesCount}) →
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Founded
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{club?.founded_year}</div>
-              <p className="text-xs text-slate-500 mt-1">Est. year</p>
+              <div className="text-3xl font-bold text-foreground">{club?.founded_year}</div>
+              <p className="text-xs text-muted-foreground mt-1">Est. year</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Teams
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-slate-500 mt-1">Create teams</p>
+              <div className="text-3xl font-bold text-foreground">0</div>
+              <p className="text-xs text-muted-foreground mt-1">Create teams</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Players
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-slate-500 mt-1">Scout players</p>
+              <div className="text-3xl font-bold text-foreground">{activeContractsCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {activeContractsCount === 0 ? 'Scout players' : 'Active contracts'}
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Matches
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-slate-500 mt-1">No matches yet</p>
+              <div className="text-3xl font-bold text-foreground">0</div>
+              <p className="text-xs text-muted-foreground mt-1">No matches yet</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-200">
+          <Card className="card-hover border-2 hover:border-accent/50">
             <CardHeader>
               <CardTitle>👥 Manage Teams</CardTitle>
               <CardDescription>
@@ -296,13 +350,17 @@ export default function ClubOwnerDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                Coming Soon
+              <Button
+                variant="gradient"
+                className="w-full btn-lift font-semibold"
+                onClick={() => router.push('/dashboard/club-owner/team-management')}
+              >
+                Manage Team
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-200">
+          <Card className="card-hover border-2 hover:border-accent/50">
             <CardHeader>
               <CardTitle>🔍 Scout Players</CardTitle>
               <CardDescription>
@@ -311,7 +369,8 @@ export default function ClubOwnerDashboard() {
             </CardHeader>
             <CardContent>
               <Button
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
+                variant="gradient"
+                className="w-full btn-lift font-semibold"
                 onClick={() => router.push('/scout/players')}
               >
                 Browse Players
@@ -319,7 +378,7 @@ export default function ClubOwnerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer relative border-2 hover:border-blue-200">
+          <Card className="card-hover relative border-2 hover:border-accent/50">
             <CardHeader>
               <CardTitle className="relative inline-block">
                 📋 Contracts
@@ -331,7 +390,8 @@ export default function ClubOwnerDashboard() {
             </CardHeader>
             <CardContent>
               <Button
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
+                variant="gradient"
+                className="w-full btn-lift font-semibold"
                 onClick={() => router.push('/dashboard/club-owner/contracts')}
               >
                 View Contracts
@@ -339,7 +399,48 @@ export default function ClubOwnerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 hover:border-blue-200">
+          <Card
+            className={`card-hover cursor-pointer ${
+              unreadMessagesCount > 0
+                ? 'border-2 border-destructive bg-gradient-to-br from-destructive/20 via-destructive/10 to-destructive/5 shadow-xl shadow-destructive/30 animate-pulse hover:border-destructive/80'
+                : 'border-2 hover:border-accent/50'
+            }`}
+            onClick={() => router.push('/dashboard/club-owner/messages')}
+          >
+            <CardHeader>
+              <CardTitle className={`flex items-center gap-2 ${
+                unreadMessagesCount > 0 ? 'text-destructive' : ''
+              }`}>
+                💬 Messages
+                {unreadMessagesCount > 0 && (
+                  <Badge variant="destructive" className="animate-pulse text-sm">
+                    {unreadMessagesCount} new
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className={
+                unreadMessagesCount > 0 ? 'text-foreground font-medium' : ''
+              }>
+                {unreadMessagesCount > 0
+                  ? `You have ${unreadMessagesCount} unread message${unreadMessagesCount > 1 ? 's' : ''} from players`
+                  : 'Review player communications and respond quickly'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant={unreadMessagesCount > 0 ? "destructive" : "outline"}
+                size={unreadMessagesCount > 0 ? "lg" : "default"}
+                className={`w-full btn-lift ${
+                  unreadMessagesCount > 0 ? 'font-bold shadow-lg text-base' : ''
+                }`}
+                onClick={() => router.push('/dashboard/club-owner/messages')}
+              >
+                {unreadMessagesCount > 0 ? `📬 View ${unreadMessagesCount} New Message${unreadMessagesCount > 1 ? 's' : ''}` : 'Open Inbox'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover border-2 hover:border-accent/50">
             <CardHeader>
               <CardTitle>⚽ Matches</CardTitle>
               <CardDescription>
@@ -354,13 +455,18 @@ export default function ClubOwnerDashboard() {
           </Card>
         </div>
 
+        {/* Recruitment Progress */}
+        <div className="mb-8">
+          <RecruitmentProgress activeContractsCount={activeContractsCount} />
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>Latest updates and notifications</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               <p>No recent activity</p>
               <p className="text-sm mt-2">Activity will appear here once you start managing your club</p>
             </div>

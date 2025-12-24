@@ -3,17 +3,21 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground transition-all duration-200",
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
+        default: "bg-card text-card-foreground border-border",
         destructive:
-          "border-red-500/50 text-red-600 dark:border-red-500 [&>svg]:text-red-600",
+          "bg-destructive/10 border-destructive/50 text-destructive [&>svg]:text-destructive",
         success:
-          "border-green-500/50 text-green-600 dark:border-green-500 [&>svg]:text-green-600",
+          "bg-success/10 border-success/50 text-success [&>svg]:text-success",
         warning:
-          "border-yellow-500/50 text-yellow-600 dark:border-yellow-500 [&>svg]:text-yellow-600",
+          "bg-warning/10 border-warning/50 text-warning-foreground [&>svg]:text-warning",
+        info:
+          "bg-info/10 border-info/50 text-info [&>svg]:text-info",
+        orange:
+          "bg-accent/10 border-accent/50 text-accent [&>svg]:text-accent",
       },
     },
     defaultVariants: {

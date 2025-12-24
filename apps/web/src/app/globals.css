@@ -2,55 +2,117 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Brand Colors - Dark Blue & Orange */
+    --brand-dark-blue: 13 27 62; /* rgb(13, 27, 62) */
+    --brand-orange: 255 140 66; /* rgb(255, 140, 66) */
+    --brand-orange-light: 255 165 100; /* rgb(255, 165, 100) */
+    --brand-dark-blue-light: 20 40 80; /* rgb(20, 40, 80) */
+
+    /* Base Colors */
+    --background: 250 250 252; /* rgb(250, 250, 252) - Soft off-white */
+    --foreground: 13 27 62; /* Dark Blue */
+    --card: 255 255 255; /* rgb(255, 255, 255) */
+    --card-foreground: 13 27 62; /* Dark Blue */
+    --popover: 255 255 255; /* rgb(255, 255, 255) */
+    --popover-foreground: 13 27 62; /* Dark Blue */
+
+    /* Primary - Dark Blue */
+    --primary: 13 27 62; /* Dark Blue */
+    --primary-foreground: 255 255 255; /* White */
+    --primary-hover: 20 40 80; /* Lighter Dark Blue */
+
+    /* Secondary - Light Blue/Gray */
+    --secondary: 230 240 250; /* rgb(230, 240, 250) - Light Blue */
+    --secondary-foreground: 13 27 62; /* Dark Blue */
+
+    /* Accent - Orange */
+    --accent: 255 140 66; /* Orange */
+    --accent-foreground: 255 255 255; /* White */
+    --accent-hover: 255 120 50; /* rgb(255, 120, 50) - Darker Orange */
+
+    /* Muted */
+    --muted: 240 244 248; /* rgb(240, 244, 248) */
+    --muted-foreground: 100 116 139; /* rgb(100, 116, 139) */
+
+    /* Destructive */
+    --destructive: 239 68 68; /* rgb(239, 68, 68) */
+    --destructive-foreground: 255 255 255; /* White */
+
+    /* Border & Input */
+    --border: 226 232 240; /* rgb(226, 232, 240) */
+    --input: 226 232 240; /* rgb(226, 232, 240) */
+    --ring: 255 140 66; /* Orange ring for focus */
+
+    /* Success */
+    --success: 34 197 94; /* rgb(34, 197, 94) */
+    --success-foreground: 255 255 255; /* White */
+
+    /* Warning */
+    --warning: 251 191 36; /* rgb(251, 191, 36) */
+    --warning-foreground: 13 27 62; /* Dark Blue */
+
+    /* Info */
+    --info: 59 130 246; /* rgb(59, 130, 246) */
+    --info-foreground: 255 255 255; /* White */
+
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Base Colors - Dark Mode */
+    --background: 13 27 62; /* Dark Blue */
+    --foreground: 248 250 252; /* rgb(248, 250, 252) - Off-white */
+    --card: 20 40 80; /* Lighter Dark Blue */
+    --card-foreground: 248 250 252; /* Off-white */
+    --popover: 20 40 80; /* Lighter Dark Blue */
+    --popover-foreground: 248 250 252; /* Off-white */
+
+    /* Primary - Light colors in dark mode */
+    --primary: 255 140 66; /* Orange */
+    --primary-foreground: 13 27 62; /* Dark Blue */
+    --primary-hover: 255 165 100; /* Lighter Orange */
+
+    /* Secondary */
+    --secondary: 30 50 90; /* rgb(30, 50, 90) - Medium Dark Blue */
+    --secondary-foreground: 248 250 252; /* Off-white */
+
+    /* Accent */
+    --accent: 255 140 66; /* Orange */
+    --accent-foreground: 13 27 62; /* Dark Blue */
+    --accent-hover: 255 165 100; /* Lighter Orange */
+
+    /* Muted */
+    --muted: 30 50 90; /* Medium Dark Blue */
+    --muted-foreground: 148 163 184; /* rgb(148, 163, 184) */
+
+    /* Destructive */
+    --destructive: 220 38 38; /* rgb(220, 38, 38) - Darker Red */
+    --destructive-foreground: 248 250 252; /* Off-white */
+
+    /* Border & Input */
+    --border: 30 50 90; /* Medium Dark Blue */
+    --input: 30 50 90; /* Medium Dark Blue */
+    --ring: 255 140 66; /* Orange ring */
+
+    /* Success */
+    --success: 34 197 94; /* rgb(34, 197, 94) */
+    --success-foreground: 13 27 62; /* Dark Blue */
+
+    /* Warning */
+    --warning: 251 191 36; /* rgb(251, 191, 36) */
+    --warning-foreground: 13 27 62; /* Dark Blue */
+
+    /* Info */
+    --info: 59 130 246; /* rgb(59, 130, 246) */
+    --info-foreground: 248 250 252; /* Off-white */
   }
 }
 
 @layer base {
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
   html {
     scroll-behavior: smooth;
@@ -59,7 +121,7 @@
 }
 
 @layer utilities {
-  /* Enhanced button hover effects */
+  /* Enhanced button hover effects with brand colors */
   .btn-lift {
     @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
   }
@@ -79,9 +141,25 @@
     @apply transition-transform duration-200 hover:scale-105 active:scale-95;
   }
 
-  /* Glow effect on hover */
+  /* Glow effect on hover with orange accent */
   .glow-on-hover {
-    @apply transition-all duration-300 hover:shadow-2xl hover:ring-4 hover:ring-blue-400/50;
+    @apply transition-all duration-300 hover:shadow-2xl hover:ring-4;
+    --tw-ring-color: rgba(var(--accent), 0.5);
+  }
+
+  /* Dark blue gradient background */
+  .gradient-dark-blue {
+    background: linear-gradient(135deg, rgb(var(--brand-dark-blue)) 0%, rgb(var(--brand-dark-blue-light)) 100%);
+  }
+
+  /* Orange gradient background */
+  .gradient-orange {
+    background: linear-gradient(135deg, rgb(var(--accent-hover)) 0%, rgb(var(--accent)) 100%);
+  }
+
+  /* Brand gradient - Dark Blue to Orange */
+  .gradient-brand {
+    background: linear-gradient(135deg, rgb(var(--brand-dark-blue)) 0%, rgb(var(--accent)) 100%);
   }
 
   /* Pulse animation for important elements */
@@ -90,12 +168,26 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.8;
+      opacity: 0.85;
     }
   }
 
   .pulse-subtle {
     animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Pulse orange animation */
+  @keyframes pulse-orange {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(var(--accent), 0.7);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(var(--accent), 0);
+    }
+  }
+
+  .pulse-orange {
+    animation: pulse-orange 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   /* Smooth gradient transitions */
@@ -106,6 +198,18 @@
 
   .gradient-shift:hover {
     background-position: right center;
+  }
+
+  /* Focus ring with orange */
+  .focus-ring-orange {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: rgb(var(--accent));
+  }
+
+  /* Focus ring with dark blue */
+  .focus-ring-blue {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: rgb(var(--primary));
   }
 }
 

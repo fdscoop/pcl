@@ -1,5 +1,5 @@
--- Migration: Team Formations and Substitutes Management
--- This migration adds support for managing team formations, squad selections, and substitutes
+-- Migration: Team Formations and Substitutes Management (v2)
+-- Adapted for actual database schema
 
 -- Create match_format enum if it doesn't exist
 DO $$ BEGIN
@@ -8,7 +8,7 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- Add format to teams table to specify 5s, 7s, or 11s
+-- Add format columns to teams table
 ALTER TABLE teams
 ADD COLUMN IF NOT EXISTS format match_format DEFAULT '11-a-side',
 ADD COLUMN IF NOT EXISTS formation_data JSONB,
@@ -17,7 +17,7 @@ ADD COLUMN IF NOT EXISTS last_lineup_updated TIMESTAMP;
 -- Create team_squads table to track which players are in a team
 -- This is the overall squad (all contracted players eligible for this team)
 CREATE TABLE IF NOT EXISTS team_squads (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   contract_id UUID REFERENCES contracts(id) ON DELETE SET NULL,
@@ -30,15 +30,13 @@ CREATE TABLE IF NOT EXISTS team_squads (
 );
 
 -- Create team_lineups table for match-day squads (starting XI + substitutes)
--- This represents the actual lineup for a specific match or formation setup
 CREATE TABLE IF NOT EXISTS team_lineups (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
-  lineup_name TEXT NOT NULL, -- e.g., "Default 4-3-3", "Match Day 1 vs Team X"
-  format match_format NOT NULL, -- 5-a-side, 7-a-side, or 11-a-side
-  formation TEXT NOT NULL, -- e.g., "4-3-3", "3-4-3", "2-3-1" for 5s
-  is_default BOOLEAN DEFAULT false, -- Is this the default lineup for this format?
-  match_id UUID REFERENCES matches(id) ON DELETE SET NULL, -- Optional: link to specific match
+  lineup_name TEXT NOT NULL,
+  format match_format NOT NULL,
+  formation TEXT NOT NULL,
+  is_default BOOLEAN DEFAULT false,
   created_by UUID REFERENCES users(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -47,17 +45,16 @@ CREATE TABLE IF NOT EXISTS team_lineups (
 );
 
 -- Create team_lineup_players table for players in a specific lineup
--- This tracks starting XI and substitutes separately
 CREATE TABLE IF NOT EXISTS team_lineup_players (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lineup_id UUID NOT NULL REFERENCES team_lineups(id) ON DELETE CASCADE,
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-  position_on_field TEXT NOT NULL, -- e.g., "GK", "LB", "CM", "ST"
-  position_x DECIMAL(5, 2), -- X coordinate on formation (0-100)
-  position_y DECIMAL(5, 2), -- Y coordinate on formation (0-100)
+  position_on_field TEXT NOT NULL,
+  position_x DECIMAL(5, 2),
+  position_y DECIMAL(5, 2),
   jersey_number INTEGER,
-  is_starter BOOLEAN DEFAULT true, -- true = starting XI, false = substitute
-  substitute_order INTEGER, -- Order in substitute bench (1, 2, 3, etc.)
+  is_starter BOOLEAN DEFAULT true,
+  substitute_order INTEGER,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -72,14 +69,13 @@ CREATE TABLE IF NOT EXISTS team_lineup_players (
 
 -- Create substitution_history table to track in-game substitutions
 CREATE TABLE IF NOT EXISTS substitution_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lineup_id UUID NOT NULL REFERENCES team_lineups(id) ON DELETE CASCADE,
-  match_id UUID REFERENCES matches(id) ON DELETE SET NULL,
   player_out_id UUID NOT NULL REFERENCES players(id),
   player_in_id UUID NOT NULL REFERENCES players(id),
-  substitution_time INTEGER, -- Minute of substitution (e.g., 45, 67)
-  reason TEXT, -- Optional: "Injury", "Tactical", "Performance"
-  made_by UUID REFERENCES users(id), -- Coach/manager who made the substitution
+  substitution_time INTEGER,
+  reason TEXT,
+  made_by UUID REFERENCES users(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   -- Can't substitute yourself
@@ -100,7 +96,6 @@ CREATE INDEX IF NOT EXISTS idx_team_lineup_players_player_id ON team_lineup_play
 CREATE INDEX IF NOT EXISTS idx_team_lineup_players_starters ON team_lineup_players(lineup_id, is_starter);
 
 CREATE INDEX IF NOT EXISTS idx_substitution_history_lineup_id ON substitution_history(lineup_id);
-CREATE INDEX IF NOT EXISTS idx_substitution_history_match_id ON substitution_history(match_id);
 
 -- Create function to validate team squad membership
 CREATE OR REPLACE FUNCTION validate_team_squad_contract()
@@ -111,7 +106,7 @@ DECLARE
 BEGIN
   -- If contract_id is provided, validate it
   IF NEW.contract_id IS NOT NULL THEN
-    SELECT c.status, c.player_id INTO contract_status, contract_player
+    SELECT c.status::TEXT, c.player_id INTO contract_status, contract_player
     FROM contracts c
     WHERE c.id = NEW.contract_id;
 

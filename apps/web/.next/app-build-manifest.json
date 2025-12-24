@@ -16,15 +16,70 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/page.js"
     ],
-    "/dashboard/club-owner/page": [
+    "/dashboard/player/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/club-owner/page.js"
+      "static/chunks/app/dashboard/player/page.js"
     ],
     "/dashboard/player/contracts/[id]/view/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/player/contracts/[id]/view/page.js"
+    ],
+    "/auth/signup/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/signup/page.js"
+    ],
+    "/auth/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/login/page.js"
+    ],
+    "/dashboard/player/contracts/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/player/contracts/page.js"
+    ],
+    "/profile/player/complete/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/profile/player/complete/page.js"
+    ],
+    "/dashboard/player/messages/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/player/messages/page.js"
+    ],
+    "/dashboard/club-owner/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/club-owner/page.js"
+    ],
+    "/dashboard/club-owner/contracts/[id]/view/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/club-owner/contracts/[id]/view/page.js"
+    ],
+    "/dashboard/club-owner/contracts/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/club-owner/contracts/page.js"
+    ],
+    "/scout/players/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/scout/players/page.js"
+    ],
+    "/dashboard/club-owner/messages/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/club-owner/messages/page.js"
+    ],
+    "/dashboard/club-owner/team-management/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/dashboard/club-owner/team-management/page.js"
     ]
   }
 }

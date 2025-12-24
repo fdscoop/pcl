@@ -1,7 +1,7 @@
 {
-  "/dashboard/player/page": "app/dashboard/player/page.js",
-  "/dashboard/player/contracts/[id]/view/page": "app/dashboard/player/contracts/[id]/view/page.js",
   "/dashboard/club-owner/page": "app/dashboard/club-owner/page.js",
-  "/scout/players/page": "app/scout/players/page.js",
-  "/dashboard/player/contracts/page": "app/dashboard/player/contracts/page.js"
+  "/dashboard/player/messages/page": "app/dashboard/player/messages/page.js",
+  "/dashboard/club-owner/messages/page": "app/dashboard/club-owner/messages/page.js",
+  "/dashboard/club-owner/team-management/page": "app/dashboard/club-owner/team-management/page.js",
+  "/scout/players/page": "app/scout/players/page.js"
 }

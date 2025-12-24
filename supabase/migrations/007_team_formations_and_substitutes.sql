@@ -1,6 +1,13 @@
 -- Migration: Team Formations and Substitutes Management
 -- This migration adds support for managing team formations, squad selections, and substitutes
 
+-- Create match_format enum if it doesn't exist
+DO $$ BEGIN
+    CREATE TYPE match_format AS ENUM ('friendly', '5-a-side', '7-a-side', '11-a-side');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
 -- Add format to teams table to specify 5s, 7s, or 11s
 ALTER TABLE teams
 ADD COLUMN IF NOT EXISTS format match_format DEFAULT '11-a-side',

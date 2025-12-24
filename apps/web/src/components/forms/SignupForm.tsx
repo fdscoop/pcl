@@ -123,9 +123,9 @@ export default function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto shadow-xl border-accent/20">
       <CardHeader>
-        <CardTitle className="text-2xl">Create Your PCL Account</CardTitle>
+        <CardTitle className="text-2xl text-primary">Create Your PCL Account</CardTitle>
         <CardDescription>
           Join the Professional Club League platform
         </CardDescription>
@@ -153,8 +153,8 @@ export default function SignupForm() {
                   className={`
                     cursor-pointer rounded-lg border-2 p-4 transition-all duration-200
                     ${selectedRole === role.value
-                      ? 'border-blue-600 bg-blue-50 shadow-lg ring-2 ring-blue-200 transform scale-[1.02]'
-                      : 'border-gray-200 hover:border-blue-300 hover:shadow-md hover:bg-blue-50/30 bg-white'
+                      ? 'border-accent bg-accent/10 shadow-lg ring-2 ring-accent/30 transform scale-[1.02]'
+                      : 'border-border hover:border-accent/50 hover:shadow-md hover:bg-accent/5 bg-card'
                     }
                   `}
                 >
@@ -167,15 +167,15 @@ export default function SignupForm() {
                       className="mt-1"
                     />
                     <div className="flex-1">
-                      <h3 className="font-semibold text-sm">{role.label}</h3>
-                      <p className="text-xs text-gray-600 mt-1">{role.description}</p>
+                      <h3 className="font-semibold text-sm text-foreground">{role.label}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">{role.description}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
             {errors.role && (
-              <p className="text-sm text-red-600">{errors.role.message}</p>
+              <p className="text-sm text-destructive">{errors.role.message}</p>
             )}
           </div>
 
@@ -190,7 +190,7 @@ export default function SignupForm() {
                 disabled={loading}
               />
               {errors.firstName && (
-                <p className="text-sm text-red-600">{errors.firstName.message}</p>
+                <p className="text-sm text-destructive">{errors.firstName.message}</p>
               )}
             </div>
 
@@ -203,7 +203,7 @@ export default function SignupForm() {
                 disabled={loading}
               />
               {errors.lastName && (
-                <p className="text-sm text-red-600">{errors.lastName.message}</p>
+                <p className="text-sm text-destructive">{errors.lastName.message}</p>
               )}
             </div>
           </div>
@@ -219,7 +219,7 @@ export default function SignupForm() {
               disabled={loading}
             />
             {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+              <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
 
@@ -234,7 +234,7 @@ export default function SignupForm() {
               disabled={loading}
             />
             {errors.phone && (
-              <p className="text-sm text-red-600">{errors.phone.message}</p>
+              <p className="text-sm text-destructive">{errors.phone.message}</p>
             )}
           </div>
 
@@ -249,7 +249,7 @@ export default function SignupForm() {
               disabled={loading}
             />
             {errors.password && (
-              <p className="text-sm text-red-600">{errors.password.message}</p>
+              <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
           </div>
 
@@ -264,7 +264,7 @@ export default function SignupForm() {
               disabled={loading}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
             )}
           </div>
         </CardContent>
@@ -272,16 +272,17 @@ export default function SignupForm() {
         <CardFooter className="flex flex-col gap-4">
           <Button
             type="submit"
-            className="w-full"
+            variant="gradient"
+            className="w-full btn-lift"
             size="lg"
             disabled={loading}
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
 
-          <p className="text-sm text-center text-gray-600">
+          <p className="text-sm text-center text-muted-foreground">
             Already have an account?{' '}
-            <a href="/auth/login" className="text-blue-600 hover:underline hover:text-blue-800 font-medium transition-colors">
+            <a href="/auth/login" className="text-accent hover:underline hover:text-accent-hover font-medium transition-colors">
               Sign in
             </a>
           </p>

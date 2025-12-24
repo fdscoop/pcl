@@ -52,27 +52,27 @@ export default function StadiumOwnerDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-slate-600">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <nav className="bg-white border-b border-slate-200 shadow-sm">
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                PCL
-              </h1>
+              <span className="text-lg font-semibold text-foreground hidden sm:inline">
+                Professional Club League
+              </span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-muted-foreground">
                 {userData?.first_name} {userData?.last_name}
               </span>
-              <Button onClick={handleSignOut} variant="outline" size="sm">
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="btn-lift">
                 Sign Out
               </Button>
             </div>
@@ -82,10 +82,10 @@ export default function StadiumOwnerDashboard() {
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Welcome back, {userData?.first_name}! 🏟️
           </h1>
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             Manage your stadiums, bookings, and availability
           </p>
         </div>
@@ -93,43 +93,43 @@ export default function StadiumOwnerDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Listed Stadiums
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-slate-500 mt-1">List your first venue</p>
+              <div className="text-3xl font-bold text-foreground">0</div>
+              <p className="text-xs text-muted-foreground mt-1">List your first venue</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Bookings
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-slate-500 mt-1">No bookings yet</p>
+              <div className="text-3xl font-bold text-foreground">0</div>
+              <p className="text-xs text-muted-foreground mt-1">No bookings yet</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 This Month's Revenue
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">$0</div>
-              <p className="text-xs text-slate-500 mt-1">Start earning</p>
+              <div className="text-3xl font-bold text-foreground">$0</div>
+              <p className="text-xs text-muted-foreground mt-1">Start earning</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="card-hover border-2 hover:border-accent/50">
             <CardHeader>
               <CardTitle>🏟️ List Your First Stadium</CardTitle>
               <CardDescription>
@@ -137,11 +137,11 @@ export default function StadiumOwnerDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">Add Stadium</Button>
+              <Button variant="gradient" className="w-full btn-lift">Add Stadium</Button>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="card-hover border-2 hover:border-accent/50">
             <CardHeader>
               <CardTitle>💰 Set Pricing</CardTitle>
               <CardDescription>
@@ -149,7 +149,7 @@ export default function StadiumOwnerDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline">
+              <Button className="w-full btn-lift" variant="outline">
                 Manage Pricing
               </Button>
             </CardContent>
@@ -162,7 +162,7 @@ export default function StadiumOwnerDashboard() {
             <CardDescription>Manage your listed venues</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               <p>No stadiums listed yet</p>
               <p className="text-sm mt-2">List your first stadium to start accepting bookings!</p>
             </div>
@@ -175,7 +175,7 @@ export default function StadiumOwnerDashboard() {
             <CardDescription>Latest booking requests and confirmations</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-muted-foreground">
               <p>No bookings yet</p>
               <p className="text-sm mt-2">Bookings will appear here once clubs reserve your stadiums</p>
             </div>

@@ -495,20 +495,20 @@ export default function ScoutPlayersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 shadow-sm">
+      <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                PCL
-              </h1>
+              <span className="text-lg font-semibold text-foreground hidden sm:inline">
+                Professional Club League
+              </span>
             </div>
             <div className="flex items-center gap-4">
-              {club && <span className="text-sm text-slate-600">{club.name}</span>}
-              <Button onClick={() => router.push('/dashboard/club-owner')} variant="outline" size="sm">
+              {club && <span className="text-sm text-muted-foreground">{club.name}</span>}
+              <Button onClick={() => router.push('/dashboard/club-owner')} variant="outline" size="sm" className="btn-lift">
                 Back to Dashboard
               </Button>
             </div>
@@ -519,14 +519,14 @@ export default function ScoutPlayersPage() {
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">🔍 Scout Players</h1>
-          <p className="text-slate-600">Find and connect with verified players available for recruitment</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">🔍 Scout Players</h1>
+          <p className="text-muted-foreground">Find and connect with verified players available for recruitment</p>
         </div>
 
         {/* Error Alert */}
         {loadError && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>
               <span className="font-medium">⚠️ Error:</span> {loadError}
             </AlertDescription>
           </Alert>
@@ -534,37 +534,37 @@ export default function ScoutPlayersPage() {
 
         {/* No Players Alert */}
         {noPlayersMessage && filteredPlayers.length === 0 && (
-          <Alert className="mb-6 border-amber-200 bg-amber-50">
-            <AlertDescription className="text-amber-800">
+          <Alert variant="warning" className="mb-6">
+            <AlertDescription>
               <span className="font-medium">📋 No Players Available:</span> {noPlayersMessage}
             </AlertDescription>
           </Alert>
         )}
-        <Card className="mb-8">
+        <Card className="mb-8 border-l-4 border-l-accent">
           <CardHeader>
-            <CardTitle className="text-lg">Filter Players</CardTitle>
+            <CardTitle className="text-lg text-primary">Filter Players</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Search */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Search</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Search</label>
                 <input
                   type="text"
                   placeholder="Name, email, or player ID"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-accent placeholder:text-muted-foreground"
                 />
               </div>
 
               {/* Position */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Position</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Position</label>
                 <select
                   value={selectedPosition}
                   onChange={(e) => setSelectedPosition(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   <option value="all">All Positions</option>
                   {positions.map(pos => (
@@ -575,14 +575,14 @@ export default function ScoutPlayersPage() {
 
               {/* State */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">State</label>
+                <label className="block text-sm font-medium text-foreground mb-2">State</label>
                 <select
                   value={selectedState}
                   onChange={(e) => {
                     setSelectedState(e.target.value)
                     setSelectedDistrict('all') // Reset district when state changes
                   }}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   <option value="all">All States</option>
                   {availableStates.map(state => (
@@ -593,12 +593,12 @@ export default function ScoutPlayersPage() {
 
               {/* District */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">District</label>
+                <label className="block text-sm font-medium text-foreground mb-2">District</label>
                 <select
                   value={selectedDistrict}
                   onChange={(e) => setSelectedDistrict(e.target.value)}
                   disabled={selectedState === 'all' || availableDistricts.length === 0}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
+                  className="w-full px-3 py-2 border border-input bg-card text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-muted disabled:text-muted-foreground"
                 >
                   <option value="all">All Districts</option>
                   {availableDistricts.map(district => (
@@ -609,7 +609,7 @@ export default function ScoutPlayersPage() {
 
               {/* Results Count */}
               <div className="flex items-end">
-                <div className="w-full text-sm text-slate-600 bg-slate-100 rounded-lg p-2">
+                <div className="w-full text-sm text-foreground bg-accent/10 border border-accent/30 rounded-lg p-2">
                   📊 <strong>{filteredPlayers.length}</strong> players found
                 </div>
               </div>

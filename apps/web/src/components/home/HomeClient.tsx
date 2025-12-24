@@ -46,9 +46,9 @@ export default function HomeClient() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 shadow-sm">
+      <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
@@ -60,17 +60,14 @@ export default function HomeClient() {
                   (e.target as HTMLImageElement).style.display = 'none'
                 }}
               />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                PCL
-              </h1>
-              <span className="text-sm text-slate-600 hidden sm:inline">
+              <span className="text-lg font-semibold text-foreground hidden sm:inline">
                 Professional Club League
               </span>
             </div>
             <div className="flex items-center gap-4">
               {user ? (
                 <>
-                  <span className="text-sm text-slate-600 hidden sm:inline">{user.email}</span>
+                  <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
                   <Button
                     onClick={async () => {
                       if (supabase) {
@@ -86,16 +83,17 @@ export default function HomeClient() {
                     }}
                     variant="outline"
                     size="sm"
+                    className="btn-lift"
                   >
                     Sign Out
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button variant="outline" size="sm" className="btn-lift" asChild>
                     <a href="/auth/login">Sign In</a>
                   </Button>
-                  <Button size="sm" asChild>
+                  <Button variant="gradient" size="sm" className="btn-lift" asChild>
                     <a href="/auth/signup">Sign Up</a>
                   </Button>
                 </>
@@ -106,34 +104,66 @@ export default function HomeClient() {
       </nav>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-slate-900 mb-4">
-            Professional Club League
-          </h1>
-          <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-            The complete sports management platform for clubs, players, referees, staff, and stadium owners
-          </p>
+      <main>
+        {/* Modern Banner */}
+        <div className="relative mt-0 mb-16 overflow-hidden shadow-2xl">
+          <div
+            className="relative overflow-hidden bg-cover bg-center min-h-[520px] sm:min-h-[600px]"
+            style={{ backgroundImage: "url('/banner.jpg')" }}
+          >
+            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 opacity-10 bg-grid-pattern"></div>
+            <div className="relative z-10 px-6 py-16 sm:px-12 sm:py-20 lg:py-24 min-h-[520px] sm:min-h-[600px] flex items-center justify-center text-center">
+              <div className="w-full max-w-4xl flex flex-col items-center">
+                <h1 className="text-center text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6 tracking-tight">
+                  Professional Club League
+                </h1>
+                <p className="text-center text-lg sm:text-xl lg:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
+                  The complete sports management platform for clubs, players, referees, staff, and stadium owners
+                </p>
+                <div className="flex flex-wrap gap-4 justify-center items-center text-center mx-auto">
+                  <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
+                    <span className="text-2xl">⚽</span>
+                    <span className="font-semibold">Players</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
+                    <span className="text-2xl">🏆</span>
+                    <span className="font-semibold">Clubs</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
+                    <span className="text-2xl">🎯</span>
+                    <span className="font-semibold">Referees</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
+                    <span className="text-2xl">🏟️</span>
+                    <span className="font-semibold">Stadiums</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
           {user ? (
-            <Card className="max-w-md mx-auto">
+            <Card className="max-w-md mx-auto border-accent/20 shadow-lg">
               <CardHeader>
-                <CardTitle>Welcome Back!</CardTitle>
+                <CardTitle className="text-primary">Welcome Back!</CardTitle>
                 <CardDescription>{user.email}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-slate-600">You are logged in and ready to go!</p>
-                <Button className="w-full" asChild>
+                <p className="text-muted-foreground">You are logged in and ready to go!</p>
+                <Button className="w-full" variant="gradient" asChild>
                   <a href="/dashboard">Go to Dashboard</a>
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
+              <Button size="lg" variant="gradient" className="btn-lift" asChild>
                 <a href="/auth/signup">Get Started</a>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" className="btn-lift" asChild>
                 <a href="/auth/login">Sign In</a>
               </Button>
             </div>
@@ -141,135 +171,138 @@ export default function HomeClient() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
           {/* Players */}
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="card-hover border-l-4 border-l-accent group">
             <CardHeader>
-              <div className="text-4xl mb-2">⚽</div>
-              <CardTitle>For Players</CardTitle>
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">⚽</div>
+              <CardTitle className="text-primary">For Players</CardTitle>
               <CardDescription>Build your profile and get scouted</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="text-sm text-slate-600 space-y-2">
-                <li>✓ Create detailed player profile</li>
-                <li>✓ KYC verification for scouting</li>
-                <li>✓ Manage contracts with clubs</li>
-                <li>✓ Track performance statistics</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Create detailed player profile</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> KYC verification for scouting</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Manage contracts with clubs</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Track performance statistics</li>
               </ul>
             </CardContent>
           </Card>
 
           {/* Club Owners */}
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="card-hover border-l-4 border-l-primary group">
             <CardHeader>
-              <div className="text-4xl mb-2">🏆</div>
-              <CardTitle>For Club Owners</CardTitle>
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">🏆</div>
+              <CardTitle className="text-primary">For Club Owners</CardTitle>
               <CardDescription>Manage your clubs and teams</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="text-sm text-slate-600 space-y-2">
-                <li>✓ Create and manage clubs</li>
-                <li>✓ Scout and sign players</li>
-                <li>✓ Organize matches and tournaments</li>
-                <li>✓ Book stadiums for games</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Create and manage clubs</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Scout and sign players</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Organize matches and tournaments</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Book stadiums for games</li>
               </ul>
             </CardContent>
           </Card>
 
           {/* Referees */}
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="card-hover border-l-4 border-l-accent group">
             <CardHeader>
-              <div className="text-4xl mb-2">🎯</div>
-              <CardTitle>For Referees</CardTitle>
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">🎯</div>
+              <CardTitle className="text-primary">For Referees</CardTitle>
               <CardDescription>Officiate matches professionally</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="text-sm text-slate-600 space-y-2">
-                <li>✓ Create referee profile</li>
-                <li>✓ Get assigned to matches</li>
-                <li>✓ Track officiating history</li>
-                <li>✓ Manage availability</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Create referee profile</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Get assigned to matches</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Track officiating history</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Manage availability</li>
               </ul>
             </CardContent>
           </Card>
 
           {/* Staff */}
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="card-hover border-l-4 border-l-primary group">
             <CardHeader>
-              <div className="text-4xl mb-2">👥</div>
-              <CardTitle>For Staff/Volunteers</CardTitle>
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">👥</div>
+              <CardTitle className="text-primary">For Staff/Volunteers</CardTitle>
               <CardDescription>Support match operations</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="text-sm text-slate-600 space-y-2">
-                <li>✓ Register as staff member</li>
-                <li>✓ Get assigned to matches</li>
-                <li>✓ Support tournament organization</li>
-                <li>✓ Track experience and roles</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Register as staff member</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Get assigned to matches</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Support tournament organization</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Track experience and roles</li>
               </ul>
             </CardContent>
           </Card>
 
           {/* Stadium Owners */}
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="card-hover border-l-4 border-l-accent group">
             <CardHeader>
-              <div className="text-4xl mb-2">🏟️</div>
-              <CardTitle>For Stadium Owners</CardTitle>
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">🏟️</div>
+              <CardTitle className="text-primary">For Stadium Owners</CardTitle>
               <CardDescription>List and manage your venues</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="text-sm text-slate-600 space-y-2">
-                <li>✓ List your stadiums</li>
-                <li>✓ Manage availability slots</li>
-                <li>✓ Set pricing and amenities</li>
-                <li>✓ Accept bookings from clubs</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> List your stadiums</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Manage availability slots</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Set pricing and amenities</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Accept bookings from clubs</li>
               </ul>
             </CardContent>
           </Card>
 
           {/* Tournaments */}
-          <Card className="hover:shadow-lg transition-shadow">
+          <Card className="card-hover border-l-4 border-l-primary group">
             <CardHeader>
-              <div className="text-4xl mb-2">🎖️</div>
-              <CardTitle>Tournament System</CardTitle>
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">🎖️</div>
+              <CardTitle className="text-primary">Tournament System</CardTitle>
               <CardDescription>Organize and compete</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="text-sm text-slate-600 space-y-2">
-                <li>✓ Friendly and official matches</li>
-                <li>✓ 5-a-side, 7-a-side, 11-a-side</li>
-                <li>✓ League structures</li>
-                <li>✓ Real-time match tracking</li>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Friendly and official matches</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> 5-a-side, 7-a-side, 11-a-side</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> League structures</li>
+                <li className="flex items-start gap-2"><span className="text-accent font-bold">✓</span> Real-time match tracking</li>
               </ul>
             </CardContent>
           </Card>
         </div>
 
         {/* Tournament Statistics Section */}
-        <div className="mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
           <TournamentStatistics />
         </div>
 
         {/* CTA Section */}
-        <div className="mt-16 text-center bg-white rounded-lg shadow-lg p-12">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            Ready to Get Started?
-          </h2>
-          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of players, clubs, and sports professionals on the PCL platform
-          </p>
-          {!user && (
-            <Button size="lg" asChild>
-              <a href="/auth/signup">Create Your Account</a>
-            </Button>
-          )}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 text-center bg-card border border-border rounded-lg shadow-xl p-12 gradient-brand relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 bg-grid-pattern"></div>
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Ready to Get Started?
+            </h2>
+            <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
+              Join thousands of players, clubs, and sports professionals on the PCL platform
+            </p>
+            {!user && (
+              <Button size="lg" variant="accent" className="btn-lift bg-white text-primary hover:bg-white/90" asChild>
+                <a href="/auth/signup">Create Your Account</a>
+              </Button>
+            )}
+          </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-16">
+      <footer className="bg-card border-t border-border mt-16">
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-slate-600">
+          <div className="text-center text-sm text-muted-foreground">
             <p>&copy; 2025 Professional Club League. All rights reserved.</p>
           </div>
         </div>

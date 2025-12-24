@@ -100,9 +100,9 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto shadow-xl border-accent/20">
       <CardHeader>
-        <CardTitle className="text-2xl">Welcome Back</CardTitle>
+        <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
         <CardDescription>
           Sign in to your PCL account
         </CardDescription>
@@ -126,9 +126,10 @@ export default function LoginForm() {
               placeholder="john.doe@example.com"
               disabled={loading}
               autoComplete="email"
+              className="focus-visible:ring-accent"
             />
             {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+              <p className="text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
 
@@ -138,7 +139,7 @@ export default function LoginForm() {
               <Label htmlFor="password">Password</Label>
               <a
                 href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:underline hover:text-blue-800 font-medium transition-colors"
+                className="text-sm text-accent hover:underline hover:text-accent-hover font-medium transition-colors"
               >
                 Forgot password?
               </a>
@@ -150,9 +151,10 @@ export default function LoginForm() {
               placeholder="Enter your password"
               disabled={loading}
               autoComplete="current-password"
+              className="focus-visible:ring-accent"
             />
             {errors.password && (
-              <p className="text-sm text-red-600">{errors.password.message}</p>
+              <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
           </div>
         </CardContent>
@@ -160,16 +162,17 @@ export default function LoginForm() {
         <CardFooter className="flex flex-col gap-4">
           <Button
             type="submit"
-            className="w-full"
+            className="w-full btn-lift"
             size="lg"
+            variant="gradient"
             disabled={loading}
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
 
-          <p className="text-sm text-center text-gray-600">
+          <p className="text-sm text-center text-muted-foreground">
             Don't have an account?{' '}
-            <a href="/auth/signup" className="text-blue-600 hover:underline hover:text-blue-800 font-medium transition-colors">
+            <a href="/auth/signup" className="text-accent hover:underline hover:text-accent-hover font-medium transition-colors">
               Sign up
             </a>
           </p>

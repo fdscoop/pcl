@@ -367,13 +367,13 @@ export default function ContractViewerPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-        <Card className="p-12 shadow-2xl border-2 border-blue-200">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="p-12 shadow-2xl border-2 border-accent/30">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
             <div className="text-center">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Loading Contract</h3>
-              <p className="text-slate-600">Please wait while we fetch your contract details...</p>
+              <h3 className="text-xl font-bold text-foreground mb-2">Loading Contract</h3>
+              <p className="text-muted-foreground">Please wait while we fetch your contract details...</p>
             </div>
           </div>
         </Card>
@@ -383,31 +383,31 @@ export default function ContractViewerPage() {
 
   if (error || !contract || !player) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4 flex items-center justify-center">
+      <div className="min-h-screen bg-background py-8 px-4 flex items-center justify-center">
         <div className="max-w-2xl w-full">
-          <Card className="p-10 border-4 border-red-300 bg-gradient-to-br from-red-50 to-orange-50 shadow-2xl">
+          <Card className="p-10 border-4 border-destructive/30 bg-destructive/10 shadow-2xl">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-3xl shadow-lg">
+              <div className="w-16 h-16 rounded-full bg-destructive flex items-center justify-center text-3xl shadow-lg">
                 ⚠️
               </div>
-              <h2 className="text-3xl font-bold text-red-900">Unable to Load Contract</h2>
+              <h2 className="text-3xl font-bold text-destructive">Unable to Load Contract</h2>
             </div>
-            <div className="bg-white p-6 rounded-lg border-2 border-red-200 mb-6">
-              <p className="text-red-800 text-lg leading-relaxed">
+            <div className="bg-card p-6 rounded-lg border-2 border-destructive/20 mb-6">
+              <p className="text-destructive text-lg leading-relaxed">
                 {error || 'The contract could not be loaded. Please try again or contact support.'}
               </p>
             </div>
             <div className="flex gap-3">
               <Button
                 onClick={() => router.push('/dashboard/player/contracts')}
-                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold shadow-md py-6 text-lg"
+                className="flex-1 btn-lift font-semibold py-6 text-lg"
               >
                 ← Back to Contracts
               </Button>
               <Button
                 onClick={() => window.location.reload()}
                 variant="outline"
-                className="flex-1 border-2 border-red-300 hover:border-red-400 hover:bg-red-50 font-semibold py-6 text-lg"
+                className="flex-1 btn-lift font-semibold py-6 text-lg"
               >
                 🔄 Retry
               </Button>
@@ -421,25 +421,25 @@ export default function ContractViewerPage() {
   const playerName = `${player.first_name} ${player.last_name}`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background">
       {/* Top Navigation */}
-      <nav className="bg-gradient-to-r from-white to-blue-50 border-b-2 border-blue-200 shadow-lg sticky top-0 z-50">
+      <nav className="bg-card border-b-2 border-accent/20 shadow-lg fixed top-0 inset-x-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <Button
                 onClick={() => router.back()}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+                className="btn-lift font-semibold shadow-md"
                 size="sm"
               >
                 ← Back
               </Button>
-              <span className="text-blue-300">|</span>
+              <span className="text-accent/50">|</span>
               <div>
-                <h1 className="text-lg font-bold text-slate-900">
+                <h1 className="text-lg font-bold text-foreground">
                   📋 {contract.clubs.club_name}
                 </h1>
-                <p className="text-xs text-slate-600">Contract Details & Signing</p>
+                <p className="text-xs text-muted-foreground">Contract Details & Signing</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -447,13 +447,14 @@ export default function ContractViewerPage() {
                 onClick={() => window.print()}
                 variant="outline"
                 size="sm"
-                className="border-2 border-blue-300 hover:border-blue-400 hover:bg-blue-50 font-medium"
+                className="border-2 btn-lift font-medium"
               >
                 🖨️ Print
               </Button>
               <Button
                 onClick={() => router.push('/dashboard/player/contracts')}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-md"
+                variant="gradient"
+                className="btn-lift font-semibold shadow-md"
                 size="sm"
               >
                 All Contracts
@@ -464,7 +465,7 @@ export default function ContractViewerPage() {
       </nav>
 
       {/* Main Content */}
-      <div className="py-8 flex flex-col items-center">
+      <div className="pt-0 pb-8 flex flex-col items-center">
         {error && !loading && (
           <div className="w-full max-w-4xl mx-auto px-4 mb-6">
             <Card className="p-4 border-red-200 bg-red-50">
@@ -476,52 +477,55 @@ export default function ContractViewerPage() {
         )}
 
         {/* Contract Overview - Modern Optimized */}
-        <div className="w-full max-w-3xl mx-auto px-4 mb-10">
-          <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow p-6 md:p-8 flex flex-col items-center text-center">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-blue-900 mb-2 tracking-tight">Contract Overview</h2>
-            {contract.status === 'pending' && (
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-yellow-100 border border-yellow-300 text-yellow-900 font-semibold text-sm shadow">
-                ⚠️ Action Required
-              </span>
-            )}
-            {contract.status === 'active' && (
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-green-100 border border-green-300 text-green-900 font-semibold text-sm shadow">
-                ✅ Contract Active & Signed
-              </span>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-2">
-              <div>
-                <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Club</div>
-                <div className="text-lg font-bold text-blue-900">{contract.clubs.club_name}</div>
-                {contract.clubs.city && contract.clubs.state && (
-                  <div className="text-sm text-slate-600 mt-1">📍 {contract.clubs.city}, {contract.clubs.state}</div>
+        <div className="w-full max-w-3xl mx-auto px-4 mt-0 mb-10">
+          <div className="rounded-xl gradient-brand border border-accent/20 shadow-xl p-6 md:p-8 flex flex-col items-center text-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10 bg-grid-pattern"></div>
+            <div className="relative z-10 w-full">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-2 tracking-tight">Contract Overview</h2>
+              {contract.status === 'pending' && (
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-warning text-warning-foreground font-semibold text-sm shadow">
+                  ⚠️ Action Required
+                </span>
+              )}
+              {contract.status === 'active' && (
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-success text-success-foreground font-semibold text-sm shadow">
+                  ✅ Contract Active & Signed
+                </span>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-2">
+                <div>
+                  <div className="text-xs font-semibold text-white/70 uppercase mb-1">Club</div>
+                  <div className="text-lg font-bold text-white">{contract.clubs.club_name}</div>
+                  {contract.clubs.city && contract.clubs.state && (
+                    <div className="text-sm text-white/80 mt-1">📍 {contract.clubs.city}, {contract.clubs.state}</div>
+                  )}
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-white/70 uppercase mb-1">Contract Period</div>
+                  <div className="text-lg font-bold text-white">
+                    {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })} - {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-white/70 uppercase mb-1">Position</div>
+                  <div className="text-lg font-bold text-white capitalize">{contract.position_assigned || 'Not Assigned'}</div>
+                </div>
+                {(contract.clubs.email || contract.clubs.phone) && (
+                  <div>
+                    <div className="text-xs font-semibold text-white/70 uppercase mb-1">Contact Club</div>
+                    {contract.clubs.email && (
+                      <a href={`mailto:${contract.clubs.email}`} className="block text-white hover:text-accent-foreground hover:underline text-sm mb-1 transition-colors">
+                        📧 {contract.clubs.email}
+                      </a>
+                    )}
+                    {contract.clubs.phone && (
+                      <a href={`tel:${contract.clubs.phone}`} className="block text-white hover:text-accent-foreground hover:underline text-sm transition-colors">
+                        📱 {contract.clubs.phone}
+                      </a>
+                    )}
+                  </div>
                 )}
               </div>
-              <div>
-                <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Contract Period</div>
-                <div className="text-lg font-bold text-blue-900">
-                  {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })} - {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
-                </div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Position</div>
-                <div className="text-lg font-bold text-blue-900 capitalize">{contract.position_assigned || 'Not Assigned'}</div>
-              </div>
-              {(contract.clubs.email || contract.clubs.phone) && (
-                <div>
-                  <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Contact Club</div>
-                  {contract.clubs.email && (
-                    <a href={`mailto:${contract.clubs.email}`} className="block text-blue-700 hover:underline text-sm mb-1">
-                      📧 {contract.clubs.email}
-                    </a>
-                  )}
-                  {contract.clubs.phone && (
-                    <a href={`tel:${contract.clubs.phone}`} className="block text-blue-700 hover:underline text-sm">
-                      📱 {contract.clubs.phone}
-                    </a>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>

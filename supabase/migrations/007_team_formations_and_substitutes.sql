@@ -26,17 +26,7 @@ CREATE TABLE IF NOT EXISTS team_squads (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-  UNIQUE(team_id, player_id),
-
-  -- Ensure player belongs to the team's club
-  CONSTRAINT check_player_team_club CHECK (
-    EXISTS (
-      SELECT 1 FROM contracts c
-      WHERE c.id = contract_id
-      AND c.player_id = player_id
-      AND c.status = 'active'
-    )
-  )
+  UNIQUE(team_id, player_id)
 );
 
 -- Create team_lineups table for match-day squads (starting XI + substitutes)
@@ -72,16 +62,6 @@ CREATE TABLE IF NOT EXISTS team_lineup_players (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
   UNIQUE(lineup_id, player_id),
-
-  -- Ensure player is in the team squad
-  CONSTRAINT check_player_in_squad CHECK (
-    EXISTS (
-      SELECT 1 FROM team_squads ts
-      WHERE ts.player_id = team_lineup_players.player_id
-      AND ts.team_id = (SELECT team_id FROM team_lineups WHERE id = lineup_id)
-      AND ts.is_active = true
-    )
-  ),
 
   -- Constraint: substitute_order should only be set for substitutes
   CONSTRAINT check_substitute_order CHECK (
@@ -122,6 +102,81 @@ CREATE INDEX IF NOT EXISTS idx_team_lineup_players_starters ON team_lineup_playe
 CREATE INDEX IF NOT EXISTS idx_substitution_history_lineup_id ON substitution_history(lineup_id);
 CREATE INDEX IF NOT EXISTS idx_substitution_history_match_id ON substitution_history(match_id);
 
+-- Create function to validate team squad membership
+CREATE OR REPLACE FUNCTION validate_team_squad_contract()
+RETURNS TRIGGER AS $$
+DECLARE
+  contract_status TEXT;
+  contract_player UUID;
+BEGIN
+  -- If contract_id is provided, validate it
+  IF NEW.contract_id IS NOT NULL THEN
+    SELECT c.status, c.player_id INTO contract_status, contract_player
+    FROM contracts c
+    WHERE c.id = NEW.contract_id;
+
+    -- Check if contract exists
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Contract % does not exist', NEW.contract_id;
+    END IF;
+
+    -- Check if contract player matches
+    IF contract_player != NEW.player_id THEN
+      RAISE EXCEPTION 'Contract player does not match squad player';
+    END IF;
+
+    -- Check if contract is active
+    IF contract_status != 'active' THEN
+      RAISE EXCEPTION 'Contract must be active to add player to squad';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for team squad validation
+DROP TRIGGER IF EXISTS trigger_validate_team_squad_contract ON team_squads;
+CREATE TRIGGER trigger_validate_team_squad_contract
+  BEFORE INSERT OR UPDATE ON team_squads
+  FOR EACH ROW
+  EXECUTE FUNCTION validate_team_squad_contract();
+
+-- Create function to validate lineup player is in squad
+CREATE OR REPLACE FUNCTION validate_lineup_player_in_squad()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_team_id UUID;
+  squad_exists BOOLEAN;
+BEGIN
+  -- Get the team_id from the lineup
+  SELECT team_id INTO v_team_id
+  FROM team_lineups
+  WHERE id = NEW.lineup_id;
+
+  -- Check if player is in the team squad
+  SELECT EXISTS (
+    SELECT 1 FROM team_squads ts
+    WHERE ts.player_id = NEW.player_id
+    AND ts.team_id = v_team_id
+    AND ts.is_active = true
+  ) INTO squad_exists;
+
+  IF NOT squad_exists THEN
+    RAISE EXCEPTION 'Player must be in team squad before adding to lineup';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for lineup player validation
+DROP TRIGGER IF EXISTS trigger_validate_lineup_player_in_squad ON team_lineup_players;
+CREATE TRIGGER trigger_validate_lineup_player_in_squad
+  BEFORE INSERT OR UPDATE ON team_lineup_players
+  FOR EACH ROW
+  EXECUTE FUNCTION validate_lineup_player_in_squad();
+
 -- Create function to validate lineup player count based on format
 CREATE OR REPLACE FUNCTION validate_lineup_player_count()
 RETURNS TRIGGER AS $$
@@ -135,11 +190,12 @@ BEGIN
   FROM team_lineups
   WHERE id = NEW.lineup_id;
 
-  -- Count current starters
+  -- Count current starters (excluding current row if it's an update)
   SELECT COUNT(*) INTO starter_count
   FROM team_lineup_players
   WHERE lineup_id = NEW.lineup_id
-  AND is_starter = true;
+  AND is_starter = true
+  AND (TG_OP = 'INSERT' OR id != NEW.id);
 
   -- Determine required starters based on format
   required_starters := CASE lineup_format

@@ -389,3 +389,59 @@ export async function getContractData(contractId: string): Promise<{
     return null
   }
 }
+
+/**
+ * Get active contract for a player with club details
+ * Handles RLS policies by fetching contract and club separately
+ */
+export async function getActiveContractForPlayer(playerId: string): Promise<{
+  contract: any | null
+  club: any | null
+  error?: string
+}> {
+  try {
+    const supabase = createClient()
+
+    // Fetch active contract
+    const { data: contractData, error: contractError } = await supabase
+      .from('contracts')
+      .select('*')
+      .eq('player_id', playerId)
+      .eq('status', 'active')
+      .single()
+
+    if (contractError) {
+      // No active contract is normal, not an error
+      if (contractError.code === 'PGRST116') {
+        return { contract: null, club: null }
+      }
+      console.error('Error fetching active contract:', contractError)
+      return { contract: null, club: null, error: contractError.message }
+    }
+
+    if (!contractData) {
+      return { contract: null, club: null }
+    }
+
+    // Fetch club data separately (RLS requirement)
+    const { data: clubData, error: clubError } = await supabase
+      .from('clubs')
+      .select('id, club_name, logo_url, city, state, country')
+      .eq('id', contractData.club_id)
+      .single()
+
+    if (clubError) {
+      console.warn('Error fetching club data:', clubError)
+      return { contract: contractData, club: null }
+    }
+
+    return { contract: contractData, club: clubData }
+  } catch (err) {
+    console.error('Error in getActiveContractForPlayer:', err)
+    return {
+      contract: null,
+      club: null,
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }
+  }
+}

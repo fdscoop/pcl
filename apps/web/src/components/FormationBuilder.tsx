@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { X, ArrowUpCircle, ArrowDownCircle, Trash2 } from 'lucide-react'
+import { X, ArrowUpCircle, ArrowDownCircle, Trash2, RefreshCw, ArrowLeftRight } from 'lucide-react'
 
 interface Player {
   id: string
@@ -175,6 +175,8 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
   )
   const [assignments, setAssignments] = useState<Record<string, Player | null>>({})
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set()) // Players moved from bench
+  const [swapMode, setSwapMode] = useState<boolean>(false) // Swap mode toggle
+  const [firstSwapPlayer, setFirstSwapPlayer] = useState<{ player: Player; source: 'field' | 'substitute' | 'available'; positionKey?: string } | null>(null)
 
   const currentFormations = FORMATIONS[selectedFormat as keyof typeof FORMATIONS] || FORMATIONS['5s']
   const formation = currentFormations[selectedFormation as keyof typeof currentFormations]
@@ -221,6 +223,58 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
 
   const handleAddFromBench = (player: Player) => {
     setSelectedPlayers(prev => new Set(prev).add(player.id))
+  }
+
+  // Swap functionality
+  const handleSwapClick = (player: Player, source: 'field' | 'substitute' | 'available', positionKey?: string) => {
+    if (!firstSwapPlayer) {
+      // First selection
+      setFirstSwapPlayer({ player, source, positionKey })
+    } else {
+      // Second selection - perform swap
+      performSwap(firstSwapPlayer, { player, source, positionKey })
+      setFirstSwapPlayer(null)
+      setSwapMode(false)
+    }
+  }
+
+  const performSwap = (
+    first: { player: Player; source: 'field' | 'substitute' | 'available'; positionKey?: string },
+    second: { player: Player; source: 'field' | 'substitute' | 'available'; positionKey?: string }
+  ) => {
+    // Field <-> Field: Swap positions
+    if (first.source === 'field' && second.source === 'field' && first.positionKey && second.positionKey) {
+      setAssignments(prev => ({
+        ...prev,
+        [first.positionKey!]: second.player,
+        [second.positionKey!]: first.player
+      }))
+    }
+    // Field <-> Substitute/Available: Replace player on field, first player goes to substitutes
+    else if (first.source === 'field' && (second.source === 'substitute' || second.source === 'available') && first.positionKey) {
+      setAssignments(prev => ({
+        ...prev,
+        [first.positionKey!]: second.player
+      }))
+      // First player stays in selectedPlayers (goes to substitutes automatically)
+    }
+    // Substitute/Available <-> Field: Replace player on field, second player goes to substitutes
+    else if ((first.source === 'substitute' || first.source === 'available') && second.source === 'field' && second.positionKey) {
+      setAssignments(prev => ({
+        ...prev,
+        [second.positionKey!]: first.player
+      }))
+      // Second player stays in selectedPlayers (goes to substitutes automatically)
+    }
+    // Substitute/Available <-> Substitute/Available: Just a visual swap (both stay in selectedPlayers)
+    else {
+      // No action needed - they're both in the same pool
+    }
+  }
+
+  const cancelSwap = () => {
+    setFirstSwapPlayer(null)
+    setSwapMode(false)
   }
 
   const handleMoveToBench = (player: Player) => {
@@ -284,50 +338,69 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
     // Don't clear formation - keep assignments
   }
 
-  const PlayerCard = ({ player, variant, onAction, actionIcon, actionLabel }: {
+  const PlayerCard = ({ player, variant, onAction, actionIcon, actionLabel, source, positionKey }: {
     player: Player
     variant: 'bench' | 'available' | 'substitute'
     onAction: () => void
     actionIcon: React.ReactNode
     actionLabel: string
-  }) => (
-    <div className="flex items-center gap-3 p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors group">
-      {player.players?.photo_url ? (
-        <img
-          src={player.players.photo_url}
-          alt={`${player.players.users?.first_name}`}
-          className="w-12 h-12 rounded-full object-cover border-2 border-border"
-        />
-      ) : (
-        <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold">
-          {player.players?.users?.first_name?.[0]}
-          {player.players?.users?.last_name?.[0]}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm truncate">
-          {player.players?.users?.first_name} {player.players?.users?.last_name}
-        </p>
-        <div className="flex items-center gap-2 mt-1">
-          <Badge variant="secondary" className="text-xs">
-            {player.players?.position}
-          </Badge>
-          <span className="text-xs text-muted-foreground font-bold">
-            #{player.jersey_number}
-          </span>
-        </div>
-      </div>
-      <Button
-        size="sm"
-        variant={variant === 'bench' ? 'default' : 'outline'}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={onAction}
+    source?: 'field' | 'substitute' | 'available'
+    positionKey?: string
+  }) => {
+    const isSelected = swapMode && firstSwapPlayer?.player.id === player.id
+    const canSwap = swapMode && source !== 'bench' && variant !== 'bench'
+
+    return (
+      <div
+        className={`flex items-center gap-3 p-3 rounded-lg hover:bg-muted/80 transition-colors group ${
+          isSelected ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-muted'
+        } ${canSwap ? 'cursor-pointer' : ''}`}
+        onClick={() => canSwap && source && handleSwapClick(player, source, positionKey)}
       >
-        {actionIcon}
-        <span className="ml-1 text-xs">{actionLabel}</span>
-      </Button>
-    </div>
-  )
+        {player.players?.photo_url ? (
+          <img
+            src={player.players.photo_url}
+            alt={`${player.players.users?.first_name}`}
+            className="w-12 h-12 rounded-full object-cover border-2 border-border"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold">
+            {player.players?.users?.first_name?.[0]}
+            {player.players?.users?.last_name?.[0]}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate">
+            {player.players?.users?.first_name} {player.players?.users?.last_name}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant="secondary" className="text-xs">
+              {player.players?.position}
+            </Badge>
+            <span className="text-xs text-muted-foreground font-bold">
+              #{player.jersey_number}
+            </span>
+          </div>
+        </div>
+        {!swapMode && (
+          <Button
+            size="sm"
+            variant={variant === 'bench' ? 'default' : 'outline'}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={onAction}
+          >
+            {actionIcon}
+            <span className="ml-1 text-xs">{actionLabel}</span>
+          </Button>
+        )}
+        {canSwap && (
+          <Badge variant={isSelected ? 'default' : 'outline'} className="text-xs">
+            {isSelected ? '1st' : 'Swap'}
+          </Badge>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -431,13 +504,38 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
                   </Button>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" onClick={autoAssign}>
                   🤖 Auto-Assign Players
                 </Button>
                 <Button variant="outline" onClick={clearFormation}>
                   🗑️ Clear Formation
                 </Button>
+                <Button
+                  variant={swapMode ? 'default' : 'outline'}
+                  onClick={() => {
+                    setSwapMode(!swapMode)
+                    if (swapMode) cancelSwap()
+                  }}
+                  className={swapMode ? 'bg-blue-500 hover:bg-blue-600' : ''}
+                >
+                  <ArrowLeftRight className="w-4 h-4 mr-1" />
+                  {swapMode ? 'Cancel Swap' : 'Swap Players'}
+                </Button>
+                {swapMode && firstSwapPlayer && (
+                  <Alert className="mt-2 bg-blue-500/10 border-blue-500">
+                    <AlertDescription>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">
+                          <strong>{firstSwapPlayer.player.players.users.first_name} {firstSwapPlayer.player.players.users.last_name}</strong> selected. Click another player to swap.
+                        </span>
+                        <Button size="sm" variant="ghost" onClick={cancelSwap}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -512,7 +610,14 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
                           }}
                         >
                           {assignedPlayer ? (
-                            <div className="relative cursor-pointer">
+                            <div
+                              className={`relative cursor-pointer ${
+                                swapMode && firstSwapPlayer?.player.id === assignedPlayer.id
+                                  ? 'ring-4 ring-blue-500 rounded-full'
+                                  : ''
+                              }`}
+                              onClick={() => swapMode && handleSwapClick(assignedPlayer, 'field', key)}
+                            >
                               <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow-2xl group-hover:scale-110 transition-transform">
                                 {assignedPlayer.players?.photo_url ? (
                                   <img
@@ -531,17 +636,24 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
                                 {assignedPlayer.jersey_number}
                               </div>
                               {/* Remove button */}
-                              <button
-                                onClick={() => handleRemoveFromPosition(key)}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
+                              {!swapMode && (
+                                <button
+                                  onClick={() => handleRemoveFromPosition(key)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              )}
+                              {swapMode && (
+                                <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
+                                  <ArrowLeftRight className="w-3 h-3" />
+                                </div>
+                              )}
                               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-black/90 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity shadow-xl z-20">
                                 <div className="font-bold">
                                   {assignedPlayer.players?.users?.first_name} {assignedPlayer.players?.users?.last_name}
                                 </div>
-                                <div className="text-gray-300 text-[10px]">{pos.role}</div>
+                                <div className="text-gray-300 text-[10px]">{pos.role} {swapMode && '• Click to swap'}</div>
                               </div>
                             </div>
                           ) : (
@@ -593,6 +705,7 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
                           onAction={() => handleMoveToBench(player)}
                           actionIcon={<Trash2 className="w-3 h-3" />}
                           actionLabel="Remove"
+                          source="available"
                         />
                       ))
                     )}
@@ -621,6 +734,7 @@ export function FormationBuilder({ players, clubId }: FormationBuilderProps) {
                         onAction={() => handleMoveToBench(player)}
                         actionIcon={<ArrowDownCircle className="w-3 h-3" />}
                         actionLabel="Bench"
+                        source="substitute"
                       />
                     ))}
                     {substitutePlayers.length === 0 && (

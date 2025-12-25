@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import TournamentStatistics from '@/components/TournamentStatistics'
@@ -506,7 +507,7 @@ export default function HomeClient() {
                       )}
                     </div>
                     <Button size="sm" variant="outline" className="w-full" asChild>
-                      <a href={`/club/${club.id}`}>View Club</a>
+                      <Link href={`/club/${club.id}`}>View Club</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -654,7 +655,7 @@ export default function HomeClient() {
                         </div>
                       )}
                       <Button size="sm" variant="outline" className="w-full" asChild>
-                        <a href={`/player/${player.id}`}>View Profile</a>
+                        <Link href={`/player/${player.id}`}>View Profile</Link>
                       </Button>
                     </CardContent>
                   </Card>

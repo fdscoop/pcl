@@ -36,6 +36,7 @@ export interface Club {
   founded_year: number;
   city: string;
   state: string;
+  district?: string;
   country: string;
   email: string;
   phone: string;

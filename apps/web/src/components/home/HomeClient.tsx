@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import TournamentStatistics from '@/components/TournamentStatistics'
 import type { Club, Player, Stadium } from '@/types/database'
 
 export default function HomeClient() {
+  const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [supabase, setSupabase] = useState<any>(null)
@@ -506,8 +507,13 @@ export default function HomeClient() {
                         <div>Founded: <span className="font-semibold text-foreground">{club.founded_year}</span></div>
                       )}
                     </div>
-                    <Button size="sm" variant="outline" className="w-full" asChild>
-                      <Link href={`/club/${club.id}`}>View Club</Link>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => router.push(`/club/${club.id}`)}
+                    >
+                      View Club
                     </Button>
                   </CardContent>
                 </Card>
@@ -654,8 +660,13 @@ export default function HomeClient() {
                           📍 {player.district}, {player.state}
                         </div>
                       )}
-                      <Button size="sm" variant="outline" className="w-full" asChild>
-                        <Link href={`/player/${player.id}`}>View Profile</Link>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => router.push(`/player/${player.id}`)}
+                      >
+                        View Profile
                       </Button>
                     </CardContent>
                   </Card>

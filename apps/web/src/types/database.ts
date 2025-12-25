@@ -55,6 +55,7 @@ export interface Club {
   total_goals_scored?: number;
   total_goals_conceded?: number;
   clean_sheets?: number;
+  stadium_capacity?: number;
   created_at: string;
   updated_at: string;
   deleted_at?: string;

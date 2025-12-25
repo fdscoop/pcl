@@ -2,6 +2,8 @@
 
 The main Next.js frontend application for the PCL platform.
 
+<!-- Environment variables updated: 2025-01-25 -->
+
 ## Structure
 
 - `src/app` - Next.js app directory

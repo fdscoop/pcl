@@ -34,19 +34,6 @@ export default function HomeClient() {
   const [stadiumCount, setStadiumCount] = useState(0)
   const [tournamentCount, setTournamentCount] = useState(0)
 
-  // Navigation handlers - Force full page navigation for production reliability
-  const navigateToClub = (clubId: string) => {
-    console.log('Attempting to navigate to club:', clubId)
-    // Use window.location for production reliability on Vercel
-    window.location.href = `/club/${clubId}`
-  }
-
-  const navigateToPlayer = (playerId: string) => {
-    console.log('Attempting to navigate to player:', playerId)
-    // Use window.location for production reliability on Vercel
-    window.location.href = `/player/${playerId}`
-  }
-
   useEffect(() => {
     const initializeSupabase = async () => {
       try {
@@ -328,11 +315,21 @@ export default function HomeClient() {
                 </>
               ) : (
                 <>
-                  <Button variant="outline" size="sm" className="btn-lift" asChild>
-                    <a href="/auth/login">Sign In</a>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="btn-lift"
+                    onClick={() => router.push('/auth/login')}
+                  >
+                    Sign In
                   </Button>
-                  <Button variant="gradient" size="sm" className="btn-lift" asChild>
-                    <a href="/auth/signup">Sign Up</a>
+                  <Button
+                    variant="gradient"
+                    size="sm"
+                    className="btn-lift"
+                    onClick={() => router.push('/auth/signup')}
+                  >
+                    Sign Up
                   </Button>
                 </>
               )}
@@ -520,11 +517,23 @@ export default function HomeClient() {
                         <div>Founded: <span className="font-semibold text-foreground">{club.founded_year}</span></div>
                       )}
                     </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="w-full"
-                      onClick={() => navigateToClub(club.id)}
+                      onClick={() => {
+                        const href = `/club/${club.id}`
+                        try {
+                          router.push(href)
+                        } finally {
+                          // If client-side navigation is prevented (e.g., overlay intercept), force a hard navigation.
+                          setTimeout(() => {
+                            if (typeof window !== 'undefined' && window.location.pathname !== href) {
+                              window.location.assign(href)
+                            }
+                          }, 50)
+                        }
+                      }}
                     >
                       View Club
                     </Button>
@@ -673,11 +682,22 @@ export default function HomeClient() {
                           📍 {player.district}, {player.state}
                         </div>
                       )}
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         className="w-full"
-                        onClick={() => navigateToPlayer(player.id)}
+                        onClick={() => {
+                          const href = `/player/${player.id}`
+                          try {
+                            router.push(href)
+                          } finally {
+                            setTimeout(() => {
+                              if (typeof window !== 'undefined' && window.location.pathname !== href) {
+                                window.location.assign(href)
+                              }
+                            }, 50)
+                          }
+                        }}
                       >
                         View Profile
                       </Button>

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Notification } from '@/types/database'
+import { useToast } from '@/context/ToastContext'
 
 export function useClubNotifications(clubId: string | null) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
+  const { addToast } = useToast()
 
   useEffect(() => {
     if (!clubId) return
@@ -26,6 +28,21 @@ export function useClubNotifications(clubId: string | null) {
         },
         (payload) => {
           console.log('Notification change:', payload)
+          // Show a small in-app toast for realtime updates to reduce noisy desktop notifications
+          try {
+            const newRecord = (payload as any)?.record || (payload as any)?.new || null
+            if (newRecord) {
+              addToast({
+                type: 'info',
+                title: 'New notification',
+                description: newRecord.title || newRecord.notification_type || 'You have a new notification',
+                duration: 3000
+              })
+            }
+          } catch (err) {
+            console.debug('Toast unavailable for notification:', err)
+          }
+
           loadNotifications()
         }
       )

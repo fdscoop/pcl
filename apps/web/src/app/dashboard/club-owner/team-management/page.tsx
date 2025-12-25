@@ -6,12 +6,16 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { FormationBuilder } from '@/components/FormationBuilder'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
+import { useToast } from '@/context/ToastContext'
+import { Edit2, X } from 'lucide-react'
 
 interface Player {
   id: string
+  player_id: string
   jersey_number: number
   position_assigned: string
   players: {
@@ -30,9 +34,15 @@ export default function TeamManagementPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [club, setClub] = useState<any>(null)
-  const [players, setPlayers] = useState<Player[]>([])
+  const [team, setTeam] = useState<any>(null)
+  const [players, setPlayers] = useState<Player[]>([]) // Players in team_squads (the squad/bench)
+  const [contractedPlayers, setContractedPlayers] = useState<Player[]>([]) // All contracted players
   const [selectedPosition, setSelectedPosition] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'list' | 'formation'>('list')
+  const [editingJerseyPlayerId, setEditingJerseyPlayerId] = useState<string | null>(null)
+  const [editingJerseyNumber, setEditingJerseyNumber] = useState<string>('')
+  const [updatingJersey, setUpdatingJersey] = useState(false)
+  const { addToast } = useToast()
   const {
     notifications,
     unreadCount,
@@ -69,7 +79,20 @@ export default function TeamManagementPage() {
 
       setClub(clubData)
 
-      // Fetch active contracts with player details
+      // Try to get existing team (don't auto-create)
+      const { data: teamData, error: teamError } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('club_id', clubData.id)
+        .maybeSingle()
+
+      if (teamError) {
+        console.error('Error fetching team:', teamError)
+      }
+
+      setTeam(teamData)
+
+      // Fetch ALL contracted players (for the "Declare Squad" functionality)
       const { data: contractsData, error: contractsError } = await supabase
         .from('contracts')
         .select('id, jersey_number, position_assigned, player_id')
@@ -79,13 +102,30 @@ export default function TeamManagementPage() {
 
       if (contractsError) {
         console.error('Error loading contracts:', contractsError)
-      } else if (contractsData && contractsData.length > 0) {
-        // Fetch player details
-        const playerIds = contractsData.map(c => c.player_id)
+      }
+
+      // If team exists, fetch squad players from team_squads
+      if (teamData && contractsData && contractsData.length > 0) {
+        const { data: squadData, error: squadError } = await supabase
+          .from('team_squads')
+          .select('contract_id, player_id, jersey_number')
+          .eq('team_id', teamData.id)
+          .eq('is_active', true)
+
+        if (squadError) {
+          console.error('Error loading squad:', squadError)
+        }
+
+        // Get all player IDs (both squad and contracted)
+        // Use Set to remove duplicates in case there are duplicate squad entries
+        const squadPlayerIds = [...new Set(squadData?.map(s => s.player_id) || [])]
+        const allPlayerIds = contractsData.map(c => c.player_id)
+
+        // Fetch player details for all
         const { data: playersData, error: playersError } = await supabase
           .from('players')
           .select('id, position, photo_url, unique_player_id, user_id')
-          .in('id', playerIds)
+          .in('id', allPlayerIds)
 
         if (!playersError && playersData) {
           // Fetch user details
@@ -104,12 +144,59 @@ export default function TeamManagementPage() {
             }))
 
             const playersMap = new Map(playersWithUsers.map(p => [p.id, p]))
-            const mergedData = contractsData.map(contract => ({
+
+            // Create a map of squad data for easy lookup (player_id -> squad record)
+            const squadDataMap = new Map(squadData?.map(s => [s.player_id, s]) || [])
+
+            // Squad players (in team_squads) - for bench/formations
+            const squadContracts = contractsData.filter(c => squadPlayerIds.includes(c.player_id))
+            const squadPlayers = squadContracts.map(contract => {
+              const squadRecord = squadDataMap.get(contract.player_id)
+              return {
+                ...contract,
+                // Use jersey_number from team_squads if available, otherwise fall back to contract's jersey_number
+                jersey_number: squadRecord?.jersey_number ?? contract.jersey_number,
+                players: playersMap.get(contract.player_id)
+              }
+            })
+            setPlayers(squadPlayers as Player[])
+
+            // All contracted players
+            const allContractedPlayers = contractsData.map(contract => ({
               ...contract,
               players: playersMap.get(contract.player_id)
             }))
+            setContractedPlayers(allContractedPlayers as Player[])
+          }
+        }
+      } else if (contractsData && contractsData.length > 0) {
+        // No team yet, just load contracted players
+        const playerIds = contractsData.map(c => c.player_id)
+        const { data: playersData, error: playersError } = await supabase
+          .from('players')
+          .select('id, position, photo_url, unique_player_id, user_id')
+          .in('id', playerIds)
 
-            setPlayers(mergedData as Player[])
+        if (!playersError && playersData) {
+          const userIds = playersData.map(p => p.user_id)
+          const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('id, first_name, last_name')
+            .in('id', userIds)
+
+          if (!usersError && usersData) {
+            const usersMap = new Map(usersData.map(u => [u.id, u]))
+            const playersWithUsers = playersData.map(p => ({
+              ...p,
+              users: usersMap.get(p.user_id)
+            }))
+
+            const playersMap = new Map(playersWithUsers.map(p => [p.id, p]))
+            const allContractedPlayers = contractsData.map(contract => ({
+              ...contract,
+              players: playersMap.get(contract.player_id)
+            }))
+            setContractedPlayers(allContractedPlayers as Player[])
           }
         }
       }
@@ -117,6 +204,307 @@ export default function TeamManagementPage() {
       console.error('Error:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateTeam = async () => {
+    if (!club) return
+
+    const teamName = prompt(`Enter team name (e.g., "${club.club_name} First Team"):`) || `${club.club_name} First Team`
+
+    try {
+      const supabase = createClient()
+
+      // Create team with unique slug
+      const slug = teamName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+      const { data: newTeam, error: teamError } = await supabase
+        .from('teams')
+        .insert({
+          club_id: club.id,
+          team_name: teamName,
+          slug: slug,
+          format: '11-a-side',
+          formation: '4-3-3'
+        })
+        .select()
+        .single()
+
+      if (teamError) {
+        console.error('Error creating team:', teamError)
+        alert(`Error creating team: ${teamError.message}`)
+        return
+      }
+
+      setTeam(newTeam)
+      alert(`Team "${teamName}" created successfully!`)
+      loadData() // Reload data
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to create team')
+    }
+  }
+
+  const handleDeclareSquad = async () => {
+    if (!team) {
+      alert('Please create a team first')
+      return
+    }
+
+    if (contractedPlayers.length === 0) {
+      alert('No contracted players available')
+      return
+    }
+
+    try {
+      const supabase = createClient()
+
+      // Get existing squad players to avoid duplicates
+      const existingPlayerIds = players.map(p => p.player_id)
+
+      // Filter out players already in squad
+      const playersToAdd = contractedPlayers.filter(
+        p => !existingPlayerIds.includes(p.player_id)
+      )
+
+      if (playersToAdd.length === 0) {
+        alert('All contracted players are already in the squad')
+        return
+      }
+
+      // Auto-assign jersey numbers based on position
+      const squadWithJerseys = autoAssignJerseyNumbers(playersToAdd)
+
+      // Add remaining contracted players to team_squads with auto-assigned jersey numbers
+      const squadInserts = squadWithJerseys.map(player => ({
+        team_id: team.id,
+        player_id: player.player_id,
+        contract_id: player.id,
+        jersey_number: player.jersey_number,
+        is_active: true
+      }))
+
+      const { error: squadError } = await supabase
+        .from('team_squads')
+        .insert(squadInserts)
+
+      if (squadError) {
+        console.error('Error declaring squad:', squadError)
+        alert(`Error: ${squadError.message}`)
+        return
+      }
+
+      addToast({
+        title: 'Squad Updated',
+        description: `${playersToAdd.length} player${playersToAdd.length > 1 ? 's' : ''} added to the team with auto-assigned jersey numbers.`,
+        type: 'success',
+        duration: 3000
+      })
+      loadData() // Reload data
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to declare squad')
+    }
+  }
+
+  // Auto-assign jersey numbers based on player position
+  const autoAssignJerseyNumbers = (squadPlayers: any[]) => {
+    const jerseyRanges: Record<string, { start: number; end: number }> = {
+      'Goalkeeper': { start: 1, end: 3 },
+      'Defender': { start: 4, end: 8 },
+      'Midfielder': { start: 8, end: 10 },
+      'Forward': { start: 9, end: 11 }
+    }
+
+    // Get all already taken jersey numbers from existing squad players
+    const takenNumbers = new Set(players.map(p => p.jersey_number).filter(n => n != null))
+
+    // Track newly assigned numbers in this batch (including pre-existing ones from contracts)
+    const newlyAssigned: number[] = []
+
+    const squadWithJerseys = squadPlayers.map(player => {
+      // If player already has a jersey number from their contract, check if it's available
+      const existingNumber = player.jersey_number
+
+      if (existingNumber != null && existingNumber > 0) {
+        // Check if the existing number is not taken by squad or newly added players
+        if (!takenNumbers.has(existingNumber) && !newlyAssigned.includes(existingNumber)) {
+          // Keep the existing jersey number
+          newlyAssigned.push(existingNumber)
+          return {
+            ...player,
+            jersey_number: existingNumber
+          }
+        }
+        // If existing number is taken, we'll auto-assign a new one below
+      }
+
+      // Auto-assign a new number
+      const position = player.players?.position || 'Forward'
+      const range = jerseyRanges[position] || jerseyRanges['Forward']
+
+      // Helper function to check if number is available
+      const isNumberAvailable = (num: number) => {
+        return !takenNumbers.has(num) && !newlyAssigned.includes(num)
+      }
+
+      // Find next available number in position range
+      let nextNumber = range.start
+      while (nextNumber <= range.end && !isNumberAvailable(nextNumber)) {
+        nextNumber++
+      }
+
+      // If range is full, find next available number from 1-99
+      if (nextNumber > range.end) {
+        nextNumber = 1
+        while (nextNumber <= 99 && !isNumberAvailable(nextNumber)) {
+          nextNumber++
+        }
+        // Final fallback - if somehow we run out (unlikely with 99 numbers)
+        if (nextNumber > 99) {
+          nextNumber = Math.floor(Math.random() * 1000) + 100
+        }
+      }
+
+      newlyAssigned.push(nextNumber)
+
+      return {
+        ...player,
+        jersey_number: nextNumber
+      }
+    })
+
+    return squadWithJerseys
+  }
+
+  const handleUpdateJerseyNumber = async (playerId: string, newJerseyNumber: number) => {
+    // Validate range
+    if (newJerseyNumber < 0 || newJerseyNumber > 99) {
+      addToast({
+        title: 'Invalid Jersey Number',
+        description: 'Jersey number must be between 0 and 99',
+        type: 'error',
+        duration: 2500
+      })
+      return
+    }
+
+    // Check for duplicates in the same team
+    const isDuplicate = players.some(
+      p => p.id !== playerId && p.jersey_number === newJerseyNumber
+    )
+
+    if (isDuplicate) {
+      const duplicatePlayer = players.find(p => p.jersey_number === newJerseyNumber)
+      addToast({
+        title: 'Jersey Number Already in Use',
+        description: `${duplicatePlayer?.players?.users?.first_name} ${duplicatePlayer?.players?.users?.last_name} is already wearing #${newJerseyNumber}`,
+        type: 'error',
+        duration: 3000
+      })
+      return
+    }
+
+    if (!club) {
+      addToast({
+        title: 'Club Not Found',
+        description: 'Unable to find club information',
+        type: 'error',
+        duration: 2500
+      })
+      return
+    }
+
+    setUpdatingJersey(true)
+    try {
+      const supabase = createClient()
+
+      // Find the player to get their contract ID
+      const player = players.find(p => p.id === playerId)
+      if (!player) {
+        addToast({
+          title: 'Player Not Found',
+          description: 'Unable to find player information',
+          type: 'error',
+          duration: 2500
+        })
+        return
+      }
+
+      // Update in team_squads table
+      const { error: squadError } = await supabase
+        .from('team_squads')
+        .update({ jersey_number: newJerseyNumber })
+        .eq('player_id', player.player_id)
+        .eq('team_id', team.id)
+
+      if (squadError) {
+        console.error('Error updating team_squads:', squadError)
+        addToast({
+          title: 'Update Failed',
+          description: squadError.message || 'Failed to update squad',
+          type: 'error',
+          duration: 3000
+        })
+        return
+      }
+
+      // Update in contracts table
+      const { error: contractError } = await supabase
+        .from('contracts')
+        .update({ jersey_number: newJerseyNumber })
+        .eq('id', playerId)
+
+      if (contractError) {
+        console.error('Error updating contracts:', contractError)
+        addToast({
+          title: 'Update Failed',
+          description: contractError.message || 'Failed to update contract',
+          type: 'error',
+          duration: 3000
+        })
+        return
+      }
+
+      // Update in players table
+      const { error: playerError } = await supabase
+        .from('players')
+        .update({ jersey_number: newJerseyNumber })
+        .eq('id', player.player_id)
+
+      if (playerError) {
+        console.error('Error updating players:', playerError)
+        addToast({
+          title: 'Update Failed',
+          description: playerError.message || 'Failed to update player',
+          type: 'error',
+          duration: 3000
+        })
+        return
+      }
+
+      // Reset editing state and reload
+      setEditingJerseyPlayerId(null)
+      setEditingJerseyNumber('')
+      
+      // Update local state
+      const updatedPlayers = players.map(p =>
+        p.id === playerId ? { ...p, jersey_number: newJerseyNumber } : p
+      )
+      setPlayers(updatedPlayers)
+      
+      addToast({
+        title: 'Jersey Number Updated',
+        description: `${player.players?.users?.first_name} is now wearing #${newJerseyNumber}`,
+        type: 'success',
+        duration: 2500
+      })
+      loadData()
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to update jersey number')
+    } finally {
+      setUpdatingJersey(false)
     }
   }
 
@@ -160,8 +548,8 @@ export default function TeamManagementPage() {
                 onMarkAllAsRead={markAllAsRead}
                 loading={notificationsLoading}
               />
-              <Button onClick={() => router.push('/dashboard/club-owner')} variant="outline" size="sm">
-                Back to Dashboard
+              <Button onClick={() => router.push('/dashboard/club-owner')} variant="ghost" size="sm" className="border border-border">
+                ← Back to Dashboard
               </Button>
             </div>
           </div>
@@ -172,77 +560,246 @@ export default function TeamManagementPage() {
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-2">
                 Team Management
               </h1>
               <p className="text-muted-foreground">
-                Manage your squad and organize your team formation
+                {team ? `Managing ${team.team_name}` : 'Create a team to get started'}
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                onClick={() => setViewMode('list')}
-              >
-                📋 Roster List
-              </Button>
-              <Button
-                variant={viewMode === 'formation' ? 'default' : 'outline'}
-                onClick={() => setViewMode('formation')}
-                disabled={players.length === 0}
-              >
-                ⚽ Formation
-              </Button>
+            <div className="flex gap-3">
+              {!team && (
+                <Button variant="gradient" onClick={handleCreateTeam} size="lg" className="shadow-lg">
+                  ➕ Create Team
+                </Button>
+              )}
+              {team && players.length === 0 && contractedPlayers.length > 0 && (
+                <Button variant="gradient" onClick={handleDeclareSquad} size="lg" className="shadow-lg">
+                  📝 Declare Squad
+                </Button>
+              )}
+              {team && players.length > 0 && (
+                <div className="flex gap-2 bg-muted/50 p-1.5 rounded-xl">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="lg"
+                    className={viewMode === 'list' ? 'gradient-brand text-white shadow-lg border-0 hover:shadow-xl' : 'border-2 border-slate-200 text-slate-700 bg-white hover:border-orange-300 hover:text-orange-800 hover:bg-orange-50 transition-all duration-200'}
+                    onClick={() => setViewMode('list')}
+                  >
+                    📋 Roster List
+                  </Button>
+                  <Button
+                    variant={viewMode === 'formation' ? 'default' : 'ghost'}
+                    size="lg"
+                    className={viewMode === 'formation' ? 'gradient-brand text-white shadow-lg border-0 hover:shadow-xl' : 'border-2 border-slate-200 text-slate-700 bg-white hover:border-orange-300 hover:text-orange-800 hover:bg-orange-50 transition-all duration-200'}
+                    onClick={() => setViewMode('formation')}
+                  >
+                    ⚽ Formation
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Team status info */}
+          {team && (
+            <div className="bg-gradient-to-r from-accent/5 to-accent/10 rounded-xl p-5 mb-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Team</p>
+                    <p className="font-bold text-lg">{team.team_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Squad Size</p>
+                    <p className="font-bold text-lg">{players.length} players</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Contracted</p>
+                    <p className="font-bold text-lg">{contractedPlayers.length} players</p>
+                  </div>
+                  {players.length < contractedPlayers.length && (
+                    <Badge variant="outline" className="ml-2">
+                      {contractedPlayers.length - players.length} not in squad
+                    </Badge>
+                  )}
+                </div>
+                {players.length < contractedPlayers.length && (
+                  <Button variant="accent" size="sm" onClick={handleDeclareSquad}>
+                    Add Remaining to Squad
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
+        {/* Information Section */}
+        <div className="mb-8 space-y-4">
+          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950 dark:to-blue-900/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Players</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{players.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Goalkeepers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">
-                {players.filter(p => p.players?.position === 'Goalkeeper').length}
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">ℹ️</div>
+                <div>
+                  <CardTitle className="text-lg text-blue-900 dark:text-blue-100">Team Management Overview</CardTitle>
+                  <CardDescription className="text-blue-800 dark:text-blue-200 mt-2 text-sm leading-relaxed">
+                    Team Management is a critical feature for tournament compliance and match organization. Here you can build and declare your official team lineup for competitions.
+                  </CardDescription>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Defenders</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">
-                {players.filter(p => p.players?.position === 'Defender').length}
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Key Features */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-foreground flex items-center gap-2">
+                    <span className="text-lg">📋</span> What You Can Do
+                  </h4>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6">
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 dark:text-blue-400">✓</span>
+                      <span><strong>Create Teams</strong> - Build multiple team configurations</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 dark:text-blue-400">✓</span>
+                      <span><strong>Manage Squad</strong> - Add/remove players from your squad</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 dark:text-blue-400">✓</span>
+                      <span><strong>Declare Formations</strong> - Set tactical formations (5, 7, or 11-a-side)</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 dark:text-blue-400">✓</span>
+                      <span><strong>Assign Jersey Numbers</strong> - Manage player identification</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Tournament Rules & Important Info */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-foreground flex items-center gap-2">
+                    <span className="text-lg">⚠️</span> Tournament Rules
+                  </h4>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-6">
+                    <li className="flex gap-2">
+                      <span className="text-red-600 dark:text-red-400">!</span>
+                      <span><strong>Suspended Players</strong> - Players under suspension cannot be included in lineups</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-red-600 dark:text-red-400">!</span>
+                      <span><strong>Declare Changes</strong> - Notify system when team changes are made</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-red-600 dark:text-red-400">!</span>
+                      <span><strong>Update Before Matches</strong> - Always declare team before tournament matches</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-red-600 dark:text-red-400">!</span>
+                      <span><strong>Squad Compliance</strong> - Ensure all players meet eligibility requirements</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Midfielders</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">
-                {players.filter(p => p.players?.position === 'Midfielder').length}
+
+              {/* Action Required Banner */}
+              <div className="bg-orange-50 dark:bg-orange-950 border-l-4 border-orange-500 p-4 rounded">
+                <p className="text-sm text-orange-900 dark:text-orange-100">
+                  <strong>🎯 Important:</strong> After making any changes to your team (adding/removing players, changing formations), you must <strong>"Declare Team"</strong> to notify the tournament system. This ensures compliance with tournament rules and accurate team records.
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
+        {!team ? (
+          <Card className="border-2 border-dashed">
+            <CardContent className="py-12">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🏆</div>
+                <h3 className="text-2xl font-bold text-foreground mb-2">
+                  No Team Created
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Create your first team to start managing your squad and formations.
+                </p>
+                <Button variant="gradient" onClick={handleCreateTeam} size="lg">
+                  ➕ Create Your First Team
+                </Button>
+                {contractedPlayers.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-4">
+                    You have {contractedPlayers.length} contracted player{contractedPlayers.length !== 1 ? 's' : ''} ready to join your team.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : players.length === 0 ? (
+          <Card className="border-2 border-dashed">
+            <CardContent className="py-12">
+              <div className="text-center">
+                <div className="text-6xl mb-4">📝</div>
+                <h3 className="text-2xl font-bold text-foreground mb-2">
+                  No Squad Declared
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Add your contracted players to the team squad to start building formations.
+                </p>
+                {contractedPlayers.length > 0 ? (
+                  <>
+                    <Button variant="gradient" onClick={handleDeclareSquad} size="lg">
+                      📝 Declare Squad ({contractedPlayers.length} players)
+                    </Button>
+                    <p className="text-sm text-muted-foreground mt-4">
+                      This will add all {contractedPlayers.length} contracted players to your team squad.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      You don't have any contracted players yet.
+                    </p>
+                    <Button
+                      variant="gradient"
+                      onClick={() => router.push('/scout/players')}
+                    >
+                      🔍 Scout Players
+                    </Button>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-gradient-to-br from-slate-500/10 to-slate-600/10 rounded-2xl p-5 border border-slate-200/50">
+                <p className="text-sm font-medium text-muted-foreground mb-1">Total Players</p>
+                <div className="text-4xl font-bold text-foreground">{players.length}</div>
+              </div>
+              <div className="bg-gradient-to-br from-slate-500/10 to-slate-600/10 rounded-2xl p-5 border border-slate-200/50">
+                <p className="text-sm font-medium text-muted-foreground mb-1">Goalkeepers</p>
+                <div className="text-4xl font-bold text-foreground">
+                  {players.filter(p => p.players?.position === 'Goalkeeper').length}
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-2xl p-5 border border-blue-200/50">
+                <p className="text-sm font-medium text-muted-foreground mb-1">Defenders</p>
+                <div className="text-4xl font-bold text-foreground">
+                  {players.filter(p => p.players?.position === 'Defender').length}
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-2xl p-5 border border-orange-200/50">
+                <p className="text-sm font-medium text-muted-foreground mb-1">Midfielders</p>
+                <div className="text-4xl font-bold text-foreground">
+                  {players.filter(p => p.players?.position === 'Midfielder').length}
+                </div>
+              </div>
+            </div>
 
-        {/* Content based on view mode */}
-        {viewMode === 'list' ? (
+            {/* Content based on view mode */}
+            {viewMode === 'list' ? (
           <>
             {/* Position Filter */}
             {players.length > 0 && (
@@ -252,13 +809,17 @@ export default function TeamManagementPage() {
                     key={position}
                     variant={selectedPosition === position ? 'default' : 'outline'}
                     size="sm"
+                    className={selectedPosition === position 
+                      ? 'gradient-brand text-white shadow-lg border-0 hover:shadow-xl' 
+                      : 'border-2 border-slate-200 text-slate-700 bg-white hover:border-orange-300 hover:text-orange-800 hover:bg-orange-50 transition-all duration-200'
+                    }
                     onClick={() => setSelectedPosition(position)}
                   >
-                    {position === 'all' ? 'All Players' : position}
+                    {position === 'all' ? '🌟 All Players' : position}
                     {position !== 'all' && (
-                      <Badge variant="secondary" className="ml-2">
+                      <span className="ml-2 px-2 py-0.5 rounded-full bg-white/30 text-xs font-bold">
                         {players.filter(p => p.players?.position === position).length}
-                      </Badge>
+                      </span>
                     )}
                   </Button>
                 ))}
@@ -266,82 +827,207 @@ export default function TeamManagementPage() {
             )}
 
             {/* Player List */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {selectedPosition === 'all' ? 'All Players' : selectedPosition + 's'}
-                </CardTitle>
-                <CardDescription>
-                  {filteredPlayers.length} {filteredPlayers.length === 1 ? 'player' : 'players'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {filteredPlayers.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <div className="text-6xl mb-4">⚽</div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">
-                      {players.length === 0 ? 'No Players Yet' : 'No Players in This Position'}
-                    </h3>
-                    <p className="text-sm mb-4">
-                      {players.length === 0
-                        ? 'Start building your team by scouting and signing players!'
-                        : `You don't have any ${selectedPosition.toLowerCase()}s in your squad yet.`}
-                    </p>
-                    {players.length === 0 && (
-                      <Button
-                        variant="gradient"
-                        onClick={() => router.push('/scout/players')}
+            <div className="mb-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                    📋 Team Roster - {selectedPosition === 'all' ? 'All Players' : selectedPosition + 's'}
+                  </h2>
+                  <p className="text-muted-foreground mt-2">
+                    Permanent squad members with assigned jersey numbers. These players are available for match lineups.
+                  </p>
+                  <p className="font-semibold text-foreground mt-1">
+                    Total: {filteredPlayers.length} {filteredPlayers.length === 1 ? 'player' : 'players'}
+                  </p>
+                </div>
+                <div className="text-4xl">🏆</div>
+              </div>
+
+              {filteredPlayers.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="py-12">
+                    <div className="text-center text-muted-foreground">
+                      <div className="text-6xl mb-4">⚽</div>
+                      <h3 className="text-xl font-bold text-foreground mb-2">
+                        {players.length === 0 ? 'No Players Yet' : 'No Players in This Position'}
+                      </h3>
+                      <p className="text-sm mb-4">
+                        {players.length === 0
+                          ? 'Start building your team by scouting and signing players!'
+                          : `You don't have any ${selectedPosition.toLowerCase()}s in your squad yet.`}
+                      </p>
+                      {players.length === 0 && (
+                        <Button
+                          variant="gradient"
+                          onClick={() => router.push('/scout/players')}
+                        >
+                          🔍 Scout Players
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {filteredPlayers.map((player) => {
+                    const getPositionGradient = (position: string) => {
+                      switch (position) {
+                        case 'Goalkeeper':
+                          return 'from-slate-600 to-slate-700' // Professional dark gray
+                        case 'Defender':
+                          return 'from-blue-600 to-blue-700' // Brand-aligned blue
+                        case 'Midfielder':
+                          return 'from-orange-500 to-orange-600' // Brand orange
+                        case 'Forward':
+                          return 'from-indigo-600 to-indigo-700' // Professional indigo
+                        default:
+                          return 'from-gray-600 to-gray-700'
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={player.id}
+                        className="relative overflow-hidden rounded-3xl shadow-2xl aspect-[4/5] group cursor-pointer transform transition-transform hover:scale-105"
                       >
-                        🔍 Scout Players
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredPlayers.map((player) => (
-                      <Card key={player.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                        <div className="relative">
+                        {/* Background Image */}
+                        <div className="absolute inset-0">
                           {player.players?.photo_url ? (
                             <img
                               src={player.players.photo_url}
                               alt={`${player.players.users?.first_name} ${player.players.users?.last_name}`}
-                              className="w-full h-48 object-cover"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-48 bg-gradient-to-br from-accent/20 to-accent/40 flex items-center justify-center">
-                              <span className="text-6xl">⚽</span>
-                            </div>
+                            <div className={`w-full h-full bg-gradient-to-br ${getPositionGradient(player.players?.position || '')}`} />
                           )}
-                          <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg shadow-lg">
-                            #{player.jersey_number || '?'}
+                          {/* Gradient Overlay */}
+                          <div className={`absolute inset-0 bg-gradient-to-br ${getPositionGradient(
+                            player.players?.position || ''
+                          )} opacity-60 mix-blend-multiply`} />
+                          {/* Dark gradient from bottom */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                        </div>
+
+                        {/* Jersey Number Badge */}
+                        <div className="absolute top-4 right-4 z-20">
+                          <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform border-2 border-white/30">
+                            <span className="text-2xl font-bold text-white">#{player.jersey_number || '?'}</span>
                           </div>
                         </div>
-                        <CardContent className="p-4">
-                          <h3 className="font-bold text-lg text-foreground mb-1">
-                            {player.players?.users?.first_name} {player.players?.users?.last_name}
-                          </h3>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary">{player.players?.position}</Badge>
-                              {player.position_assigned && player.position_assigned !== player.players?.position && (
-                                <Badge variant="outline">{player.position_assigned}</Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">
+
+                        {/* Position Badge */}
+                        <div className="absolute top-4 left-4 z-20">
+                          <div className="inline-block bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg border border-white/30">
+                            {player.players?.position?.toUpperCase()}
+                          </div>
+                        </div>
+
+                        {/* Curved accent line */}
+                        <div className="absolute right-0 top-1/4 w-1/2 h-1/2 opacity-30 z-10">
+                          <svg viewBox="0 0 100 200" className="w-full h-full">
+                            <path
+                              d="M0 0 Q 50 100 0 200"
+                              fill="none"
+                              stroke="rgba(255,255,255,0.6)"
+                              strokeWidth="10"
+                            />
+                          </svg>
+                        </div>
+
+                        {/* Info Section - Lower Half */}
+                        <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+                          {/* Player Info */}
+                          <div className="text-white">
+                            <h4 className="text-2xl font-bold mb-1 drop-shadow-lg">
+                              {player.players?.users?.first_name} {player.players?.users?.last_name}
+                            </h4>
+                            <p className="text-sm text-white/90 mb-3 drop-shadow">
                               ID: {player.players?.unique_player_id}
                             </p>
+
+                            {/* Jersey Edit Box */}
+                            {editingJerseyPlayerId === player.id ? (
+                              <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 mb-3">
+                                <div className="flex gap-2">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="99"
+                                    value={editingJerseyNumber}
+                                    onChange={(e) => setEditingJerseyNumber(e.target.value)}
+                                    placeholder="Jersey #"
+                                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    className="bg-orange-500 hover:bg-orange-600 text-white border-0"
+                                    onClick={() => {
+                                      const num = parseInt(editingJerseyNumber)
+                                      if (!isNaN(num)) {
+                                        handleUpdateJerseyNumber(player.id, num)
+                                      }
+                                    }}
+                                    disabled={updatingJersey || !editingJerseyNumber}
+                                  >
+                                    ✓
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="bg-white/20 hover:bg-white/30 text-white border-0"
+                                    onClick={() => {
+                                      setEditingJerseyPlayerId(null)
+                                      setEditingJerseyNumber('')
+                                    }}
+                                    disabled={updatingJersey}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div 
+                                className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors"
+                                onClick={() => {
+                                  setEditingJerseyPlayerId(player.id)
+                                  setEditingJerseyNumber(player.jersey_number?.toString() || '')
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <div className="text-xs text-white/80 font-medium mb-0.5">
+                                      Jersey Number
+                                    </div>
+                                    <div className="text-2xl font-bold text-orange-300">
+                                      #{player.jersey_number || '?'}
+                                    </div>
+                                  </div>
+                                  <Edit2 className="w-5 h-5 text-white/60" />
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        </div>
+
+                        {/* Large watermark text */}
+                        <div className="absolute bottom-16 left-0 right-0 pointer-events-none overflow-hidden z-10">
+                          <div className="text-[80px] font-black text-white/10 leading-none">
+                            PCL
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </>
         ) : (
-          <FormationBuilder players={players} clubId={club?.id} />
+          <FormationBuilder players={players} clubId={club?.id} teamId={team?.id} />
         )}
+      </>
+    )}
       </main>
     </div>
   )

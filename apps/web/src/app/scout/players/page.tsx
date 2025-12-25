@@ -142,7 +142,34 @@ export default function ScoutPlayersPage() {
       console.log('Fetching available players...')
       const { data: playersData, error } = await supabase
         .from('players')
-        .select('id, user_id, position, photo_url, unique_player_id, jersey_number, height_cm, weight_kg, date_of_birth, nationality, preferred_foot, current_club_id, is_available_for_scout, state, district, address, total_matches_played, total_goals_scored, total_assists')
+        .select(`
+          id,
+          user_id,
+          position,
+          photo_url,
+          unique_player_id,
+          jersey_number,
+          height_cm,
+          weight_kg,
+          date_of_birth,
+          nationality,
+          preferred_foot,
+          current_club_id,
+          is_available_for_scout,
+          state,
+          district,
+          address,
+          total_matches_played,
+          total_goals_scored,
+          total_assists,
+          users:user_id (
+            id,
+            first_name,
+            last_name,
+            email,
+            bio
+          )
+        `)
         .eq('is_available_for_scout', true)
         .order('created_at', { ascending: false })
 

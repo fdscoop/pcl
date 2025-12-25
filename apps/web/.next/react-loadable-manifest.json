@@ -1,22 +1,4 @@
 {
-  "app/dashboard/club-owner/contracts/[id]/view/page.tsx -> @/utils/contractGenerator": {
-    "id": "app/dashboard/club-owner/contracts/[id]/view/page.tsx -> @/utils/contractGenerator",
-    "files": [
-      "static/chunks/_app-pages-browser_src_utils_contractGenerator_ts.js"
-    ]
-  },
-  "app/dashboard/player/contracts/[id]/view/page.tsx -> @/utils/contractGenerator": {
-    "id": "app/dashboard/player/contracts/[id]/view/page.tsx -> @/utils/contractGenerator",
-    "files": [
-      "static/chunks/_app-pages-browser_src_utils_contractGenerator_ts.js"
-    ]
-  },
-  "app/scout/players/page.tsx -> @/utils/contractGenerator": {
-    "id": "app/scout/players/page.tsx -> @/utils/contractGenerator",
-    "files": [
-      "static/chunks/_app-pages-browser_src_utils_contractGenerator_ts.js"
-    ]
-  },
   "components/home/HomeClient.tsx -> @/lib/supabase/client": {
     "id": "components/home/HomeClient.tsx -> @/lib/supabase/client",
     "files": [

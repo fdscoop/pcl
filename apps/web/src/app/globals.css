@@ -123,28 +123,54 @@
 @layer utilities {
   /* Enhanced button hover effects with brand colors */
   .btn-lift {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
+    transition: all 0.2s ease-in-out;
+    transform: translateY(0);
+  }
+  
+  .btn-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .btn-lift:active {
+    transform: translateY(0);
   }
 
   /* Enhanced card hover effects */
   .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
 
   /* Smooth color transitions */
   .color-transition {
-    @apply transition-colors duration-200;
+    transition: color 0.2s ease-in-out;
   }
 
   /* Interactive elements with scale */
   .interactive-scale {
-    @apply transition-transform duration-200 hover:scale-105 active:scale-95;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .interactive-scale:hover {
+    transform: scale(1.05);
+  }
+  
+  .interactive-scale:active {
+    transform: scale(0.95);
   }
 
   /* Glow effect on hover with orange accent */
   .glow-on-hover {
-    @apply transition-all duration-300 hover:shadow-2xl hover:ring-4;
-    --tw-ring-color: rgba(var(--accent), 0.5);
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .glow-on-hover:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 0 0 4px rgba(var(--accent), 0.5);
   }
 
   /* Dark blue gradient background */
@@ -202,14 +228,183 @@
 
   /* Focus ring with orange */
   .focus-ring-orange {
-    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    --tw-ring-color: rgb(var(--accent));
+    outline: none;
+  }
+  
+  .focus-ring-orange:focus {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
   }
 
   /* Focus ring with dark blue */
   .focus-ring-blue {
-    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    --tw-ring-color: rgb(var(--primary));
+    outline: none;
+  }
+  
+  .focus-ring-blue:focus {
+    outline: 2px solid rgb(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Enhanced card hover effects */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(0);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Enhanced button lift effect */
+  .btn-lift {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(0);
+  }
+
+  .btn-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-lift:active {
+    transform: translateY(0);
+  }
+
+  /* Smooth scale animations */
+  .scale-on-hover {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .scale-on-hover:hover {
+    transform: scale(1.05);
+  }
+
+  /* Gradient text effect */
+  .gradient-text {
+    background: linear-gradient(135deg, rgb(var(--primary)) 0%, rgb(var(--accent)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Loading skeleton animation */
+  @keyframes skeleton-loading {
+    0% {
+      background-position: -200px 0;
+    }
+    100% {
+      background-position: calc(200px + 100%) 0;
+    }
+  }
+
+  .skeleton-loading {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s infinite;
+  }
+
+  /* Enhanced focus states for accessibility */
+  .focus-visible-ring {
+    outline: none;
+  }
+  
+  .focus-visible-ring:focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+  }
+
+  /* Smooth page transitions */
+  .page-transition {
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Mobile-first responsive helpers */
+  @media (max-width: 640px) {
+    .mobile-p-4 {
+      padding: 1rem;
+    }
+    
+    .mobile-text-sm {
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Improved readability for small screens */
+  @media (max-width: 768px) {
+    .responsive-text {
+      line-height: 1.6;
+      font-size: clamp(0.875rem, 2.5vw, 1rem);
+    }
+    
+    .responsive-title {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+    }
+  }
+
+  /* Enhanced table responsiveness */
+  .table-responsive {
+    @media (max-width: 768px) {
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Better form element styling */
+  .form-input-enhanced {
+    transition: all 0.2s ease-in-out;
+    border-color: rgb(var(--border));
+  }
+  
+  .form-input-enhanced:focus {
+    border-color: rgb(var(--accent));
+    box-shadow: 0 0 0 2px rgba(var(--accent), 0.2);
+    outline: none;
+  }
+
+  /* Improved accessibility for screen readers */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .card-hover {
+      border: 2px solid;
+    }
+    
+    .btn-lift {
+      border: 2px solid;
+    }
+  }
+
+  /* Reduced motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .card-hover,
+    .btn-lift,
+    .scale-on-hover,
+    .page-transition {
+      transition: none;
+      animation: none;
+    }
   }
 }
 

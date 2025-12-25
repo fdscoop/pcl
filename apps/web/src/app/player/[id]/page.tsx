@@ -34,6 +34,7 @@ interface PlayerWithUser extends Player {
   email?: string
   phone?: string
   profile_photo_url?: string
+  photo_url?: string
   bio?: string
 }
 

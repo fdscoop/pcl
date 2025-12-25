@@ -1216,7 +1216,7 @@ export default function HomeClient() {
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Startup ID</div>
-                  <div className="font-mono text-sm text-foreground">DIPP69878/2020</div>
+                  <div className="font-mono text-sm text-foreground">DIPP69878</div>
                 </div>
               </CardContent>
             </Card>
@@ -1236,7 +1236,7 @@ export default function HomeClient() {
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">KSUM ID</div>
-                  <div className="font-mono text-sm text-foreground">KSUM1031</div>
+                  <div className="font-mono text-sm text-foreground">DIPP69878/2020/KSUM1031</div>
                 </div>
               </CardContent>
             </Card>
@@ -1278,7 +1278,7 @@ export default function HomeClient() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             <div className="text-sm text-muted-foreground">
               <p>&copy; 2025 Professional Club League by FDS COOP LLP. All rights reserved.</p>
-              <p className="mt-2">CIN: AAU-1337 | StartupIndia: DIPP69878/2020 | KSUM: KSUM1031</p>
+              <p className="mt-2">CIN: AAU-1337 | StartupIndia: DIPP69878 | KSUM: DIPP69878/2020/KSUM1031</p>
             </div>
             <div className="md:text-center">
               <div className="text-sm font-semibold text-foreground">Legal</div>

@@ -34,7 +34,7 @@ WHERE state = 'Kerala' AND city IN ('Idukki');
 
 UPDATE clubs 
 SET district = 'Ernakulam'
-WHERE state = 'Kerala' AND city IN ('Ernakulam', 'Kochi', 'Cochin', 'Kolichal', 'Kaloor', 'Thripunithura');
+WHERE state = 'Kerala' AND city IN ('Ernakulam', 'Kochi', 'Cochin', 'Kaloor', 'Thripunithura');
 
 UPDATE clubs 
 SET district = 'Thrissur'
@@ -352,8 +352,8 @@ SET district = 'Mahabubabad'
 WHERE state = 'Telangana' AND city IN ('Mahabubabad');
 
 UPDATE clubs 
-SET district = 'Bhadadri Chrohan'
-WHERE state = 'Telangana' AND city IN ('Bhadadri Chrohan');
+SET district = 'Bhadradri Kothagudem'
+WHERE state = 'Telangana' AND city IN ('Bhadradri Kothagudem', 'Bhadadri Kothagudem', 'Bhadradri', 'Kothagudem');
 
 UPDATE clubs 
 SET district = 'Mulugu'
@@ -364,12 +364,8 @@ SET district = 'Sangareddy'
 WHERE state = 'Telangana' AND city IN ('Sangareddy');
 
 UPDATE clubs 
-SET district = 'Tandur'
-WHERE state = 'Telangana' AND city IN ('Tandur');
-
-UPDATE clubs 
-SET district = 'Tandoor'
-WHERE state = 'Telangana' AND city IN ('Tandoor');
+SET district = 'Vikarabad'
+WHERE state = 'Telangana' AND city IN ('Tandur', 'Tandoor');
 
 -- Maharashtra Districts
 UPDATE clubs 
@@ -465,12 +461,16 @@ SET district = 'Chandrapur'
 WHERE state = 'Maharashtra' AND city IN ('Chandrapur');
 
 UPDATE clubs 
-SET district = 'Gondiya'
-WHERE state = 'Maharashtra' AND city IN ('Gondiya');
-
-UPDATE clubs 
 SET district = 'Bhandara'
 WHERE state = 'Maharashtra' AND city IN ('Bhandara');
+
+-- Step 3b: Fallback for unmapped clubs
+-- If we couldn't map a district but we do have a city, store the city value as district.
+-- This avoids NULL districts until a proper mapping is added.
+UPDATE clubs
+SET district = city
+WHERE (district IS NULL OR district = '')
+	AND city IS NOT NULL AND city <> '';
 
 UPDATE clubs 
 SET district = 'Gondia'

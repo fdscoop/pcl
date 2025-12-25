@@ -1356,7 +1356,7 @@ export default function HomeClient() {
             </div>
             <div className="text-sm text-muted-foreground md:text-right">
               <div className="text-sm font-semibold text-foreground">Contact</div>
-              <p className="mt-2">support@pcl.example</p>
+              <p className="mt-2">support@professionalclubleague.com</p>
               <p>Mon–Fri, 9:00–18:00 IST</p>
             </div>
           </div>

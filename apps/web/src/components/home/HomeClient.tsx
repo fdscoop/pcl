@@ -1324,40 +1324,167 @@ export default function HomeClient() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border mt-16">
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-            <div className="text-sm text-muted-foreground">
-              <p>&copy; 2025 Professional Club League by FDS COOP LLP. All rights reserved.</p>
-              <p className="mt-2">CIN: AAU-1337 | StartupIndia: DIPP69878 | KSUM: DIPP69878/2020/KSUM1031</p>
-            </div>
-            <div className="md:text-center">
-              <div className="text-sm font-semibold text-foreground">Legal</div>
-              <div className="mt-2 flex flex-wrap gap-3 md:justify-center text-sm text-muted-foreground">
-                <a href="/legal/privacy-policy" className="hover:text-foreground transition-colors">
-                  Privacy Policy
-                </a>
-                <a href="/legal/terms-and-conditions" className="hover:text-foreground transition-colors">
-                  Terms & Conditions
-                </a>
-                <a href="/legal/refund-policy" className="hover:text-foreground transition-colors">
-                  Refund Policy
-                </a>
-                <a href="/legal/membership-policies" className="hover:text-foreground transition-colors">
-                  Membership Policies
-                </a>
-                <a href="/legal/code-of-conduct" className="hover:text-foreground transition-colors">
-                  Code of Conduct
-                </a>
-                <a href="/legal" className="hover:text-foreground transition-colors">
-                  Legal Hub
-                </a>
+      <footer className="bg-gradient-to-b from-background to-card border-t border-border mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main Footer Content */}
+          <div className="py-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+              {/* Brand Section */}
+              <div className="lg:col-span-1">
+                <h3 className="text-lg font-bold text-foreground mb-4">PCL</h3>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                  Professional Club League - transforming sports management in India.
+                </p>
+                <div className="flex gap-3">
+                  <a href="#" className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors" title="Twitter">
+                    <span className="text-xs">𝕏</span>
+                  </a>
+                  <a href="#" className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors" title="Facebook">
+                    <span className="text-sm">f</span>
+                  </a>
+                  <a href="#" className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors" title="LinkedIn">
+                    <span className="text-xs">in</span>
+                  </a>
+                  <a href="#" className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors" title="Instagram">
+                    <span className="text-xs">📷</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Platform</h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Home
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      About Us
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/auth/signup" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Get Started
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Features
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Legal */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Legal</h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="/legal/privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Privacy Policy
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/legal/terms-and-conditions" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Terms & Conditions
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/legal/refund-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Refund Policy
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/legal/membership-policies" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Membership
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/legal/code-of-conduct" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Code of Conduct
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Support */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Support</h4>
+                <ul className="space-y-3">
+                  <li>
+                    <a href="mailto:support@professionalclubleague.com" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Email Support
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Help Center
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Contact Us
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/legal" className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group">
+                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      Legal Hub
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Company Info */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Company</h4>
+                <div className="space-y-4 text-xs text-muted-foreground">
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">FDS COOP LLP</p>
+                    <p className="mt-1">CIN: AAU-1337</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">StartupIndia</p>
+                    <p className="mt-1">DIPP69878</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">KSUM</p>
+                    <p className="mt-1 font-mono text-xs">DIPP69878/2020/KSUM1031</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground md:text-right">
-              <div className="text-sm font-semibold text-foreground">Contact</div>
-              <p className="mt-2">support@professionalclubleague.com</p>
-              <p>Mon–Fri, 9:00–18:00 IST</p>
+
+            {/* Divider */}
+            <div className="border-t border-border"></div>
+          </div>
+
+          {/* Bottom Footer */}
+          <div className="py-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
+            <div>
+              <p>&copy; 2025 Professional Club League by FDS COOP LLP. All rights reserved.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1">
+                <span>Made with</span>
+                <span className="text-red-500">❤</span>
+                <span>in India</span>
+              </span>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -52,6 +52,7 @@ interface PlayerContract {
 
 export default function PlayerDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const playerId = params.id as string
 
   const [player, setPlayer] = useState<PlayerWithUser | null>(null)
@@ -61,25 +62,20 @@ export default function PlayerDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
+    if (!playerId) {
+      setError('Invalid player ID')
+      setLoading(false)
+      return
+    }
+
     const fetchPlayerData = async () => {
       try {
-        const { createClient: createSupabaseClient } = await import('@/lib/supabase/client')
-        const client = createSupabaseClient()
+        const client = createClient()
 
-        // Fetch player with user details
+        // Fetch player data first
         const { data: playerData, error: playerError } = await client
           .from('players')
-          .select(`
-            *,
-            users (
-              first_name,
-              last_name,
-              email,
-              phone,
-              profile_photo_url,
-              bio
-            )
-          `)
+          .select('*')
           .eq('id', playerId)
           .single()
 
@@ -90,17 +86,35 @@ export default function PlayerDetailPage() {
           return
         }
 
-        const formattedPlayer = {
+        if (!playerData) {
+          setError('Player not found')
+          setLoading(false)
+          return
+        }
+
+        // Fetch user data separately if user_id exists
+        let userData = null
+        if (playerData.user_id) {
+          const { data: uData } = await client
+            .from('users')
+            .select('first_name, last_name, email, phone, profile_photo_url, bio')
+            .eq('id', playerData.user_id)
+            .single()
+          userData = uData
+        }
+
+        const formattedPlayer: PlayerWithUser = {
           ...playerData,
-          first_name: playerData.users?.first_name,
-          last_name: playerData.users?.last_name,
-          email: playerData.users?.email,
-          phone: playerData.users?.phone,
-          profile_photo_url: playerData.users?.profile_photo_url,
-          bio: playerData.users?.bio,
+          first_name: userData?.first_name || playerData.first_name,
+          last_name: userData?.last_name || playerData.last_name,
+          email: userData?.email,
+          phone: userData?.phone,
+          profile_photo_url: userData?.profile_photo_url || playerData.photo_url,
+          bio: userData?.bio,
         }
 
         setPlayer(formattedPlayer)
+        setError(null)
 
         // Fetch contracts
         const { data: contractsData, error: contractsError } = await client
@@ -134,18 +148,20 @@ export default function PlayerDetailPage() {
             jersey_number: c.jersey_number,
           }))
           setContracts(formattedContracts)
+        } else if (contractsError) {
+          console.warn('Error fetching contracts:', contractsError)
         }
 
         setLoading(false)
       } catch (err) {
-        console.error('Error:', err)
+        console.error('Error loading player profile:', err)
         setError('An error occurred while loading player data')
         setLoading(false)
       }
     }
 
     fetchPlayerData()
-  }, [playerId])
+  }, [playerId, router])
 
   if (loading) {
     return (

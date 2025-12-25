@@ -1,277 +1,359 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Users, Mail, Phone, MapPin } from 'lucide-react'
 
 export default function MembershipPoliciesPage() {
+  const sections = [
+    { id: 'overview', title: '1. Membership Overview', icon: '📋' },
+    { id: 'players', title: '2. Player Membership', icon: '⚽' },
+    { id: 'clubs', title: '3. Club Membership', icon: '🏛️' },
+    { id: 'stadiums', title: '4. Stadium Owner Membership', icon: '🏟️' },
+    { id: 'referees', title: '5. Referee & Officials', icon: '🏆' },
+    { id: 'staff', title: '6. Staff & Volunteers', icon: '👥' },
+    { id: 'fees', title: '7. Membership Fees', icon: '💳' },
+    { id: 'support', title: '8. Contact Support', icon: '📞' },
+  ]
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h1 className="text-4xl font-bold mb-4">Membership Policies</h1>
-          <p className="text-xl opacity-90">
-            Comprehensive membership guidelines for all PCL user categories
+      <div className="bg-gradient-to-r from-purple-600/90 to-blue-600/90">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="flex items-center gap-4 mb-6">
+            <Users className="w-10 h-10 text-foreground" />
+            <h1 className="text-4xl sm:text-5xl font-bold text-foreground">Membership Policies</h1>
+          </div>
+          <p className="text-lg sm:text-xl text-foreground max-w-2xl mb-8">
+            Comprehensive membership guidelines and pricing for all PCL user categories
           </p>
-          <div className="mt-6 text-sm opacity-75">
-            <p>Company: Professional Club League (PCL)</p>
-            <p>Startup ID: DIPP69878</p>
-            <p>KSUM ID: DIPP69878/2020/KSUM1031</p>
-            <p>Last updated: December 25, 2025</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-foreground">
+            <div>
+              <p className="font-semibold">Company</p>
+              <p>Professional Club League</p>
+            </div>
+            <div>
+              <p className="font-semibold">Startup ID</p>
+              <p>DIPP69878</p>
+            </div>
+            <div>
+              <p className="font-semibold">KSUM ID</p>
+              <p>DIPP69878/2020/KSUM1031</p>
+            </div>
+            <div>
+              <p className="font-semibold">Updated</p>
+              <p>Dec 25, 2025</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="space-y-8">
-          {/* Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>1. Membership Overview</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <p>
-                Professional Club League (PCL) offers various membership categories designed to serve 
-                different participants in the sports ecosystem. Each membership type has specific 
-                privileges, responsibilities, and requirements.
-              </p>
-              <p>
-                All members must comply with PCL's Terms and Conditions, Code of Conduct, and applicable 
-                sports regulations.
-              </p>
-            </CardContent>
-          </Card>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-foreground">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1">
+            <div className="sticky top-20 bg-card rounded-lg border border-border p-4">
+              <h3 className="font-semibold text-foreground mb-4 text-sm uppercase tracking-wide">
+                Quick Navigation
+              </h3>
+              <nav className="space-y-2">
+                {sections.map((section) => (
+                  <a
+                    key={section.id}
+                    href={`#${section.id}`}
+                    className="block text-sm text-muted-foreground hover:text-foreground hover:bg-foreground/5 px-3 py-2 rounded-md transition-colors"
+                  >
+                    {section.title}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </div>
 
-          {/* Player Membership */}
-          <Card>
-            <CardHeader>
-              <CardTitle>2. Player Membership</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <h4 className="font-semibold">2.1 Eligibility Requirements</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Minimum age: 16 years (with parental consent for minors)</li>
-                <li>Valid government-issued identification</li>
-                <li>Completed health and fitness declaration</li>
-                <li>Signed liability waiver and code of conduct agreement</li>
-                <li>Verification of previous playing experience (if applicable)</li>
-              </ul>
+          <div className="lg:col-span-3 space-y-8">
+            <Card id="overview">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>📋</span>
+                  1. Membership Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-foreground">
+                <p>Professional Club League (PCL) offers various membership categories designed to serve different participants in the sports ecosystem. Each membership type has specific privileges, responsibilities, and fee structures.</p>
+                <p>All members must comply with PCL's Terms and Conditions, Code of Conduct, and applicable sports regulations.</p>
+              </CardContent>
+            </Card>
 
-              <h4 className="font-semibold mt-6">2.2 Player Rights and Benefits</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Profile visibility to scouts and club recruiters</li>
-                <li>Tournament participation opportunities</li>
-                <li>Access to training resources and guides</li>
-                <li>Performance statistics tracking</li>
-                <li>Networking with clubs and other players</li>
-                <li>Career development support</li>
-              </ul>
+            <Card id="players">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>⚽</span>
+                  2. Player Membership
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 text-foreground">
+                <div>
+                  <h4 className="font-semibold mb-3">2.1 Membership Fee</h4>
+                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 mb-3">
+                    <p className="text-lg font-bold text-accent">₹75 per month</p>
+                    <p className="text-sm mt-2">Renewable on a monthly basis</p>
+                  </div>
+                </div>
 
-              <h4 className="font-semibold mt-6">2.3 Player Responsibilities</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Maintain accurate and updated profile information</li>
-                <li>Adhere to fair play and sportsmanship principles</li>
-                <li>Comply with anti-doping regulations</li>
-                <li>Respect other players, officials, and spectators</li>
-                <li>Report any injuries or health issues promptly</li>
-                <li>Participate in mandatory training sessions (if contracted)</li>
-              </ul>
-            </CardContent>
-          </Card>
+                <div>
+                  <h4 className="font-semibold mb-3">2.2 Eligibility Requirements</h4>
+                  <ul className="space-y-2">
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Minimum age: 16 years (with parental consent for minors)</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Valid government-issued identification</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Completed health and fitness declaration</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Signed liability waiver and code of conduct agreement</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Verification of previous playing experience (if applicable)</span></li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Club Membership */}
-          <Card>
-            <CardHeader>
-              <CardTitle>3. Club Membership</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <h4 className="font-semibold">3.1 Club Registration Requirements</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Legal business registration or sports association certification</li>
-                <li>Designated authorized signatory for contracts</li>
-                <li>Valid insurance coverage for players and facilities</li>
-                <li>Compliance with local sports authority regulations</li>
-                <li>Financial capacity verification for player contracts</li>
-                <li>Coaching staff credentials and certifications</li>
-              </ul>
+            <Card id="clubs">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>��️</span>
+                  3. Club Membership
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 text-foreground">
+                <div>
+                  <h4 className="font-semibold mb-3">3.1 Membership Fee</h4>
+                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 mb-3">
+                    <p className="text-lg font-bold text-accent">₹250 per month</p>
+                    <p className="text-sm mt-2">Renewable on a monthly basis | Annual option available with discount</p>
+                  </div>
+                </div>
 
-              <h4 className="font-semibold mt-6">3.2 Club Privileges</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Player recruitment and scouting access</li>
-                <li>Tournament organization and participation</li>
-                <li>Stadium booking and event management</li>
-                <li>Revenue sharing opportunities</li>
-                <li>Sponsorship and partnership facilitation</li>
-                <li>Marketing and promotional support</li>
-              </ul>
+                <div>
+                  <h4 className="font-semibold mb-3">3.2 Club Registration Requirements</h4>
+                  <ul className="space-y-2">
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Legal business registration or sports association certification</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Designated authorized signatory for contracts</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Valid insurance coverage for players and facilities</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Compliance with local sports authority regulations</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Financial capacity verification for player contracts</span></li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
 
-              <h4 className="font-semibold mt-6">3.3 Club Obligations</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Provide safe and professional training environment</li>
-                <li>Honor all player contracts and financial obligations</li>
-                <li>Maintain transparent financial records</li>
-                <li>Implement proper governance and management structures</li>
-                <li>Ensure compliance with league regulations</li>
-                <li>Report significant incidents or rule violations</li>
-              </ul>
-            </CardContent>
-          </Card>
+            <Card id="stadiums">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>🏟️</span>
+                  4. Stadium Owner Membership
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 text-foreground">
+                <div>
+                  <h4 className="font-semibold mb-3">4.1 Commission Structure</h4>
+                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 mb-3">
+                    <p className="text-lg font-bold text-accent">10% Commission on Payout</p>
+                    <p className="text-sm mt-2">Includes:</p>
+                    <ul className="space-y-1 mt-2 text-sm">
+                      <li>✓ Payment gateway charges</li>
+                      <li>✓ GST (Goods and Services Tax)</li>
+                      <li>✓ Processing charges</li>
+                    </ul>
+                  </div>
+                </div>
 
-          {/* Stadium Owner Membership */}
-          <Card>
-            <CardHeader>
-              <CardTitle>4. Stadium Owner Membership</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <h4 className="font-semibold">4.1 Venue Requirements</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Valid property ownership or long-term lease documentation</li>
-                <li>Safety certifications and compliance with building codes</li>
-                <li>Adequate facilities (changing rooms, restrooms, parking)</li>
-                <li>Emergency response procedures and equipment</li>
-                <li>Insurance coverage for public liability</li>
-                <li>Accessibility compliance for disabled individuals</li>
-              </ul>
+                <div>
+                  <h4 className="font-semibold mb-3">4.2 No Monthly Membership Fee</h4>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-3">
+                    <p className="font-semibold text-green-700">✓ Stadium owners do not pay monthly membership fees</p>
+                    <p className="text-sm text-green-700 mt-2">You only pay the 10% commission when you receive payouts</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <h4 className="font-semibold mt-6">4.2 Revenue Opportunities</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Rental fees from clubs and tournament organizers</li>
-                <li>Concession and merchandise sales</li>
-                <li>Advertising and sponsorship revenue</li>
-                <li>Event hosting and facility management</li>
-                <li>Training camp accommodations</li>
-              </ul>
+            <Card id="referees">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>🏆</span>
+                  5. Referee & Officials Membership
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 text-foreground">
+                <div>
+                  <h4 className="font-semibold mb-3">5.1 No Membership Fee</h4>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-3">
+                    <p className="font-semibold text-green-700">✓ FREE membership for all referees and officials</p>
+                    <p className="text-sm text-green-700 mt-2">No monthly or annual fees required</p>
+                  </div>
+                </div>
 
-              <h4 className="font-semibold mt-6">4.3 Service Standards</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Maintain clean and well-maintained facilities</li>
-                <li>Provide reliable scheduling and booking systems</li>
-                <li>Ensure adequate security and crowd management</li>
-                <li>Offer competitive and transparent pricing</li>
-                <li>Respond promptly to booking requests and inquiries</li>
-              </ul>
-            </CardContent>
-          </Card>
+                <div>
+                  <h4 className="font-semibold mb-3">5.2 Certification Requirements</h4>
+                  <ul className="space-y-2">
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Valid officiating license from recognized sports authority</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Completed referee training and education programs</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Physical fitness certification</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span>Background check and character verification</span></li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Referee and Officials */}
-          <Card>
-            <CardHeader>
-              <CardTitle>5. Referee and Officials Membership</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <h4 className="font-semibold">5.1 Certification Requirements</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Valid officiating license from recognized sports authority</li>
-                <li>Completed referee training and education programs</li>
-                <li>Physical fitness certification</li>
-                <li>Background check and character verification</li>
-                <li>Continuing education and skill development</li>
-                <li>Insurance coverage for officiating activities</li>
-              </ul>
+            <Card id="staff">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>👥</span>
+                  6. Staff & Volunteer Membership
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 text-foreground">
+                <div>
+                  <h4 className="font-semibold mb-3">6.1 No Membership Fee</h4>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-3">
+                    <p className="font-semibold text-green-700">✓ FREE membership for all staff and volunteers</p>
+                    <p className="text-sm text-green-700 mt-2">No fees or charges for joining and participating</p>
+                  </div>
+                </div>
 
-              <h4 className="font-semibold mt-6">5.2 Assignment Process</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Match assignments based on certification level and availability</li>
-                <li>Fair rotation and equal opportunity policies</li>
-                <li>Performance evaluation and feedback system</li>
-                <li>Compensation according to match level and duration</li>
-                <li>Travel and accommodation support for distant matches</li>
-              </ul>
+                <div>
+                  <h4 className="font-semibold mb-3">6.2 Categories</h4>
+                  <ul className="space-y-2">
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span><strong>Event Staff:</strong> Tournament organizers, coordinators, technical support</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span><strong>Medical Personnel:</strong> Doctors, physiotherapists, first aid providers</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span><strong>Support Staff:</strong> Groundskeepers, equipment managers, security</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span><strong>Volunteers:</strong> Community supporters, student assistants, retirees</span></li>
+                    <li className="flex gap-3"><span className="text-accent font-bold">•</span><span><strong>Media Personnel:</strong> Photographers, journalists, broadcasters</span></li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
 
-              <h4 className="font-semibold mt-6">5.3 Professional Standards</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Maintain impartiality and integrity in all decisions</li>
-                <li>Arrive punctually and properly equipped for matches</li>
-                <li>Enforce rules consistently and fairly</li>
-                <li>Communicate effectively with players, coaches, and spectators</li>
-                <li>Submit accurate match reports and incident documentation</li>
-                <li>Participate in ongoing training and development programs</li>
-              </ul>
-            </CardContent>
-          </Card>
+            <Card id="fees">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>💳</span>
+                  7. Membership Fees Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-foreground">
+                <div className="space-y-4">
+                  <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
+                    <h4 className="font-semibold mb-3">Fee Structure</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start pb-3 border-b border-accent/20">
+                        <div>
+                          <p className="font-semibold">⚽ Player Membership</p>
+                          <p className="text-sm text-muted-foreground">Monthly subscription</p>
+                        </div>
+                        <p className="text-lg font-bold text-accent">₹75/month</p>
+                      </div>
 
-          {/* Staff and Volunteers */}
-          <Card>
-            <CardHeader>
-              <CardTitle>6. Staff and Volunteer Membership</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <h4 className="font-semibold">6.1 Categories</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Event Staff:</strong> Tournament organizers, coordinators, technical support</li>
-                <li><strong>Medical Personnel:</strong> Doctors, physiotherapists, first aid providers</li>
-                <li><strong>Support Staff:</strong> Groundskeepers, equipment managers, security</li>
-                <li><strong>Volunteers:</strong> Community supporters, student assistants, retirees</li>
-                <li><strong>Media Personnel:</strong> Photographers, journalists, broadcasters</li>
-              </ul>
+                      <div className="flex justify-between items-start pb-3 border-b border-accent/20">
+                        <div>
+                          <p className="font-semibold">🏛️ Club Membership</p>
+                          <p className="text-sm text-muted-foreground">Monthly subscription</p>
+                        </div>
+                        <p className="text-lg font-bold text-accent">₹250/month</p>
+                      </div>
 
-              <h4 className="font-semibold mt-6">6.2 Requirements</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Background verification and character references</li>
-                <li>Relevant qualifications or experience (for specialized roles)</li>
-                <li>Completion of orientation and training programs</li>
-                <li>Commitment to PCL values and code of conduct</li>
-                <li>Availability for assigned duties and responsibilities</li>
-              </ul>
+                      <div className="flex justify-between items-start pb-3 border-b border-accent/20">
+                        <div>
+                          <p className="font-semibold">🏟️ Stadium Owner Membership</p>
+                          <p className="text-sm text-muted-foreground">10% commission on payouts</p>
+                        </div>
+                        <p className="text-lg font-bold text-accent">10% + GST</p>
+                      </div>
 
-              <h4 className="font-semibold mt-6">6.3 Benefits and Recognition</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Skill development and training opportunities</li>
-                <li>Networking with sports industry professionals</li>
-                <li>Recognition awards and certificates</li>
-                <li>Priority access to sports events and activities</li>
-                <li>Career advancement pathways within PCL</li>
-              </ul>
-            </CardContent>
-          </Card>
+                      <div className="flex justify-between items-start pb-3 border-b border-accent/20">
+                        <div>
+                          <p className="font-semibold">🏆 Referee & Officials</p>
+                          <p className="text-sm text-muted-foreground">No fees</p>
+                        </div>
+                        <p className="text-lg font-bold text-green-600">FREE</p>
+                      </div>
 
-          {/* Membership Fees */}
-          <Card>
-            <CardHeader>
-              <CardTitle>7. Membership Fees and Renewal</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <h4 className="font-semibold">7.1 Fee Structure</h4>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li><strong>Player Membership:</strong> ₹2,500/year (Basic), ₹5,000/year (Premium)</li>
-                  <li><strong>Club Membership:</strong> ₹25,000/year + revenue sharing</li>
-                  <li><strong>Stadium Owner:</strong> ₹15,000/year + transaction fees</li>
-                  <li><strong>Referee Membership:</strong> ₹1,500/year</li>
-                  <li><strong>Staff/Volunteer:</strong> Free registration</li>
-                </ul>
-              </div>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold">👥 Staff & Volunteers</p>
+                          <p className="text-sm text-muted-foreground">No fees</p>
+                        </div>
+                        <p className="text-lg font-bold text-green-600">FREE</p>
+                      </div>
+                    </div>
+                  </div>
 
-              <h4 className="font-semibold mt-6">7.2 Renewal Process</h4>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Annual renewal required for all paid memberships</li>
-                <li>30-day grace period for late renewals</li>
-                <li>Automatic renewal available with saved payment methods</li>
-                <li>Updated documentation required every three years</li>
-                <li>Early renewal discounts available (10% off if renewed 60 days early)</li>
-              </ul>
-            </CardContent>
-          </Card>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">💡 About Stadium Commission</h4>
+                    <ul className="space-y-1 text-sm text-blue-900">
+                      <li>✓ No monthly membership fee for stadium owners</li>
+                      <li>✓ 10% commission applies only on successful payouts</li>
+                      <li>✓ Includes payment gateway charges, GST & processing fees</li>
+                      <li>✓ Transparent and fair pricing model</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>8. Membership Support</CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <p>For membership inquiries, applications, or support:</p>
-              <div className="bg-gray-50 p-4 rounded-lg mt-4">
-                <p><strong>Professional Club League (PCL)</strong></p>
-                <p><strong>Membership Services</strong></p>
-                <p>Email: membership@professionalclubleague.com</p>
-                <p>Support: support@professionalclubleague.com</p>
-                <p>Phone: +91 [Your Phone Number]</p>
-                <p>Business Hours: Monday-Friday, 9:00 AM - 6:00 PM IST</p>
-                <p>Startup ID: DIPP69878</p>
-                <p>KSUM ID: DIPP69878/2020/KSUM1031</p>
-              </div>
-            </CardContent>
-          </Card>
+            <Card id="support">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>📞</span>
+                  8. Contact & Support
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-foreground">
+                <p className="mb-6">For membership inquiries, applications, or support:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="flex gap-3">
+                    <Mail className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm text-muted-foreground">Membership Email</p>
+                      <p>membership@professionalclubleague.com</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Mail className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm text-muted-foreground">General Support</p>
+                      <p>support@professionalclubleague.com</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Phone className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm text-muted-foreground">Phone</p>
+                      <p>+91 6282829881</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <MapPin className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm text-muted-foreground">Address</p>
+                      <p>FDS COOP LLP</p>
+                      <p>AKG Nagar, 18th Mile</p>
+                      <p>Kanhangad, Kasaragod</p>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="font-semibold text-sm text-muted-foreground mb-2">Business Hours</p>
+                    <p>Monday-Friday: 9:00 AM - 6:00 PM IST</p>
+                    <p>Response time: 24-48 hours</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <div className="flex justify-center mt-16">
+          <Button 
+            variant="outline"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            ↑ Back to Top
+          </Button>
         </div>
       </div>
     </div>

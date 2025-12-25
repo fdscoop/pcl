@@ -234,7 +234,7 @@ export default function HomeClient() {
       description: 'New teams start here. Participate in local tournaments to establish your club.',
       cardClass: 'border-l-4 border-l-blue-500',
       badgeClass: 'bg-blue-100 text-blue-700',
-      dotClass: 'bg-blue-500',
+      dotClass: 'bg-black',
     },
     {
       key: 'tier-3',
@@ -244,7 +244,7 @@ export default function HomeClient() {
       description: 'Top performers enter regional Amateur Division competitions.',
       cardClass: 'border-l-4 border-l-amber-500',
       badgeClass: 'bg-amber-100 text-amber-700',
-      dotClass: 'bg-amber-500',
+      dotClass: 'bg-black',
     },
     {
       key: 'tier-2',
@@ -254,7 +254,7 @@ export default function HomeClient() {
       description: 'State-level Intermediate Division for the best Amateur teams.',
       cardClass: 'border-l-4 border-l-purple-500',
       badgeClass: 'bg-purple-100 text-purple-700',
-      dotClass: 'bg-purple-500',
+      dotClass: 'bg-black',
     },
     {
       key: 'tier-1',
@@ -263,8 +263,8 @@ export default function HomeClient() {
       icon: '🥇',
       description: 'Elite teams compete nationally with full media coverage.',
       cardClass: 'border-l-4 border-l-accent',
-      badgeClass: 'bg-accent text-white',
-      dotClass: 'bg-accent',
+      badgeClass: 'bg-amber-500 text-white font-bold',
+      dotClass: 'bg-black',
     },
   ]
 
@@ -383,10 +383,18 @@ export default function HomeClient() {
             </Card>
           ) : (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="gradient" className="btn-lift" asChild>
+              <Button 
+                size="lg" 
+                className="btn-lift bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                asChild
+              >
                 <a href="/auth/signup">Get Started</a>
               </Button>
-              <Button size="lg" variant="outline" className="btn-lift" asChild>
+              <Button 
+                size="lg" 
+                className="btn-lift bg-blue-600 hover:bg-blue-700 text-white border-0"
+                asChild
+              >
                 <a href="/auth/login">Sign In</a>
               </Button>
             </div>
@@ -394,25 +402,45 @@ export default function HomeClient() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              The Home of Organized Football
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              PCL connects players with clubs, manages competitive matches, and builds pathways 
+              from grassroots to professional football. Join our growing community of verified players 
+              and clubs building the future of organized sports.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {statsCards.map((stat) => (
-              <Card key={stat.label} className="border-border/60 bg-card/80 backdrop-blur-sm shadow-sm">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl">{stat.icon}</span>
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
+            {statsCards.map((stat, index) => {
+              const borderColors = [
+                'border-t-blue-400', // Players
+                'border-t-green-400', // Clubs
+                'border-t-purple-400', // Stadiums
+                'border-t-orange-400', // Tournaments
+              ]
+              return (
+                <div
+                  key={stat.label}
+                  className={`bg-card/50 backdrop-blur-sm rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300 border-t-2 ${borderColors[index]}`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-3xl">{stat.icon}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-3xl font-bold text-foreground">
+                      {stat.value.toLocaleString()}
+                    </div>
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       {stat.label}
-                    </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground pt-1">Live from registrations</div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-semibold text-foreground">
-                    {stat.value.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">Live from registrations</div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -930,10 +958,11 @@ export default function HomeClient() {
           </div>
         </div>
 
-        {/* Path to Professional Division */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+        {/* Path to Professional Division - Modern Timeline Design */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 mb-20">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
               Path to Professional Division
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -941,69 +970,91 @@ export default function HomeClient() {
             </p>
           </div>
 
-          {/* Tier Cards - Optimized with better visual hierarchy */}
+          {/* Timeline Container */}
           <div className="relative">
-            {/* Connection Line */}
-            <div className="hidden lg:block absolute top-12 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-accent"></div>
+            {/* Desktop Timeline Line */}
+            <div className="hidden lg:block absolute left-1/2 top-20 bottom-0 w-1 bg-black"></div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {/* Timeline Items */}
+            <div className="space-y-8 lg:space-y-12">
               {leaguePath.map((step, index) => (
-                <Card
-                  key={step.key}
-                  className={`card-hover ${step.cardClass} relative overflow-hidden group transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}
-                >
-                  {/* Progress Dot */}
-                  <div className="hidden lg:flex absolute top-11 left-1/2 -translate-x-1/2 h-4 w-4 rounded-full ring-4 ring-background z-10">
-                    <span className={`block h-full w-full rounded-full ${step.dotClass} group-hover:scale-125 transition-transform`}></span>
+                <div key={step.key} className="relative">
+                  {/* Timeline Dot - Desktop */}
+                  <div className="hidden lg:block absolute left-1/2 top-8 -translate-x-1/2 z-20">
+                    <div className={`h-5 w-5 rounded-full ring-4 ring-background ${step.dotClass}`}></div>
                   </div>
 
-                  {/* Badge Corner */}
-                  <div className="absolute top-0 right-0">
-                    <div className={`${step.badgeClass} px-3 py-1 rounded-bl-lg text-xs font-bold tracking-wide`}>
-                      {step.badge}
+                  {/* Alternating Layout */}
+                  <div className={`flex flex-col lg:flex-row gap-8 lg:gap-12 items-stretch ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
+                    {/* Content Side */}
+                    <div className="flex-1 flex items-center">
+                      <Card className={`${step.cardClass} w-full relative overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:-translate-y-2`}>
+                        {/* Badge */}
+                        <div className="absolute top-4 left-4 z-20">
+                          <div className={`${step.badgeClass} px-3 py-1 rounded-lg text-xs font-bold`}>
+                            {step.badge}
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-8 pt-12">
+                          <div className="flex items-start gap-4 mb-4">
+                            <span className="text-5xl flex-shrink-0 group-hover:scale-110 transition-transform">{step.icon}</span>
+                          </div>
+                          <h3 className="text-2xl font-bold text-foreground mb-3">
+                            {step.title}
+                          </h3>
+                          <p className="text-muted-foreground leading-relaxed mb-6">
+                            {step.description}
+                          </p>
+                          <div className="flex items-center justify-between pt-4 border-t border-border">
+                            <span className="text-sm font-semibold text-muted-foreground">
+                              Step {index + 1} of {leaguePath.length}
+                            </span>
+                            <span className="text-xs font-bold text-accent uppercase tracking-widest">
+                              {step.badge}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
                     </div>
+
+                    {/* Spacer for Desktop */}
+                    <div className="hidden lg:flex flex-1"></div>
                   </div>
 
-                  <CardHeader className="pb-3 pt-10">
-                    <div className="flex flex-col items-center text-center gap-3">
-                      <div className="text-5xl group-hover:scale-110 transition-transform">{step.icon}</div>
-                      <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+                  {/* Arrow Between Items - Mobile */}
+                  {index < leaguePath.length - 1 && (
+                    <div className="lg:hidden flex justify-center mt-4">
+                      <div className="text-3xl text-muted-foreground/40 animate-bounce">↓</div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
-
-                    {/* Step number indicator */}
-                    <div className="mt-4 pt-4 border-t border-border">
-                      <span className="text-xs font-semibold text-muted-foreground">
-                        Step {index + 1} of {leaguePath.length}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               ))}
             </div>
           </div>
 
-          {/* CTA Section - Enhanced */}
-          <div className="text-center mt-12 p-8 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 rounded-xl border border-accent/20">
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              Start Your Team's Journey Today
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto leading-relaxed">
-              Register your club for upcoming tournaments and begin your path to the professional leagues. Every champion started from the bottom.
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              {!user && (
-                <>
-                  <Button size="lg" variant="gradient" className="btn-lift" asChild>
-                    <a href="/auth/signup">Register Your Club</a>
-                  </Button>
-                  <Button size="lg" variant="outline" className="btn-lift" asChild>
-                    <a href="/tournaments">View Tournaments</a>
-                  </Button>
-                </>
-              )}
+          {/* CTA Section */}
+          <div className="mt-20 text-center">
+            <div className="inline-block bg-accent/10 border border-accent/30 rounded-2xl p-10 sm:p-16 w-full max-w-2xl mx-auto">
+              <h3 className="text-3xl font-bold text-foreground mb-4">
+                Ready to Start Your Journey?
+              </h3>
+              <p className="text-muted-foreground mb-8 text-lg">
+                Register your club today and begin climbing the tiers. Every elite team started at District Qualifiers.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {!user && (
+                  <>
+                    <Button size="lg" variant="gradient" asChild>
+                      <a href="/auth/signup">Register Your Club</a>
+                    </Button>
+                    <Button size="lg" variant="outline" asChild>
+                      <a href="/tournaments">View Tournaments</a>
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

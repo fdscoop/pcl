@@ -250,8 +250,8 @@ export default function ClubDetailPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Club Hero Section */}
-        <div className="mb-8">
-          <Card className="relative overflow-hidden">
+        <div className="mb-12">
+          <Card className="relative overflow-hidden shadow-xl hover:shadow-2xl transition-shadow border-t-2 border-t-primary/30">
             {/* Banner */}
             <div 
               className="relative h-48 sm:h-64 bg-cover bg-center bg-gradient-to-r from-primary/20 to-accent/20"

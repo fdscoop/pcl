@@ -54,6 +54,7 @@ export interface Club {
   total_losses?: number;
   total_goals_scored?: number;
   total_goals_conceded?: number;
+  clean_sheets?: number;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
@@ -245,4 +246,3 @@ export interface Notification {
   created_at: string;
   updated_at: string;
 }
-

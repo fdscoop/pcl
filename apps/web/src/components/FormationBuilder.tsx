@@ -32,8 +32,22 @@ interface FormationBuilderProps {
   teamId?: string
 }
 
+type FieldPosition = {
+  role: string
+  x: number
+  y: number
+  count: number
+}
+
+type Formation = {
+  name: string
+  format: string
+  playersOnField: number
+  positions: FieldPosition[]
+}
+
 // Formation configurations for different formats
-const FORMATIONS = {
+const FORMATIONS: Record<string, Record<string, Formation>> = {
   // 5-a-side formations (5 players on field)
   '5s': {
     '2-2': {
@@ -345,8 +359,9 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
   const [substitutePlayers, setSubstitutePlayers] = useState<Player[]>([])
   const [showSaveDialog, setShowSaveDialog] = useState<boolean>(false)
 
-  const currentFormations = FORMATIONS[selectedFormat as keyof typeof FORMATIONS] || FORMATIONS['5s']
-  const formation = currentFormations[selectedFormation as keyof typeof currentFormations] || Object.values(currentFormations)[0]
+  const currentFormations = FORMATIONS[selectedFormat] || FORMATIONS['5s']
+  const formation: Formation =
+    currentFormations[selectedFormation] || Object.values(currentFormations)[0]
   const requirements = SQUAD_REQUIREMENTS[selectedFormat as keyof typeof SQUAD_REQUIREMENTS]
 
   // Three tiers of players
@@ -1201,7 +1216,7 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
     positionKey?: string
   }) => {
     const isSelected = swapMode && firstSwapPlayer?.player.id === player.id
-    const canSwap = swapMode && source !== 'bench' && variant !== 'bench'
+    const canSwap = swapMode && variant !== 'bench'
 
     return (
       <div

@@ -1,1 +1,15 @@
-.next/cache/
+.next/
+
+# Turborepo
+.turbo/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Misc
+.DS_Store

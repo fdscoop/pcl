@@ -76,8 +76,8 @@ export default function MessageBubble({
                     stroke="currentColor"
                     strokeWidth={2}
                     aria-label="Read"
-                    title="Read"
                   >
+                    <title>Read</title>
                     <path d="M1.5 13.5l4 4L10.5 13" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M8.5 13.5l4 4L18.5 11.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -91,16 +91,14 @@ export default function MessageBubble({
                     stroke="currentColor"
                     strokeWidth={2}
                     aria-label="Sent"
-                    title="Sent"
                   >
+                    <title>Sent</title>
                     <path d="M4 12l3 3L14 8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )
               )}
             </span>
           </div>
-
-          {formatSubject(message.subject) && <div className="font-semibold mb-1">{formatSubject(message.subject)}</div>}
           <div className="whitespace-pre-wrap">{message.content}</div>
         </div>
       </div>

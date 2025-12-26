@@ -576,8 +576,13 @@ export default function TeamManagementPage() {
                 </Button>
               )}
               {team && players.length === 0 && contractedPlayers.length > 0 && (
-                <Button variant="gradient" onClick={handleDeclareSquad} size="lg" className="shadow-lg">
-                  📝 Declare Squad
+                <Button 
+                  variant="default" 
+                  onClick={handleDeclareSquad} 
+                  size="lg" 
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-0 animate-pulse"
+                >
+                  ⚡ Add {contractedPlayers.length} New Player{contractedPlayers.length !== 1 ? 's' : ''} to Squad
                 </Button>
               )}
               {team && players.length > 0 && (
@@ -603,114 +608,155 @@ export default function TeamManagementPage() {
             </div>
           </div>
 
-          {/* Team status info */}
+          {/* Optimized Team Status Section */}
           {team && (
-            <div className="bg-gradient-to-r from-accent/5 to-accent/10 rounded-xl p-5 mb-8">
+            <div className="bg-gradient-to-r from-slate-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/50 rounded-xl p-4 mb-6 border border-slate-200/50 shadow-md">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Team</p>
-                    <p className="font-bold text-lg">{team.team_name}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
+                      <span className="text-white text-xl">🏆</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Team</p>
+                      <p className="font-bold text-lg">{team.team_name}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Squad Size</p>
-                    <p className="font-bold text-lg">{players.length} players</p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">Squad Size</p>
+                      <p className="font-bold text-base text-brand-orange">{players.length} players</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">Contracted</p>
+                      <p className="font-bold text-base">{contractedPlayers.length} players</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Contracted</p>
-                    <p className="font-bold text-lg">{contractedPlayers.length} players</p>
-                  </div>
+                  
                   {players.length < contractedPlayers.length && (
-                    <Badge variant="outline" className="ml-2">
-                      {contractedPlayers.length - players.length} not in squad
+                    <Badge variant="outline" className="ml-2 border-red-400 text-red-700 bg-red-50 animate-pulse">
+                      {contractedPlayers.length - players.length} newly recruited players waiting
                     </Badge>
                   )}
                 </div>
                 {players.length < contractedPlayers.length && (
-                  <Button variant="accent" size="sm" onClick={handleDeclareSquad}>
-                    Add Remaining to Squad
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="default" 
+                      size="lg" 
+                      onClick={handleDeclareSquad} 
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-0 animate-pulse"
+                    >
+                      ✨ Add {contractedPlayers.length - players.length} New Player{contractedPlayers.length - players.length !== 1 ? 's' : ''} to Squad
+                    </Button>
+                    <p className="text-xs text-red-600 font-medium text-center">
+                      ⚠️ These players can't play until added to squad
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
           )}
         </div>
 
-        {/* Information Section */}
-        <div className="mb-8 space-y-4">
-          <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950 dark:to-blue-900/50">
-            <CardHeader className="pb-3">
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">ℹ️</div>
-                <div>
-                  <CardTitle className="text-lg text-blue-900 dark:text-blue-100">Team Management Overview</CardTitle>
-                  <CardDescription className="text-blue-800 dark:text-blue-200 mt-2 text-sm leading-relaxed">
-                    Team Management is a critical feature for tournament compliance and match organization. Here you can build and declare your official team lineup for competitions.
-                  </CardDescription>
-                </div>
+        {/* Urgent Action Required - New Players Alert */}
+        {players.length < contractedPlayers.length && (
+          <div className="mb-6 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 dark:from-red-950 dark:via-orange-950 dark:to-yellow-950 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 shadow-lg animate-pulse">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg animate-bounce">
+                <span className="text-white text-xl">🚨</span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Key Features */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2">
-                    <span className="text-lg">📋</span> What You Can Do
-                  </h4>
-                  <ul className="text-sm text-muted-foreground space-y-2 ml-6">
-                    <li className="flex gap-2">
-                      <span className="text-blue-600 dark:text-blue-400">✓</span>
-                      <span><strong>Create Teams</strong> - Build multiple team configurations</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-blue-600 dark:text-blue-400">✓</span>
-                      <span><strong>Manage Squad</strong> - Add/remove players from your squad</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-blue-600 dark:text-blue-400">✓</span>
-                      <span><strong>Declare Formations</strong> - Set tactical formations (5, 7, or 11-a-side)</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-blue-600 dark:text-blue-400">✓</span>
-                      <span><strong>Assign Jersey Numbers</strong> - Manage player identification</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Tournament Rules & Important Info */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2">
-                    <span className="text-lg">⚠️</span> Tournament Rules
-                  </h4>
-                  <ul className="text-sm text-muted-foreground space-y-2 ml-6">
-                    <li className="flex gap-2">
-                      <span className="text-red-600 dark:text-red-400">!</span>
-                      <span><strong>Suspended Players</strong> - Players under suspension cannot be included in lineups</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-red-600 dark:text-red-400">!</span>
-                      <span><strong>Declare Changes</strong> - Notify system when team changes are made</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-red-600 dark:text-red-400">!</span>
-                      <span><strong>Update Before Matches</strong> - Always declare team before tournament matches</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-red-600 dark:text-red-400">!</span>
-                      <span><strong>Squad Compliance</strong> - Ensure all players meet eligibility requirements</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Action Required Banner */}
-              <div className="bg-orange-50 dark:bg-orange-950 border-l-4 border-orange-500 p-4 rounded">
-                <p className="text-sm text-orange-900 dark:text-orange-100">
-                  <strong>🎯 Important:</strong> After making any changes to your team (adding/removing players, changing formations), you must <strong>"Declare Team"</strong> to notify the tournament system. This ensures compliance with tournament rules and accurate team records.
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-red-900 dark:text-red-100 mb-1">
+                  Action Required: New Players Need Squad Assignment
+                </h3>
+                <p className="text-sm text-red-800 dark:text-red-200 mb-3">
+                  You have <strong>{contractedPlayers.length - players.length} newly recruited player{contractedPlayers.length - players.length !== 1 ? 's' : ''}</strong> who are contracted but not yet added to your team squad. 
+                  These players cannot participate in matches or formations until they are officially added to the squad.
                 </p>
+                <div className="flex items-center gap-3">
+                  <Button 
+                    onClick={handleDeclareSquad} 
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-0"
+                    size="lg"
+                  >
+                    ✅ Add All {contractedPlayers.length - players.length} Player{contractedPlayers.length - players.length !== 1 ? 's' : ''} to Squad Now
+                  </Button>
+                  <div className="flex items-center gap-2 text-xs text-red-700 dark:text-red-300">
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                    <span>Urgent action needed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Compact Information Section */}
+        <div className="mb-6 space-y-3">
+          {/* Quick Overview Card */}
+          <Card className="border-0 shadow-lg bg-gradient-to-r from-brand-orange/5 via-brand-orange/10 to-brand-orange-light/5 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">ℹ️</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Team Management Overview</h3>
+                  <p className="text-sm text-muted-foreground">Build and declare your official team lineup for competitions</p>
+                </div>
+              </div>
+              
+              {/* Key Actions Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
+                  <span className="text-blue-600">✓</span>
+                  <span className="text-xs font-medium">Create Teams</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
+                  <span className="text-blue-600">✓</span>
+                  <span className="text-xs font-medium">Manage Squad</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
+                  <span className="text-blue-600">✓</span>
+                  <span className="text-xs font-medium">Set Formations</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
+                  <span className="text-blue-600">✓</span>
+                  <span className="text-xs font-medium">Jersey Numbers</span>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Important Rules - Compact Banner */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800 rounded-xl p-3 shadow-md">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div className="flex-1">
+                <h4 className="font-semibold text-amber-900 dark:text-amber-100 text-sm mb-2">Tournament Compliance Rules</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-amber-800 dark:text-amber-200">
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-500">•</span>
+                    <span>Declare team before matches</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-500">•</span>
+                    <span>No suspended players in lineups</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-500">•</span>
+                    <span>Notify changes immediately</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-red-500">•</span>
+                    <span>Ensure squad compliance</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         {!team ? (
           <Card className="border-2 border-dashed">
@@ -735,29 +781,39 @@ export default function TeamManagementPage() {
             </CardContent>
           </Card>
         ) : players.length === 0 ? (
-          <Card className="border-2 border-dashed">
+          <Card className="border-2 border-dashed border-amber-300">
             <CardContent className="py-12">
               <div className="text-center">
-                <div className="text-6xl mb-4">📝</div>
+                <div className="text-6xl mb-4">�</div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
-                  No Squad Declared
+                  Squad Not Declared Yet
                 </h3>
-                <p className="text-muted-foreground mb-6">
-                  Add your contracted players to the team squad to start building formations.
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Your team exists, but you haven't declared your squad yet. Add your contracted players to the team squad to start building formations and lineups.
                 </p>
                 {contractedPlayers.length > 0 ? (
                   <>
-                    <Button variant="gradient" onClick={handleDeclareSquad} size="lg">
-                      📝 Declare Squad ({contractedPlayers.length} players)
-                    </Button>
-                    <p className="text-sm text-muted-foreground mt-4">
-                      This will add all {contractedPlayers.length} contracted players to your team squad.
+                    <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 mb-6 max-w-md mx-auto">
+                      <p className="text-sm text-emerald-800 dark:text-emerald-200 mb-3">
+                        🎉 Great! You have <strong>{contractedPlayers.length} contracted player{contractedPlayers.length !== 1 ? 's' : ''}</strong> ready to join your squad.
+                      </p>
+                      <Button 
+                        variant="default" 
+                        onClick={handleDeclareSquad} 
+                        size="lg"
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-0"
+                      >
+                        ✅ Add All {contractedPlayers.length} Player{contractedPlayers.length !== 1 ? 's' : ''} to Squad
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This will make all your contracted players available for formations and match lineups.
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="text-sm text-muted-foreground mb-4">
-                      You don't have any contracted players yet.
+                      You don't have any contracted players yet. Start by scouting and signing players.
                     </p>
                     <Button
                       variant="gradient"
@@ -772,29 +828,61 @@ export default function TeamManagementPage() {
           </Card>
         ) : (
           <>
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-gradient-to-br from-slate-500/10 to-slate-600/10 rounded-2xl p-5 border border-slate-200/50">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Total Players</p>
-                <div className="text-4xl font-bold text-foreground">{players.length}</div>
-              </div>
-              <div className="bg-gradient-to-br from-slate-500/10 to-slate-600/10 rounded-2xl p-5 border border-slate-200/50">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Goalkeepers</p>
-                <div className="text-4xl font-bold text-foreground">
-                  {players.filter(p => p.players?.position === 'Goalkeeper').length}
+            {/* Enhanced Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-brand-orange/5 via-brand-orange/10 to-brand-orange-light/10 border border-brand-orange/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-brand-orange/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
+                    <span className="text-white text-lg">⚽</span>
+                  </div>
+                  <span className="text-2xl sm:text-3xl font-black text-brand-orange">{players.length}</span>
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-slate-700">Total Players</p>
               </div>
-              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-2xl p-5 border border-blue-200/50">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Defenders</p>
-                <div className="text-4xl font-bold text-foreground">
-                  {players.filter(p => p.players?.position === 'Defender').length}
+              
+              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-slate-100 via-slate-200/50 to-slate-300/30 border border-slate-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-slate-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shadow-lg">
+                    <span className="text-white text-lg">🥅</span>
+                  </div>
+                  <span className="text-2xl sm:text-3xl font-black text-slate-700">{players.filter(p => p.players?.position === 'Goalkeeper').length}</span>
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-slate-700">Goalkeepers</p>
               </div>
-              <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 rounded-2xl p-5 border border-orange-200/50">
-                <p className="text-sm font-medium text-muted-foreground mb-1">Midfielders</p>
-                <div className="text-4xl font-bold text-foreground">
-                  {players.filter(p => p.players?.position === 'Midfielder').length}
+              
+              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-blue-100 via-blue-200/50 to-blue-300/30 border border-blue-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
+                    <span className="text-white text-lg">🛡️</span>
+                  </div>
+                  <span className="text-2xl sm:text-3xl font-black text-blue-700">{players.filter(p => p.players?.position === 'Defender').length}</span>
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-blue-700">Defenders</p>
+              </div>
+              
+              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-emerald-100 via-emerald-200/50 to-emerald-300/30 border border-emerald-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-emerald-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center shadow-lg">
+                    <span className="text-white text-lg">⚡</span>
+                  </div>
+                  <span className="text-2xl sm:text-3xl font-black text-emerald-700">{players.filter(p => p.players?.position === 'Midfielder').length}</span>
+                </div>
+                <p className="text-xs sm:text-sm font-semibold text-emerald-700">Midfielders</p>
+              </div>
+              
+              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-indigo-100 via-indigo-200/50 to-indigo-300/30 border border-indigo-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-indigo-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-lg">
+                    <span className="text-white text-lg">🎯</span>
+                  </div>
+                  <span className="text-2xl sm:text-3xl font-black text-indigo-700">{players.filter(p => p.players?.position === 'Forward').length}</span>
+                </div>
+                <p className="text-xs sm:text-sm font-semibold text-indigo-700">Forwards</p>
               </div>
             </div>
 
@@ -826,21 +914,23 @@ export default function TeamManagementPage() {
               </div>
             )}
 
-            {/* Player List */}
-            <div className="mb-6">
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                    📋 Team Roster - {selectedPosition === 'all' ? 'All Players' : selectedPosition + 's'}
-                  </h2>
-                  <p className="text-muted-foreground mt-2">
-                    Permanent squad members with assigned jersey numbers. These players are available for match lineups.
-                  </p>
-                  <p className="font-semibold text-foreground mt-1">
-                    Total: {filteredPlayers.length} {filteredPlayers.length === 1 ? 'player' : 'players'}
-                  </p>
+            {/* Optimized Player List Header */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
+                    <span className="text-white text-lg">📋</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">
+                      Team Roster - {selectedPosition === 'all' ? 'All Players' : selectedPosition + 's'}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {filteredPlayers.length} {filteredPlayers.length === 1 ? 'player' : 'players'} • Ready for match lineups
+                    </p>
+                  </div>
                 </div>
-                <div className="text-4xl">🏆</div>
+                <div className="text-3xl">🏆</div>
               </div>
 
               {filteredPlayers.length === 0 ? (

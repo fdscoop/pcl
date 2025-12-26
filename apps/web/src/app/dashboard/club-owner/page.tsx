@@ -21,6 +21,7 @@ export default function ClubOwnerDashboard() {
   const [clubId, setClubId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [activeContractsCount, setActiveContractsCount] = useState(0)
+  const [teamsCount, setTeamsCount] = useState(0)
   const {
     notifications,
     unreadCount,
@@ -76,6 +77,16 @@ export default function ClubOwnerDashboard() {
 
           if (!contractsError && contractsData) {
             setActiveContractsCount(contractsData.length)
+          }
+
+          // Fetch teams count
+          const { data: teamsData, error: teamsError } = await supabase
+            .from('teams')
+            .select('id', { count: 'exact' })
+            .eq('club_id', clubData.id)
+
+          if (!teamsError && teamsData) {
+            setTeamsCount(teamsData.length)
           }
         }
       } catch (error) {
@@ -312,8 +323,8 @@ export default function ClubOwnerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">0</div>
-              <p className="text-xs text-muted-foreground mt-1">Create teams</p>
+              <div className="text-3xl font-bold text-foreground">{teamsCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">{teamsCount === 0 ? 'Create teams' : teamsCount === 1 ? '1 team created' : `${teamsCount} teams created`}</p>
             </CardContent>
           </Card>
 

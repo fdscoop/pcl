@@ -268,6 +268,16 @@ export function TeamBuildingAlert({ activeContractsCount }: TeamBuildingAlertPro
             {config.stage === 'complete' ? '👥 ' : '🔍 '}
             {config.buttonText}
           </Button>
+          
+          {/* Create Team Button - Show when squad is complete or has enough players */}
+          {activeContractsCount >= 8 && (
+            <Button
+              onClick={() => router.push('/dashboard/club-owner/team-management')}
+              className="flex-1 sm:flex-initial bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-xs sm:text-sm py-1.5 px-3 shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 transform hover:scale-105 active:scale-95 transition-transform border-0"
+            >
+              ⚙️ Create Team
+            </Button>
+          )}
         </div>
       </Alert>
     </div>

@@ -104,12 +104,12 @@ export default function TournamentStatistics() {
   )
 
   const tabs = [
-    { id: 'friendly', label: 'Friendly', filterType: 'district', description: 'Casual matches' },
-    { id: 'tournaments', label: 'Tournaments', filterType: 'district', description: 'Competitive tournaments' },
-    { id: 'dql', label: 'DQL', filterType: 'district', description: 'District Qualifier Level' },
-    { id: 'amateur', label: 'Amateur League', filterType: 'state', description: 'Top 4 from each DQL' },
-    { id: 'intermediate', label: 'Intermediate League', filterType: 'region', description: 'Top 2 from each Amateur' },
-    { id: 'professional', label: 'Professional League', filterType: 'national', description: 'Elite teams from Intermediate' },
+    { id: 'friendly', label: 'Friendly', filterType: 'district', description: 'Casual matches', available: true },
+    { id: 'tournaments', label: 'Tournaments', filterType: 'district', description: 'Competitive tournaments', available: true },
+    { id: 'dql', label: 'DQL', filterType: 'district', description: 'District Qualifier Level', available: false },
+    { id: 'amateur', label: 'Amateur League', filterType: 'district', description: 'District Level Amateur Competition', available: false },
+    { id: 'intermediate', label: 'Intermediate League', filterType: 'state', description: 'State Level Competition', available: false },
+    { id: 'professional', label: 'Professional League', filterType: 'national', description: 'National Level Championship', available: false },
   ]
 
   // Get current tab info
@@ -155,7 +155,7 @@ export default function TournamentStatistics() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition-all ${
+              className={`px-6 py-3 font-medium whitespace-nowrap transition-all relative ${
                 activeTab === tab.id
                   ? 'text-blue-600 border-b-2 border-blue-600'
                   : 'text-slate-600 hover:text-slate-900'
@@ -166,6 +166,100 @@ export default function TournamentStatistics() {
           ))}
         </div>
       </div>
+
+      {/* Tier-Specific Alerts - Only show for unavailable tiers */}
+      {!currentTab?.available && activeTab === 'dql' && (
+        <div className="mb-8 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg shadow-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl mt-0.5">🏆</span>
+            <div>
+              <h4 className="font-bold text-amber-900 mb-2 text-lg">District Qualifier League (DQL) - Coming Soon!</h4>
+              <p className="text-sm text-amber-800 mb-3">
+                The District Qualifier League will be the entry point for clubs to compete at the district level.
+                Top 4 teams from each district will advance to the Amateur League.
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs mb-3">
+                <span className="px-3 py-1.5 bg-white/80 text-amber-900 rounded-lg font-semibold border border-amber-200">📍 District Level Competition</span>
+                <span className="px-3 py-1.5 bg-white/80 text-amber-900 rounded-lg font-semibold border border-amber-200">🎯 Top 4 Advance</span>
+                <span className="px-3 py-1.5 bg-white/80 text-amber-900 rounded-lg font-semibold border border-amber-200">⚽ Multiple Formats Available</span>
+              </div>
+              <p className="text-xs text-amber-700 italic">
+                This tier is currently under development. Join Friendly Matches or Tournaments to build your team's profile!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!currentTab?.available && activeTab === 'amateur' && (
+        <div className="mb-8 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg shadow-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl mt-0.5">🥉</span>
+            <div>
+              <h4 className="font-bold text-green-900 mb-2 text-lg">Amateur League - Coming Soon!</h4>
+              <p className="text-sm text-green-800 mb-3">
+                The Amateur League is a district-level amateur competition for qualified teams.
+                This tier requires AIFF approval and is being developed with your collective efforts.
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs mb-3">
+                <span className="px-3 py-1.5 bg-white/80 text-green-900 rounded-lg font-semibold border border-green-200">📍 District Level Competition</span>
+                <span className="px-3 py-1.5 bg-white/80 text-green-900 rounded-lg font-semibold border border-green-200">🏛️ AIFF Approval Required</span>
+                <span className="px-3 py-1.5 bg-white/80 text-green-900 rounded-lg font-semibold border border-green-200">⚽ Amateur Teams</span>
+              </div>
+              <p className="text-xs text-green-700 italic">
+                This tier requires AIFF recognition and approval. Join Friendly Matches to build your team while we work together on obtaining official sanction!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!currentTab?.available && activeTab === 'intermediate' && (
+        <div className="mb-8 p-4 bg-gradient-to-r from-purple-50 to-violet-50 border-2 border-purple-300 rounded-lg shadow-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl mt-0.5">🥈</span>
+            <div>
+              <h4 className="font-bold text-purple-900 mb-2 text-lg">Intermediate League - Coming Soon!</h4>
+              <p className="text-sm text-purple-800 mb-3">
+                The Intermediate League is a state-level championship for elite teams.
+                This tier requires AIFF approval and is being developed through our collective efforts with time.
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs mb-3">
+                <span className="px-3 py-1.5 bg-white/80 text-purple-900 rounded-lg font-semibold border border-purple-200">🏛️ State Level Championship</span>
+                <span className="px-3 py-1.5 bg-white/80 text-purple-900 rounded-lg font-semibold border border-purple-200">🏛️ AIFF Approval Required</span>
+                <span className="px-3 py-1.5 bg-white/80 text-purple-900 rounded-lg font-semibold border border-purple-200">📺 Media Coverage</span>
+              </div>
+              <p className="text-xs text-purple-700 italic">
+                This state-level tier requires AIFF recognition. Build your reputation in current tournaments while we work together to make this a reality!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!currentTab?.available && activeTab === 'professional' && (
+        <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-400 rounded-lg shadow-md">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl mt-0.5">🥇</span>
+            <div>
+              <h4 className="font-bold text-blue-900 mb-2 text-lg">Professional League - Coming Soon!</h4>
+              <p className="text-sm text-blue-800 mb-3">
+                The Professional League is the national-level championship - India's premier club football competition.
+                This tier requires AIFF approval and will be achieved through our collective efforts and dedication.
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs mb-3">
+                <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">🇮🇳 National Championship</span>
+                <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">🏛️ AIFF Approval Required</span>
+                <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">📺 Full Media Coverage</span>
+                <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">💰 Sponsorships</span>
+              </div>
+              <p className="text-xs text-blue-700 italic">
+                This is the pinnacle of club football in India. Requires AIFF recognition - together we will make this a reality! Start your journey with Friendly Matches today.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Key Highlights */}
       <div className="mb-8">

@@ -105,6 +105,7 @@ export default function TournamentStatistics() {
 
   const tabs = [
     { id: 'friendly', label: 'Friendly', filterType: 'district', description: 'Casual matches' },
+    { id: 'tournaments', label: 'Tournaments', filterType: 'district', description: 'Competitive tournaments' },
     { id: 'dql', label: 'DQL', filterType: 'district', description: 'District Qualifier Level' },
     { id: 'amateur', label: 'Amateur League', filterType: 'state', description: 'Top 4 from each DQL' },
     { id: 'intermediate', label: 'Intermediate League', filterType: 'region', description: 'Top 2 from each Amateur' },
@@ -362,6 +363,11 @@ export default function TournamentStatistics() {
               )}
 
               {/* Promotion Info */}
+              {activeTab === 'tournaments' && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <span className="text-xs font-semibold text-indigo-700">🎖️ Competitive tournaments</span>
+                </div>
+              )}
               {activeTab === 'dql' && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-lg border border-green-200">
                   <span className="text-xs font-semibold text-green-700">🏆 Top 4 teams → Amateur League</span>
@@ -380,7 +386,7 @@ export default function TournamentStatistics() {
             </div>
 
             {/* Promotion Pathway Visualization */}
-            {activeTab !== 'friendly' && (
+            {activeTab !== 'friendly' && activeTab !== 'tournaments' && (
               <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex items-center gap-2 text-xs text-slate-600">
                   <span className="font-semibold text-slate-700">Promotion Path:</span>
@@ -530,7 +536,7 @@ export default function TournamentStatistics() {
         )}
 
         {/* Legend for Promotion Zones */}
-        {activeTab !== 'friendly' && activeTab !== 'professional' && filteredClubs.length > 0 && (
+        {activeTab !== 'friendly' && activeTab !== 'tournaments' && activeTab !== 'professional' && filteredClubs.length > 0 && (
           <div className="px-6 py-4 border-t border-slate-200 bg-slate-50">
             <div className="flex items-center gap-6 text-xs">
               <span className="font-semibold text-slate-700">Legend:</span>

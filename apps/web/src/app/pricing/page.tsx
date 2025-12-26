@@ -52,7 +52,7 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid lg:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
           {/* Player Plan */}
           <div className="relative bg-gradient-to-br from-[#1e3a8a]/10 via-[#1e3a8a]/5 to-background border-3 border-[#1e3a8a] rounded-3xl p-10 hover:shadow-2xl transition-all hover:scale-105">
             <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-[#1e3a8a] to-[#1e3a8a]/80 text-white text-sm font-bold rounded-full shadow-lg">
@@ -160,57 +160,6 @@ export default function PricingPage() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-
-          {/* Enterprise Plan */}
-          <div className="bg-gradient-to-br from-card to-card/50 border-2 border-border rounded-3xl p-10 hover:shadow-xl transition-all hover:scale-105">
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-4">
-                <div className="p-4 bg-gradient-to-br from-[#1e3a8a]/10 to-[#f97316]/10 rounded-2xl">
-                  <Crown className="w-12 h-12 text-[#f97316]" />
-                </div>
-              </div>
-              <h3 className="text-3xl font-bold bg-gradient-to-r from-[#1e3a8a] to-[#f97316] bg-clip-text text-transparent mb-3">Enterprise</h3>
-              <div className="flex items-baseline justify-center gap-2 mb-2">
-                <span className="text-5xl font-bold text-foreground">Custom</span>
-              </div>
-              <p className="text-sm text-muted-foreground">For large organizations</p>
-            </div>
-
-            <ul className="space-y-4 mb-10">
-              <li className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-[#1e3a8a] flex-shrink-0 mt-0.5" />
-                <span className="text-base text-foreground">Everything in Club plan</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-[#1e3a8a] flex-shrink-0 mt-0.5" />
-                <span className="text-base text-foreground">Multiple clubs management</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-[#1e3a8a] flex-shrink-0 mt-0.5" />
-                <span className="text-base text-foreground">Custom branding options</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-[#1e3a8a] flex-shrink-0 mt-0.5" />
-                <span className="text-base text-foreground">Full API access</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-[#1e3a8a] flex-shrink-0 mt-0.5" />
-                <span className="text-base text-foreground">Dedicated account manager</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-[#1e3a8a] flex-shrink-0 mt-0.5" />
-                <span className="text-base text-foreground">24/7 priority support</span>
-              </li>
-            </ul>
-
-            <Link
-              href="mailto:sales@professionalclubleague.com"
-              className="group flex items-center justify-center gap-3 w-full px-8 py-4 bg-gradient-to-r from-[#1e3a8a] to-[#1e3a8a]/80 text-white rounded-xl font-semibold hover:from-[#1e3a8a]/90 hover:to-[#1e3a8a]/70 transition-all shadow-lg"
-            >
-              Contact Sales
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
         </div>
 
         {/* FAQ Section */}
@@ -227,7 +176,7 @@ export default function PricingPage() {
             <div className="bg-gradient-to-br from-card to-card/50 border-2 border-border rounded-2xl p-8 hover:border-[#1e3a8a]/30 transition-all">
               <h3 className="text-xl font-bold text-foreground mb-3">Can I switch plans?</h3>
               <p className="text-muted-foreground text-base leading-relaxed">
-                Yes! You can upgrade or downgrade your plan at any time from your account settings. Changes take effect immediately, and we'll prorate any unused time.
+                Your membership type (Player or Club) is tied to your account role and cannot be changed. Each role has its own fixed membership fee. If you want to have both a player and club account, you'll need to create separate accounts with different email addresses.
               </p>
             </div>
 

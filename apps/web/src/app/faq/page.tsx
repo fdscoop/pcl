@@ -85,12 +85,16 @@ const faqs = [
         a: 'We accept credit/debit cards, UPI, net banking, and popular digital wallets. All payments are processed securely.'
       },
       {
+        q: 'Can I upgrade or downgrade my plan?',
+        a: 'Your membership type (Player or Club) is tied to your account role and cannot be changed. If you want to switch roles, you would need to create a separate account with a different email address, as each role has its own membership requirements.'
+      },
+      {
         q: 'Can I cancel my subscription?',
-        a: 'Yes, you can cancel anytime from your account settings. Your subscription remains active until the end of the billing period.'
+        a: 'Yes, you can cancel anytime from your account settings. Your subscription remains active until the end of the billing period. Note: Your membership role cannot be changed once selected.'
       },
       {
         q: 'Do you offer refunds?',
-        a: 'Refunds are available within 7 days of purchase if you haven\'t used premium features. See our refund policy for details.'
+        a: 'Refunds are available within 7 days of purchase if you haven\'t used platform features. Since membership is role-based and non-transferable, refunds are only available under exceptional circumstances. See our refund policy for details.'
       }
     ]
   },

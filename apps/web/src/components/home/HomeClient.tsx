@@ -377,7 +377,7 @@ export default function HomeClient() {
       title: 'Professional Division',
       badge: 'TIER 1',
       icon: '🥇',
-      description: 'Elite teams compete nationally with full media coverage.',
+      description: 'Elite teams compete at the national level with full professional standards.',
       cardClass: 'border-l-4 border-l-accent',
       badgeClass: 'bg-amber-500 text-white font-bold',
       dotClass: 'bg-black',
@@ -1823,21 +1823,21 @@ export default function HomeClient() {
                     <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                       <div className="font-semibold text-foreground mb-1">Tier 3 - Amateur Division</div>
                       <p className="text-sm text-muted-foreground">
-                        Top DQL performers advance to regional Amateur Division competitions. Clubs compete in official league matches and tournaments.
+                        Top DQL performers advance to the regional Amateur Division league. Clubs compete in official league matches and tournaments within this structured tier.
                       </p>
                     </div>
 
                     <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
                       <div className="font-semibold text-foreground mb-1">Tier 2 - Intermediate Division</div>
                       <p className="text-sm text-muted-foreground">
-                        State-level competition for the best Amateur teams. Higher stakes with improved facilities and media coverage.
+                        State-level league for the best Amateur teams. Clubs compete in the Intermediate Division league structure with higher stakes and improved facilities.
                       </p>
                     </div>
 
                     <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                       <div className="font-semibold text-foreground mb-1">Tier 1 - Professional Division</div>
                       <p className="text-sm text-muted-foreground">
-                        Elite national-level competition with full professional standards, broadcasting, and sponsorship opportunities.
+                        Elite national-level league with full professional standards. The pinnacle of PCL's league structure.
                       </p>
                     </div>
                   </div>

@@ -227,7 +227,7 @@ export default function TournamentStatistics() {
               <div className="flex flex-wrap gap-2 text-xs mb-3">
                 <span className="px-3 py-1.5 bg-white/80 text-purple-900 rounded-lg font-semibold border border-purple-200">🏛️ State Level Championship</span>
                 <span className="px-3 py-1.5 bg-white/80 text-purple-900 rounded-lg font-semibold border border-purple-200">🏛️ AIFF Approval Required</span>
-                <span className="px-3 py-1.5 bg-white/80 text-purple-900 rounded-lg font-semibold border border-purple-200">📺 Media Coverage</span>
+                <span className="px-3 py-1.5 bg-white/80 text-purple-900 rounded-lg font-semibold border border-purple-200">⭐ Professional Standards</span>
               </div>
               <p className="text-xs text-purple-700 italic">
                 This state-level tier requires AIFF recognition. Build your reputation in current tournaments while we work together to make this a reality!
@@ -250,8 +250,7 @@ export default function TournamentStatistics() {
               <div className="flex flex-wrap gap-2 text-xs mb-3">
                 <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">🇮🇳 National Championship</span>
                 <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">🏛️ AIFF Approval Required</span>
-                <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">📺 Full Media Coverage</span>
-                <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">💰 Sponsorships</span>
+                <span className="px-3 py-1.5 bg-white/80 text-blue-900 rounded-lg font-semibold border border-blue-200">⭐ Professional Standards</span>
               </div>
               <p className="text-xs text-blue-700 italic">
                 This is the pinnacle of club football in India. Requires AIFF recognition - together we will make this a reality! Start your journey with Friendly Matches today.

@@ -1,14 +1,15 @@
-import { Metadata } from 'next'
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { BookOpen, Users, Shield, Trophy, CheckCircle, ArrowRight, Mail } from 'lucide-react'
-
-export const metadata: Metadata = {
-  title: 'Getting Started Guide | PCL Championship',
-  description: 'Complete guide to getting started with Professional Club League - Learn how players join clubs, club owners manage teams, and organize tournaments on India\'s leading sports platform.',
-}
+import ContactModal from '@/components/ContactModal'
+import BetaNotice from '@/components/BetaNotice'
 
 export default function GuidePage() {
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -52,6 +53,11 @@ export default function GuidePage() {
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Beta Notice */}
+        <div className="mb-12">
+          <BetaNotice size="md" />
+        </div>
+
         {/* Quick Start */}
         <div className="mb-20">
           <h2 className="text-4xl font-bold text-center mb-4">
@@ -359,17 +365,23 @@ export default function GuidePage() {
                 <Trophy className="w-5 h-5 text-[#f97316]" />
                 View Pricing
               </Link>
-              <a
-                href="mailto:support@professionalclubleague.com"
+              <button
+                onClick={() => setIsContactModalOpen(true)}
                 className="inline-flex items-center gap-3 px-8 py-4 bg-card border-2 border-border rounded-xl font-semibold hover:bg-accent transition-all"
               >
                 <Mail className="w-5 h-5" />
                 Contact Support
-              </a>
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        defaultSubject="Getting Started with PCL"
+      />
     </div>
   )
 }

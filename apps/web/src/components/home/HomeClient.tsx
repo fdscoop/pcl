@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import TournamentStatistics from '@/components/TournamentStatistics'
+import BetaBanner from '@/components/BetaBanner'
+import ContactModal from '@/components/ContactModal'
 import type { Club, Player, Stadium } from '@/types/database'
 
 export default function HomeClient() {
@@ -39,11 +41,14 @@ export default function HomeClient() {
   const [showMatchDetails, setShowMatchDetails] = useState(false)
   const [liveMatchTimes, setLiveMatchTimes] = useState<{[key: number]: {minutes: number, seconds: number}}>({})
 
+  // Contact Modal State
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+
   // Initialize live match times
   useEffect(() => {
     const initialTimes: {[key: number]: {minutes: number, seconds: number}} = {}
     sampleMatches.forEach(match => {
-      if (match.status === 'live') {
+      if (match.status === 'live' && match.time) {
         // Parse initial time (e.g., "68' 2nd Half" -> 68 minutes)
         const timeMatch = match.time.match(/(\d+)/)
         const initialMinutes = timeMatch ? parseInt(timeMatch[1]) : 45
@@ -438,6 +443,9 @@ export default function HomeClient() {
         </div>
       </nav>
 
+      {/* Beta Banner - Prominent for Payment Gateway Verification */}
+      <BetaBanner />
+
       {/* Hero Section */}
       <main>
         {/* Modern Banner */}
@@ -572,6 +580,13 @@ export default function HomeClient() {
             </p>
           </div>
 
+          {/* Demo Data Notice */}
+          <div className="mb-8 p-3 bg-blue-50 border border-blue-200 rounded-lg max-w-3xl mx-auto">
+            <p className="text-sm text-blue-900 text-center">
+              <strong>Demo Data:</strong> All matches, clubs, and players shown are sample data for demonstration purposes only.
+            </p>
+          </div>
+
           {/* Match Filters */}
           <div className="bg-card border border-border rounded-lg p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -659,10 +674,10 @@ export default function HomeClient() {
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
                     <div className="text-right">
                       <div className={`font-bold text-lg ${
-                        match.status !== 'upcoming' && match.homeScore > match.awayScore 
-                          ? 'text-green-600' 
-                          : match.status !== 'upcoming' && match.homeScore < match.awayScore 
-                          ? 'text-red-600' 
+                        match.status !== 'upcoming' && match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore > match.awayScore
+                          ? 'text-green-600'
+                          : match.status !== 'upcoming' && match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore < match.awayScore
+                          ? 'text-red-600'
                           : 'text-foreground'
                       }`}>
                         {match.homeTeam}
@@ -679,20 +694,20 @@ export default function HomeClient() {
                         <>
                           <div className="flex items-center justify-center gap-2">
                             <div className={`text-3xl font-bold px-2 rounded ${
-                              match.homeScore > match.awayScore 
-                                ? 'bg-green-50 text-green-600' 
-                                : match.homeScore < match.awayScore 
-                                ? 'bg-red-50 text-red-600' 
+                              match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore > match.awayScore
+                                ? 'bg-green-50 text-green-600'
+                                : match.homeScore !== undefined && match.awayScore !== undefined && match.homeScore < match.awayScore
+                                ? 'bg-red-50 text-red-600'
                                 : 'text-foreground'
                             }`}>
                               {match.homeScore}
                             </div>
                             <div className="text-2xl font-bold text-muted-foreground">-</div>
                             <div className={`text-3xl font-bold px-2 rounded ${
-                              match.awayScore > match.homeScore 
-                                ? 'bg-green-50 text-green-600' 
-                                : match.awayScore < match.homeScore 
-                                ? 'bg-red-50 text-red-600' 
+                              match.awayScore !== undefined && match.homeScore !== undefined && match.awayScore > match.homeScore
+                                ? 'bg-green-50 text-green-600'
+                                : match.awayScore !== undefined && match.homeScore !== undefined && match.awayScore < match.homeScore
+                                ? 'bg-red-50 text-red-600'
                                 : 'text-foreground'
                             }`}>
                               {match.awayScore}
@@ -717,10 +732,10 @@ export default function HomeClient() {
                     </div>
                     <div className="text-left">
                       <div className={`font-bold text-lg ${
-                        match.status !== 'upcoming' && match.awayScore > match.homeScore 
-                          ? 'text-green-600' 
-                          : match.status !== 'upcoming' && match.awayScore < match.homeScore 
-                          ? 'text-red-600' 
+                        match.status !== 'upcoming' && match.awayScore !== undefined && match.homeScore !== undefined && match.awayScore > match.homeScore
+                          ? 'text-green-600'
+                          : match.status !== 'upcoming' && match.awayScore !== undefined && match.homeScore !== undefined && match.awayScore < match.homeScore
+                          ? 'text-red-600'
                           : 'text-foreground'
                       }`}>
                         {match.awayTeam}
@@ -2243,9 +2258,12 @@ export default function HomeClient() {
                     </a>
                   </li>
                   <li>
-                    <a href="mailto:support@professionalclubleague.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <button
+                      onClick={() => setIsContactModalOpen(true)}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+                    >
                       Contact Support
-                    </a>
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -2311,6 +2329,13 @@ export default function HomeClient() {
           </div>
         </div>
       </footer>
+
+      {/* Contact Support Modal */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        defaultSubject="General Inquiry"
+      />
     </div>
   )
 }

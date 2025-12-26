@@ -1,14 +1,15 @@
-import { Metadata } from 'next'
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Check, Crown, Shield, ArrowRight, Users } from 'lucide-react'
-
-export const metadata: Metadata = {
-  title: 'Pricing & Plans | PCL Championship',
-  description: 'Simple, transparent pricing for Professional Club League - Choose the perfect plan for players, clubs, and organizations on India\'s leading sports management platform.',
-}
+import ContactModal from '@/components/ContactModal'
+import BetaNotice from '@/components/BetaNotice'
 
 export default function PricingPage() {
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -52,6 +53,11 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Beta Notice */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <BetaNotice size="md" />
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
           {/* Player Plan */}
           <div className="relative bg-gradient-to-br from-[#1e3a8a]/10 via-[#1e3a8a]/5 to-background border-3 border-[#1e3a8a] rounded-3xl p-10 hover:shadow-2xl transition-all hover:scale-105">
@@ -231,17 +237,23 @@ export default function PricingPage() {
                   Start Your Journey
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link
-                  href="/guide"
+                <button
+                  onClick={() => setIsContactModalOpen(true)}
                   className="inline-flex items-center gap-3 px-8 py-4 bg-card border-2 border-[#1e3a8a]/30 rounded-xl font-semibold hover:bg-[#1e3a8a]/5 hover:border-[#1e3a8a] transition-all"
                 >
-                  View Getting Started Guide
-                </Link>
+                  Contact Sales
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        defaultSubject="Pricing Inquiry"
+      />
     </div>
   )
 }

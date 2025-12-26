@@ -125,6 +125,13 @@ export default function ClubsPage() {
           </p>
         </div>
 
+        {/* Demo Data Notice */}
+        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-900 text-center">
+            <strong>Demo Data:</strong> All club profiles shown are sample data for demonstration purposes only.
+          </p>
+        </div>
+
         {/* Search and Filters */}
         <div className="mb-8 space-y-6">
           {/* Search Bar */}

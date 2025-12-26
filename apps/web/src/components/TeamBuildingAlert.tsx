@@ -278,6 +278,16 @@ export function TeamBuildingAlert({ activeContractsCount }: TeamBuildingAlertPro
               ⚙️ Create Team
             </Button>
           )}
+
+          {/* Matches Button - Show when team can participate in tournaments (8+ players for 5s, 11+ for 7s, 14+ for 11s) */}
+          {activeContractsCount >= 8 && (
+            <Button
+              onClick={() => router.push('/dashboard/club-owner/matches')}
+              className="flex-1 sm:flex-initial bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold text-xs sm:text-sm py-1.5 px-3 shadow-lg shadow-green-600/30 hover:shadow-green-600/50 transform hover:scale-105 active:scale-95 transition-transform border-0"
+            >
+              ⚽ Matches
+            </Button>
+          )}
         </div>
       </Alert>
     </div>

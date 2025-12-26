@@ -456,5 +456,44 @@
   .animate-celebration-pulse {
     animation: celebration-pulse 0.6s ease-in-out;
   }
-}
 
+  /* React Day Picker Styles */
+  .rdp {
+    --rdp-cell-size: 40px;
+    --rdp-accent-color: rgb(255 140 66);
+    --rdp-background-color: rgb(230 240 250);
+    margin: 0 auto;
+  }
+
+  .rdp-caption {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    font-weight: 600;
+    color: rgb(13 27 62);
+  }
+
+  .rdp-head_cell {
+    color: rgb(100 116 139);
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .rdp-cell.rdp-day_selected:not([aria-disabled]) .rdp-day {
+    background-color: rgb(255 140 66);
+    color: white;
+  }
+
+  .rdp-cell.rdp-day_today:not([aria-disabled]) .rdp-day {
+    font-weight: bold;
+    color: rgb(255 140 66);
+  }
+
+  .rdp-day:hover:not([aria-disabled]):not(.rdp-day_selected) {
+    background-color: rgb(230 240 250);
+  }
+
+  .rdp-day_disabled {
+    color: rgb(209 213 219);
+  }
+}

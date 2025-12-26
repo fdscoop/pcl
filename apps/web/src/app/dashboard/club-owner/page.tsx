@@ -11,7 +11,7 @@ import { UnreadContractBadge } from '@/components/UnreadContractBadge'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
-import { TeamBuildingAlert } from '@/components/TeamBuildingAlert'
+import { TeamBuildingAlert } from '../../../components/TeamBuildingAlert'
 
 export default function ClubOwnerDashboard() {
   const router = useRouter()

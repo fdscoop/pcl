@@ -11,7 +11,7 @@ import { UnreadContractBadge } from '@/components/UnreadContractBadge'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
-import { RecruitmentProgress } from '@/components/RecruitmentProgress'
+import { TeamBuildingAlert } from '@/components/TeamBuildingAlert'
 
 export default function ClubOwnerDashboard() {
   const router = useRouter()
@@ -196,6 +196,9 @@ export default function ClubOwnerDashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Team Building Alert - Natural position in page flow */}
+        <TeamBuildingAlert activeContractsCount={activeContractsCount} />
+
         {/* Club Profile Header */}
         <div className="mb-8">
           <div className="flex items-start gap-6">
@@ -453,11 +456,6 @@ export default function ClubOwnerDashboard() {
               </Button>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Recruitment Progress */}
-        <div className="mb-8">
-          <RecruitmentProgress activeContractsCount={activeContractsCount} />
         </div>
 
         <Card>

@@ -151,9 +151,15 @@ export default function ClubOwnerMessagesPage() {
       setUserId(user.id)
       const { data: clubData } = await supabase
         .from('clubs')
-        .select('logo_url')
+        .select('logo_url, kyc_verified')
         .eq('owner_id', user.id)
         .maybeSingle()
+
+      // Check KYC verification status
+      if (clubData && !clubData.kyc_verified) {
+        router.replace('/dashboard/club-owner/kyc')
+        return
+      }
 
       setClubLogoUrl(clubData?.logo_url || null)
       await loadMessages(user.id)

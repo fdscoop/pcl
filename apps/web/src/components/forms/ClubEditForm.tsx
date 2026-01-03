@@ -462,15 +462,16 @@ export default function ClubEditForm({ club }: ClubEditFormProps) {
         <Button
           type="submit"
           disabled={loading}
-          className="flex-1"
+          className="flex-1 bg-gradient-to-r from-accent via-orange-500 to-orange-600 hover:from-accent/90 hover:via-orange-500/90 hover:to-orange-600/90 text-white font-bold py-6 text-base shadow-lg hover:shadow-xl transition-all"
         >
-          {loading ? 'Saving Changes...' : 'Save Changes'}
+          {loading ? '⏳ Saving Changes...' : '✅ Save Club Information'}
         </Button>
         <Button
           type="button"
           variant="outline"
           onClick={() => router.push('/dashboard/club-owner')}
           disabled={loading}
+          className="px-8 border-2 hover:bg-accent/10 font-semibold"
         >
           Cancel
         </Button>

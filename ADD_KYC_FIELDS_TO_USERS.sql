@@ -1,40 +1,59 @@
 -- Add KYC-related fields to users table
 -- Run this in Supabase SQL Editor
 
--- Add kyc_status enum type (if not already exists)
-DO $$ BEGIN
-  CREATE TYPE kyc_status AS ENUM ('pending', 'verified', 'rejected');
-EXCEPTION WHEN duplicate_object THEN null;
+-- Add full_name column (for Aadhaar name storage)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'full_name'
+    ) THEN
+        ALTER TABLE users ADD COLUMN full_name TEXT;
+        COMMENT ON COLUMN users.full_name IS 'Full name from Aadhaar verification';
+    END IF;
 END $$;
 
--- Add kyc_status column
-ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_status kyc_status DEFAULT NULL;
+-- Add date_of_birth column
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'date_of_birth'
+    ) THEN
+        ALTER TABLE users ADD COLUMN date_of_birth DATE;
+        COMMENT ON COLUMN users.date_of_birth IS 'Date of birth from Aadhaar verification';
+    END IF;
+END $$;
 
--- Add aadhaar_number column (encrypted, for KYC verification)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS aadhaar_number TEXT;
+-- Add aadhaar_number column (if not exists)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'aadhaar_number'
+    ) THEN
+        ALTER TABLE users ADD COLUMN aadhaar_number TEXT UNIQUE;
+        COMMENT ON COLUMN users.aadhaar_number IS 'Verified Aadhaar number (masked for security)';
+    END IF;
+END $$;
 
--- Add kyc_verified_at timestamp
-ALTER TABLE users ADD COLUMN IF NOT EXISTS kyc_verified_at TIMESTAMP;
+-- Create index for Aadhaar lookup
+CREATE INDEX IF NOT EXISTS idx_users_aadhaar ON users(aadhaar_number);
 
--- Add comments for documentation
-COMMENT ON COLUMN users.kyc_status IS 'KYC verification status: NULL (not started), verified, or rejected';
-COMMENT ON COLUMN users.aadhaar_number IS 'Encrypted Aadhaar number used for KYC verification';
-COMMENT ON COLUMN users.kyc_verified_at IS 'Timestamp when KYC was verified';
+-- Populate full_name from existing first_name and last_name (if needed)
+UPDATE users
+SET full_name = TRIM(CONCAT(first_name, ' ', last_name))
+WHERE full_name IS NULL AND first_name IS NOT NULL;
 
--- Create index for KYC status queries
-CREATE INDEX IF NOT EXISTS idx_users_kyc_status ON users(kyc_status);
-
--- Success message
-SELECT 'KYC fields added successfully! Users can now complete Aadhaar verification.' as status;
-
--- Verify the changes
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'users' 
-AND column_name IN ('kyc_status', 'kyc_verified_at', 'aadhaar_number')
-ORDER BY column_name;
-SELECT column_name, data_type, is_nullable
+-- Verify the columns were added
+SELECT
+    column_name,
+    data_type,
+    is_nullable
 FROM information_schema.columns
 WHERE table_name = 'users'
-  AND column_name IN ('aadhaar_number', 'kyc_verified_at', 'kyc_status')
+    AND column_name IN ('full_name', 'date_of_birth', 'aadhaar_number')
 ORDER BY column_name;
+
+-- Success message
+SELECT 'KYC fields added to users table successfully!' AS message;

@@ -79,6 +79,12 @@ export default function TeamManagementPage() {
 
       setClub(clubData)
 
+      // Check KYC verification status
+      if (!clubData.kyc_verified) {
+        router.replace('/dashboard/club-owner/kyc')
+        return
+      }
+
       // Try to get existing team (don't auto-create)
       const { data: teamData, error: teamError } = await supabase
         .from('teams')

@@ -99,6 +99,12 @@ function ContractsPageContent() {
 
       setClub(clubData)
 
+      // Check KYC verification status
+      if (!clubData.kyc_verified) {
+        router.replace('/dashboard/club-owner/kyc')
+        return
+      }
+
       // Fetch contracts for this club
       const { data: contractsData, error: contractsError } = await supabase
         .from('contracts')

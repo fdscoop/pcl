@@ -58,15 +58,14 @@ async function verifyAadhaarOTP(requestId: string, otp: string): Promise<any> {
 
 export async function POST(request: NextRequest) {
   try {
-    const { request_id, otp, club_id } = await request.json()
+    const { request_id, otp } = await request.json()
 
-    console.log('\n=== AADHAAR OTP VERIFICATION ===')
+    console.log('\n=== PLAYER AADHAAR OTP VERIFICATION ===')
     console.log('Request ID:', request_id)
     console.log('OTP:', otp?.substring(0, 3) + '***')
-    console.log('Club ID:', club_id)
 
     // Validate inputs
-    if (!request_id || !otp || !club_id) {
+    if (!request_id || !otp) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -111,9 +110,6 @@ export async function POST(request: NextRequest) {
     const result = await verifyAadhaarOTP(request_id, otp)
 
     console.log('📦 Cashfree Verify Response:', JSON.stringify(result, null, 2))
-    console.log('🔍 Status field:', result.status)
-    console.log('🔍 Message field:', result.message)
-    console.log('🔍 Data field:', result.data)
 
     // Extract Aadhaar data - Cashfree may return it directly or nested
     const aadhaarData = result.data || result.aadhaar_data || result
@@ -284,154 +280,47 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Aadhaar data validated successfully against user profile')
 
-    // Get club details to determine verification flow
-    const { data: club } = await supabase
-      .from('clubs')
-      .select('id, club_type, kyc_verified')
-      .eq('id', club_id)
-      .single()
-
-    if (!club) {
-      return NextResponse.json(
-        { error: 'Club not found' },
-        { status: 404 }
-      )
-    }
-
-    // Update user with verified Aadhaar and fill in missing profile data
-    const userUpdateData: any = {
-      kyc_status: 'verified',
-      kyc_verified_at: new Date().toISOString()
-    }
-
-    // Try to update aadhaar_number (column may not exist yet)
-    try {
-      userUpdateData.aadhaar_number = otpRequest.aadhaar_number
-    } catch (e) {
-      console.warn('⚠️ aadhaar_number column may not exist, skipping')
-    }
-
-    // If user profile is missing name or DOB, update with Aadhaar data
-    if (!userProfileName && aadhaarName) {
-      // Try full_name first, fallback to first_name if column doesn't exist
-      const aadhaarFullName = aadhaarData.name || aadhaarData.full_name
-      const nameParts = aadhaarFullName.split(' ')
-
-      userUpdateData.full_name = aadhaarFullName
-      // Also update first_name and last_name for compatibility
-      if (nameParts.length > 0) {
-        userUpdateData.first_name = nameParts[0]
-        userUpdateData.last_name = nameParts.slice(1).join(' ') || nameParts[0]
-      }
-      console.log('📝 Updating user profile with Aadhaar name:', aadhaarFullName)
-    }
-
-    if (!userProfileDOB && aadhaarDOB) {
-      userUpdateData.date_of_birth = aadhaarDOB
-      console.log('📝 Updating user profile with Aadhaar DOB:', userUpdateData.date_of_birth)
-    }
-
-    const { error: userError } = await supabase
-      .from('users')
-      .update(userUpdateData)
-      .eq('id', user.id)
-
-    if (userError) {
-      console.error('❌ User update error:', userError)
-      console.error('❌ Error details:', JSON.stringify(userError, null, 2))
-      console.error('❌ Tried to update with:', userUpdateData)
-
-      // Check if it's a column not found error
-      if (userError.message?.includes('column') || userError.message?.includes('does not exist')) {
-        console.error('⚠️ Database schema issue - please run ADD_KYC_FIELDS_TO_USERS.sql migration')
-        return NextResponse.json(
-          {
-            error: 'Database schema outdated',
-            message: 'Please contact support. Database migration required.',
-            details: 'Run ADD_KYC_FIELDS_TO_USERS.sql in Supabase SQL Editor'
-          },
-          { status: 500 }
-        )
-      }
-
-      return NextResponse.json(
-        { error: 'Failed to update user', details: userError.message },
-        { status: 500 }
-      )
-    }
-
     // Parse Aadhaar address data
     const parseAadhaarAddress = (aadhaarData: any) => {
       const addressData: any = {}
 
-      console.log('🏠 Parsing Aadhaar address data for club:', JSON.stringify(aadhaarData, null, 2))
+      console.log('🏠 Parsing Aadhaar address data:', JSON.stringify(aadhaarData, null, 2))
 
       // PRIORITY 1: Use split_address if available (most reliable)
       if (aadhaarData.split_address) {
         const splitAddr = aadhaarData.split_address
-        console.log('✅ Using structured split_address from Cashfree:', splitAddr)
+        console.log('✅ Using split_address from Cashfree:', splitAddr)
 
-        if (splitAddr.state) {
-          addressData.state = splitAddr.state
-          console.log('🏛️ State from split_address:', splitAddr.state)
-        }
-        if (splitAddr.dist || splitAddr.district) {
-          addressData.district = splitAddr.dist || splitAddr.district
-          console.log('🏘️ District from split_address:', splitAddr.dist || splitAddr.district)
-        }
-        if (splitAddr.pincode) {
-          addressData.pincode = splitAddr.pincode
-          console.log('📮 Pincode from split_address:', splitAddr.pincode)
-        }
-        if (splitAddr.vtc || splitAddr.city) {
-          addressData.city = splitAddr.vtc || splitAddr.city
-          console.log('🏙️ City from split_address:', splitAddr.vtc || splitAddr.city)
-        }
-        if (splitAddr.country) {
-          addressData.country = splitAddr.country
-          console.log('🌏 Country from split_address:', splitAddr.country)
-        }
+        if (splitAddr.state) addressData.state = splitAddr.state
+        if (splitAddr.dist || splitAddr.district) addressData.district = splitAddr.dist || splitAddr.district
+        if (splitAddr.pincode) addressData.pincode = splitAddr.pincode
+        if (splitAddr.vtc || splitAddr.city) addressData.city = splitAddr.vtc || splitAddr.city
+        if (splitAddr.country) addressData.country = splitAddr.country
 
-        // Store the provided full address or build from components
-        if (aadhaarData.address) {
-          addressData.full_address = aadhaarData.address
-        } else {
-          const addressComponents = [
-            splitAddr.house,
-            splitAddr.street,
-            splitAddr.landmark,
-            splitAddr.locality,
-            splitAddr.vtc,
-            splitAddr.dist || splitAddr.district,
-            splitAddr.state,
-            splitAddr.country,
-            splitAddr.pincode
-          ].filter(Boolean)
-          addressData.full_address = addressComponents.join(', ')
-        }
+        // Build full address from components if not provided
+        const addressComponents = [
+          splitAddr.house,
+          splitAddr.street,
+          splitAddr.landmark,
+          splitAddr.locality,
+          splitAddr.vtc,
+          splitAddr.dist || splitAddr.district,
+          splitAddr.state,
+          splitAddr.country,
+          splitAddr.pincode
+        ].filter(Boolean)
+
+        addressData.full_address = addressComponents.join(', ')
       }
 
       // PRIORITY 2: Use direct fields if available
-      if (!addressData.state && aadhaarData.state) {
-        addressData.state = aadhaarData.state
-        console.log('🏛️ State from direct field:', aadhaarData.state)
-      }
-      if (!addressData.district && aadhaarData.district) {
-        addressData.district = aadhaarData.district
-        console.log('🏘️ District from direct field:', aadhaarData.district)
-      }
+      if (!addressData.state && aadhaarData.state) addressData.state = aadhaarData.state
+      if (!addressData.district && aadhaarData.district) addressData.district = aadhaarData.district
       if (!addressData.pincode && (aadhaarData.pincode || aadhaarData.zip)) {
         addressData.pincode = aadhaarData.pincode || aadhaarData.zip
-        console.log('📮 Pincode from direct field:', aadhaarData.pincode || aadhaarData.zip)
       }
-      if (!addressData.city && aadhaarData.city) {
-        addressData.city = aadhaarData.city
-        console.log('🏙️ City from direct field:', aadhaarData.city)
-      }
-      if (!addressData.country && aadhaarData.country) {
-        addressData.country = aadhaarData.country
-        console.log('🌏 Country from direct field:', aadhaarData.country)
-      }
+      if (!addressData.city && aadhaarData.city) addressData.city = aadhaarData.city
+      if (!addressData.country && aadhaarData.country) addressData.country = aadhaarData.country
 
       // PRIORITY 3: Use full address string as fallback (least reliable)
       if (!addressData.full_address) {
@@ -444,7 +333,8 @@ export async function POST(request: NextRequest) {
         console.log('🌏 Country defaulted to India based on Indian address data')
       }
 
-      console.log('📋 Final parsed address data for club:', addressData)
+      console.log('📍 Final parsed address data:', addressData)
+
       return addressData
     }
 
@@ -453,57 +343,104 @@ export async function POST(request: NextRequest) {
 
     console.log('📍 Parsed address data from Aadhaar:', addressData)
 
-    // Update club based on type
-    let clubUpdateData: any = {
-      kyc_verified: true,
-      kyc_verified_at: new Date().toISOString()
+    // Normalize DOB to YYYY-MM-DD format for storage
+    const normalizeDate = (date: string) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return date
+      }
+      if (/^\d{2}-\d{2}-\d{4}$/.test(date)) {
+        const [day, month, year] = date.split('-')
+        return `${year}-${month}-${day}`
+      }
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+        const [day, month, year] = date.split('/')
+        return `${year}-${month}-${day}`
+      }
+      return date
     }
 
-    // Add verified address data to club update
-    if (addressData.state) clubUpdateData.state = addressData.state
-    if (addressData.district) clubUpdateData.district = addressData.district
-    if (addressData.pincode) clubUpdateData.pincode = addressData.pincode
-    if (addressData.full_address) clubUpdateData.full_address = addressData.full_address
-    if (addressData.city) clubUpdateData.city = addressData.city
-    if (addressData.country) clubUpdateData.country = addressData.country
-
-    // Registered clubs need admin review
-    if (club.club_type === 'registered') {
-      clubUpdateData.status = 'pending_review'
-    } else {
-      // Unregistered clubs auto-verified
-      clubUpdateData.status = 'active'
+    // Update user with verified Aadhaar and fill in missing profile data
+    const userUpdateData: any = {
+      kyc_status: 'verified',
+      kyc_verified_at: new Date().toISOString(),
+      aadhaar_number: otpRequest.aadhaar_number
     }
 
-    console.log('Updating club with data:', clubUpdateData)
+    // If user profile is missing name or DOB, update with Aadhaar data
+    if (!userProfileName && aadhaarName) {
+      const aadhaarFullName = aadhaarData.name || aadhaarData.full_name
+      const nameParts = aadhaarFullName.split(' ')
 
-    const { error: clubError } = await supabase
-      .from('clubs')
-      .update(clubUpdateData)
-      .eq('id', club_id)
+      userUpdateData.full_name = aadhaarFullName
+      if (nameParts.length > 0) {
+        userUpdateData.first_name = nameParts[0]
+        userUpdateData.last_name = nameParts.slice(1).join(' ') || nameParts[0]
+      }
+      console.log('📝 Updating user profile with Aadhaar name:', aadhaarFullName)
+    }
 
-    if (clubError) {
-      console.error('❌ Club update error:', clubError)
-      console.error('❌ Club update error details:', JSON.stringify(clubError, null, 2))
-      console.error('❌ Tried to update with:', clubUpdateData)
+    if (!userProfileDOB && aadhaarDOB) {
+      userUpdateData.date_of_birth = normalizeDate(aadhaarDOB)
+      console.log('📝 Updating user profile with Aadhaar DOB:', userUpdateData.date_of_birth)
+    }
+
+    const { error: userError } = await supabase
+      .from('users')
+      .update(userUpdateData)
+      .eq('id', user.id)
+
+    if (userError) {
+      console.error('❌ User update error:', userError)
       return NextResponse.json(
-        {
-          error: 'Failed to update club',
-          details: clubError.message,
-          dbError: clubError
-        },
+        { error: 'Failed to update user', details: userError.message },
         { status: 500 }
       )
     }
 
-    console.log('✅ Club updated successfully')
+    // Update player profile with address data and DOB
+    const { data: playerData } = await supabase
+      .from('players')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (playerData?.id) {
+      const playerUpdateData: any = {
+        is_available_for_scout: true
+      }
+
+      // Add address data
+      if (addressData.state) playerUpdateData.state = addressData.state
+      if (addressData.district) playerUpdateData.district = addressData.district
+      if (addressData.full_address) playerUpdateData.address = addressData.full_address
+
+      // Add country to nationality field
+      if (addressData.country) playerUpdateData.nationality = addressData.country
+
+      // Add DOB if not already set
+      if (aadhaarDOB) {
+        playerUpdateData.date_of_birth = normalizeDate(aadhaarDOB)
+      }
+
+      console.log('📝 Updating player profile with:', playerUpdateData)
+
+      const { error: playerError } = await supabase
+        .from('players')
+        .update(playerUpdateData)
+        .eq('id', playerData.id)
+
+      if (playerError) {
+        console.error('❌ Player update error:', playerError)
+      } else {
+        console.log('✅ Player profile updated successfully')
+      }
+    }
 
     // Store in KYC documents
     const { error: docError } = await supabase
       .from('kyc_documents')
       .insert({
         user_id: user.id,
-        club_id: club_id,
         document_type: 'aadhaar',
         verification_status: 'verified',
         verified_data: aadhaarData,
@@ -512,14 +449,11 @@ export async function POST(request: NextRequest) {
 
     if (docError) {
       console.error('❌ KYC document error:', docError)
-      console.error('❌ KYC document error details:', JSON.stringify(docError, null, 2))
     } else {
       console.log('✅ KYC document stored successfully')
     }
 
     // Mark OTP request as verified
-    console.log('Updating kyc_aadhaar_requests status to verified for request_id:', request_id)
-
     const { error: requestError } = await supabase
       .from('kyc_aadhaar_requests')
       .update({
@@ -530,7 +464,6 @@ export async function POST(request: NextRequest) {
 
     if (requestError) {
       console.error('❌ Request update error:', requestError)
-      console.error('❌ Request update error details:', JSON.stringify(requestError, null, 2))
     } else {
       console.log('✅ kyc_aadhaar_requests status updated to verified')
     }
@@ -544,12 +477,13 @@ export async function POST(request: NextRequest) {
         name: aadhaarData.name || aadhaarData.full_name,
         dob: aadhaarData.dob || aadhaarData.date_of_birth,
         address: aadhaarData.address,
-        status: clubUpdateData.status
+        state: addressData.state,
+        district: addressData.district
       }
     })
   } catch (error: any) {
     console.error('❌ Error in OTP verification:', error.message)
-    
+
     return NextResponse.json(
       {
         error: error.response?.data?.message || error.message || 'Verification failed',

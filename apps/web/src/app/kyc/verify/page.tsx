@@ -22,6 +22,7 @@ export default function KYCVerificationPage() {
   const [otpSent, setOtpSent] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [otpGenerating, setOtpGenerating] = useState(false)
+  const [requestId, setRequestId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadUser = async () => {
@@ -83,17 +84,26 @@ export default function KYCVerificationPage() {
         return
       }
 
-      // TODO: Replace with actual Cashfree API call
-      // For now, simulate API call with delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Call the API to generate OTP
+      const response = await fetch('/api/kyc/player/generate-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          aadhaar_number: aadhaarNumber.replace(/\s/g, '')
+        })
+      })
 
-      // Dummy implementation - in production, this would call Cashfree API
-      console.log('🔐 DUMMY: Generating OTP for Aadhaar:', aadhaarNumber)
-      console.log('📱 DUMMY: OTP sent to registered mobile number')
-      console.log('🎯 DUMMY: Use OTP: 123456 for testing')
+      const data = await response.json()
 
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to generate OTP')
+      }
+
+      setRequestId(data.request_id)
       setOtpSent(true)
-      setSuccess('OTP sent to your registered mobile number. Please check your phone.')
+      setSuccess(data.message || 'OTP sent to your registered mobile number. Please check your phone.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate OTP')
     } finally {
@@ -114,59 +124,28 @@ export default function KYCVerificationPage() {
         return
       }
 
-      // TODO: Replace with actual Cashfree API verification
-      // For now, simulate API call with delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // Dummy implementation - accept OTP: 123456
-      if (otp !== '123456') {
-        setError('Invalid OTP. Please try again. (For testing, use: 123456)')
+      if (!requestId) {
+        setError('Invalid session. Please generate OTP again.')
         setVerifying(false)
         return
       }
 
-      console.log('✅ DUMMY: OTP verified successfully')
-      console.log('📝 DUMMY: Updating KYC status to verified')
-
-      // Update user KYC status to verified
-      const supabase = createClient()
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          kyc_status: 'verified',
-          kyc_verified_at: new Date().toISOString(),
-          aadhaar_number: aadhaarNumber.replace(/\s/g, ''), // Store without spaces
+      // Call the API to verify OTP
+      const response = await fetch('/api/kyc/player/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          request_id: requestId,
+          otp: otp
         })
-        .eq('id', user.id)
+      })
 
-      if (updateError) {
-        throw updateError
-      }
+      const data = await response.json()
 
-      // Update player availability for scouting
-      // Query player by user_id to ensure we update the correct player
-      const { data: playerData } = await supabase
-        .from('players')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
-
-      if (playerData?.id) {
-        const { error: playerError } = await supabase
-          .from('players')
-          .update({
-            is_available_for_scout: true,
-          })
-          .eq('id', playerData.id)
-        
-        if (playerError) {
-          console.error('Error updating player availability:', playerError)
-          throw playerError
-        } else {
-          console.log('✅ Player marked as available for scouting with ID:', playerData.id)
-        }
-      } else {
-        console.warn('No player found for user:', user.id)
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to verify OTP')
       }
 
       setSuccess('✅ KYC Verification Successful! You are now verified and searchable by clubs.')
@@ -307,11 +286,11 @@ export default function KYCVerificationPage() {
                   {otpGenerating ? 'Generating OTP...' : 'Generate OTP'}
                 </Button>
 
-                {/* Testing Note */}
-                <Alert className="border-yellow-200 bg-yellow-50">
-                  <AlertDescription className="text-yellow-800 text-sm">
-                    <strong>Testing Mode:</strong> This is a dummy implementation. Enter any 12-digit number as Aadhaar.
-                    You'll receive OTP: <code className="bg-yellow-200 px-1 rounded">123456</code> for verification.
+                {/* Info Note */}
+                <Alert className="border-blue-200 bg-blue-50">
+                  <AlertDescription className="text-blue-800 text-sm">
+                    <strong>Note:</strong> OTP will be sent to the mobile number registered with your Aadhaar.
+                    Make sure you have access to that number.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -371,10 +350,10 @@ export default function KYCVerificationPage() {
                   </Button>
                 </div>
 
-                {/* Testing Note */}
-                <Alert className="border-yellow-200 bg-yellow-50">
-                  <AlertDescription className="text-yellow-800 text-sm">
-                    <strong>Testing Mode:</strong> Use OTP: <code className="bg-yellow-200 px-1 rounded font-mono">123456</code> to verify.
+                {/* Info Note */}
+                <Alert className="border-blue-200 bg-blue-50">
+                  <AlertDescription className="text-blue-800 text-sm">
+                    <strong>Tip:</strong> OTP is valid for 10 minutes. If you don't receive it, click "Resend OTP".
                   </AlertDescription>
                 </Alert>
               </div>

@@ -136,6 +136,13 @@ export default function ScoutPlayersPage() {
         }
         setClub(normalizedClub)
         console.log('Club loaded:', clubData.club_name)
+
+        // Check KYC verification status
+        if (!clubData.kyc_verified) {
+          console.log('Club KYC not verified, redirecting to KYC page')
+          router.replace('/dashboard/club-owner/kyc')
+          return
+        }
       }
 
       // Get verified players available for scouting

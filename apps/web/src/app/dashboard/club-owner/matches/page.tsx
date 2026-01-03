@@ -121,6 +121,12 @@ export default function MatchesPage() {
 
       setClub(clubData)
 
+      // Check KYC verification status
+      if (!clubData.kyc_verified) {
+        router.replace('/dashboard/club-owner/kyc')
+        return
+      }
+
       // Get contracted players count
       const { data: contractsData, count } = await supabase
         .from('contracts')

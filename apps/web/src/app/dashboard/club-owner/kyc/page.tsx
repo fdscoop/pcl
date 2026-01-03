@@ -40,6 +40,22 @@ export default function KYCVerificationPage() {
           return
         }
 
+        // Check if user profile is complete before allowing KYC
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('first_name, last_name, full_name, date_of_birth')
+          .eq('id', user.id)
+          .single()
+
+        const hasName = userProfile?.first_name && userProfile?.last_name
+        const hasDOB = userProfile?.date_of_birth
+
+        if (!hasName || !hasDOB) {
+          // Profile incomplete - redirect to settings
+          router.push('/dashboard/club-owner/settings?reason=kyc')
+          return
+        }
+
         // Get club data
         const { data: clubData, error: clubError } = await supabase
           .from('clubs')
@@ -434,15 +450,16 @@ export default function KYCVerificationPage() {
 }
 
 // Aadhaar Verification Component
-function AadhaarVerification({ 
-  clubId, 
-  isVerified, 
-  onVerificationComplete 
-}: { 
+function AadhaarVerification({
+  clubId,
+  isVerified,
+  onVerificationComplete
+}: {
   clubId: string
   isVerified: boolean
   onVerificationComplete: () => void
 }) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [aadhaarNumber, setAadhaarNumber] = useState('')
   const [otp, setOtp] = useState('')
@@ -528,7 +545,41 @@ function AadhaarVerification({
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'OTP verification failed')
+        // Enhanced error display with detailed mismatch information
+        let errorMessage = data.error || 'OTP verification failed'
+
+        // If it's a data mismatch error, show detailed comparison
+        if (data.aadhaar_name && data.profile_name) {
+          errorMessage = `
+🚫 Identity Verification Failed - Data Mismatch Detected
+
+Our system detected that the Aadhaar you're trying to use does not match your profile:
+
+📋 Your Profile Information:
+   • Name: "${data.profile_name}"
+
+🆔 Aadhaar Information Received:
+   • Name: "${data.aadhaar_name}"
+
+❌ Mismatch Details:
+${data.details || 'Name and/or Date of Birth do not match'}
+
+⚠️ Why This Matters:
+For security and compliance, you MUST use your own Aadhaar for verification. Using someone else's Aadhaar (even with their permission) is not allowed.
+
+✅ How to Fix:
+1. Go to Profile Settings
+2. Update your name to match your Aadhaar exactly
+3. Update your date of birth to match your Aadhaar
+4. Use YOUR OWN Aadhaar for verification
+
+💡 If you believe this is an error (e.g., name spelling variation), please contact support@professionalclubleague.com
+          `.trim()
+        } else if (data.message) {
+          errorMessage = data.message
+        }
+
+        setError(errorMessage)
         return
       }
 
@@ -570,6 +621,8 @@ function AadhaarVerification({
     )
   }
 
+  const isAadhaarAlreadyRegistered = error?.toLowerCase().includes('already registered')
+
   return (
     <Card className="border-2 shadow-xl hover:shadow-2xl transition-shadow duration-300">
       <CardHeader className="bg-gradient-to-r from-orange-50/60 via-amber-50/80 to-orange-50/60 dark:from-orange-950/20 dark:via-amber-950/30 dark:to-orange-950/20 border-b border-border/50">
@@ -587,9 +640,53 @@ function AadhaarVerification({
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
         {error && (
-          <Alert variant="destructive">
-            {error}
-          </Alert>
+          <>
+            <Alert className="border-2 border-red-500/60 bg-gradient-to-r from-red-50/90 via-rose-50/90 to-red-50/90 dark:from-red-950/40 dark:via-rose-950/40 dark:to-red-950/40 shadow-xl shadow-red-200/40 dark:shadow-red-900/20 animate-in fade-in duration-500">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-red-500/20 to-rose-500/20 flex-shrink-0">
+                  <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-red-900 dark:text-red-200 text-lg mb-3">❌ Verification Error</p>
+                  <div className="text-sm text-red-800 dark:text-red-300 leading-relaxed whitespace-pre-line font-mono bg-red-100/50 dark:bg-red-950/50 p-4 rounded-lg border border-red-300/50 dark:border-red-700/50">
+                    {error}
+                  </div>
+                  {isAadhaarAlreadyRegistered && (
+                    <div className="mt-3 p-3 bg-amber-50/80 dark:bg-amber-950/40 rounded-lg border border-amber-300/50 dark:border-amber-700/50">
+                      <p className="text-xs text-amber-900 dark:text-amber-200 font-semibold mb-1">💡 What to do:</p>
+                      <p className="text-xs text-amber-800 dark:text-amber-300">
+                        This Aadhaar is linked to another club. Please contact support at{' '}
+                        <a href="mailto:support@professionalclubleague.com" className="underline hover:text-amber-700 dark:hover:text-amber-100 font-semibold">
+                          support@professionalclubleague.com
+                        </a>{' '}
+                        if you believe this is an error.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Alert>
+
+            {/* Show "Update Profile" button for data mismatch errors */}
+            {error.toLowerCase().includes('mismatch') && (
+              <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/90 to-blue-50/90 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-blue-950/40 border-2 border-blue-400/60 rounded-xl p-6 shadow-lg animate-in fade-in duration-500">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="font-bold text-blue-900 dark:text-blue-200 text-lg mb-2">✏️ Update Your Profile</p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
+                      Your profile information doesn't match your Aadhaar. Click the button below to update your profile with the correct name and date of birth as shown on your Aadhaar card.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => router.push('/dashboard/club-owner/settings?from=kyc')}
+                    className="bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 hover:from-blue-600 hover:via-indigo-600 hover:to-blue-700 text-white font-bold px-8 py-6 text-base shadow-xl hover:shadow-2xl shadow-blue-500/40 transition-all duration-300 btn-lift whitespace-nowrap"
+                  >
+                    ✏️ Update Profile
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {success && (
@@ -641,12 +738,16 @@ function AadhaarVerification({
 
             <Button
               onClick={handleSendOTP}
-              disabled={loading || aadhaarNumber.length !== 12}
+              disabled={loading || aadhaarNumber.length !== 12 || isAadhaarAlreadyRegistered}
               className="w-full bg-gradient-to-r from-orange-500 via-accent to-orange-600 hover:from-orange-600 hover:via-accent/90 hover:to-orange-700 text-white font-bold py-7 text-lg shadow-xl hover:shadow-2xl shadow-accent/40 transition-all duration-300 btn-lift disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="animate-spin">⏳</span> Sending OTP...
+                </span>
+              ) : isAadhaarAlreadyRegistered ? (
+                <span className="flex items-center gap-2">
+                  🚫 Aadhaar Already Registered
                 </span>
               ) : (
                 <span className="flex items-center gap-2">

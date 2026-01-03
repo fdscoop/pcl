@@ -14,6 +14,7 @@ import { usePlayerNotifications } from '@/hooks/usePlayerNotifications'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { getActiveContractForPlayer } from '@/services/contractService'
 import { getPositionStats, getPositionDisplay, calculatePlayerRating, getFormTrend, getFormEmoji } from '@/utils/positionStats'
+import { calculateAge, formatDate } from '@/utils/dateUtils'
 
 export default function PlayerDashboard() {
   const router = useRouter()
@@ -749,11 +750,25 @@ export default function PlayerDashboard() {
                       <span className="font-medium">Nationality:</span> {userData.players[0].nationality || 'N/A'}
                     </div>
                     <div>
+                      <span className="font-medium">Age:</span> {calculateAge(userData.players[0].date_of_birth) || calculateAge(userData.date_of_birth) ? `${calculateAge(userData.players[0].date_of_birth || userData.date_of_birth)} years` : 'N/A'}
+                    </div>
+                    <div>
+                      <span className="font-medium">DOB:</span> {formatDate(userData.players[0].date_of_birth || userData.date_of_birth, 'short')}
+                    </div>
+                    <div>
                       <span className="font-medium">Height:</span> {userData.players[0].height_cm ? `${userData.players[0].height_cm} cm` : 'N/A'}
                     </div>
                     <div>
                       <span className="font-medium">Weight:</span> {userData.players[0].weight_kg ? `${userData.players[0].weight_kg} kg` : 'N/A'}
                     </div>
+                    {(userData.players[0].state || userData.players[0].district) && (
+                      <>
+                        <div className="col-span-2">
+                          <span className="font-medium">📍 Location:</span>{' '}
+                          {[userData.players[0].district, userData.players[0].state].filter(Boolean).join(', ') || 'N/A'}
+                        </div>
+                      </>
+                    )}
                   </div>
                   <Button
                     variant="gradient"

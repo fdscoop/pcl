@@ -64,15 +64,15 @@ export function TeamBuildingAlert({ activeContractsCount }: TeamBuildingAlertPro
         description: 'You have no players in your club. You MUST recruit at least 8 players before you can participate in any tournaments. Start scouting now to build your team!',
         playersNeeded: 8,
         emoji: '🚀',
-        icon: <Rocket className="w-6 h-6 text-brand-orange animate-pulse" />,
-        bgClass: 'bg-gradient-to-br from-brand-orange/5 via-brand-orange/10 to-brand-orange/5 dark:from-brand-orange/8 dark:via-brand-orange/15 dark:to-brand-orange/8',
-        borderClass: 'border-brand-orange/30 shadow-brand-orange/20',
-        textClass: 'text-brand-orange dark:text-brand-orange-light',
-        buttonClass: 'bg-gradient-to-r from-brand-orange to-brand-orange-light hover:from-brand-orange-light hover:to-brand-orange text-white font-bold shadow-lg shadow-brand-orange/30 hover:shadow-brand-orange/50',
+        icon: <Rocket className="w-6 h-6 text-white animate-pulse" />,
+        bgClass: 'bg-gradient-to-br from-red-50/90 via-orange-50/95 to-amber-50/90 dark:from-red-900/25 dark:via-orange-900/30 dark:to-amber-900/25',
+        borderClass: 'border-orange-400/60 shadow-orange-300/40',
+        textClass: 'text-orange-700 dark:text-orange-400',
+        buttonClass: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold shadow-lg shadow-orange-500/40 hover:shadow-orange-500/60',
         progressText: '0/14 players',
         buttonText: 'Start Scouting Now',
-        accentColor: 'bg-brand-orange',
-        progressBarColor: 'bg-gradient-to-r from-brand-orange via-brand-orange-light to-brand-orange'
+        accentColor: 'bg-orange-500',
+        progressBarColor: 'bg-gradient-to-r from-orange-400 via-orange-500 to-red-500'
       }
     }
 
@@ -84,15 +84,15 @@ export function TeamBuildingAlert({ activeContractsCount }: TeamBuildingAlertPro
         description: `You have ${activeContractsCount} player${activeContractsCount !== 1 ? 's' : ''}. You need ${needed} more to reach 8 players. Once you have 8 players, you can start playing 5-a-side tournaments!`,
         playersNeeded: needed,
         emoji: '⚡',
-        icon: <Zap className="w-6 h-6 text-brand-orange animate-pulse" />,
-        bgClass: 'bg-gradient-to-br from-brand-orange/5 via-brand-orange/10 to-brand-orange/5 dark:from-brand-orange/8 dark:via-brand-orange/15 dark:to-brand-orange/8',
-        borderClass: 'border-brand-orange/30 shadow-brand-orange/20',
-        textClass: 'text-brand-orange dark:text-brand-orange-light',
-        buttonClass: 'bg-gradient-to-r from-brand-orange to-brand-orange-light hover:from-brand-orange-light hover:to-brand-orange text-white font-bold shadow-lg shadow-brand-orange/30 hover:shadow-brand-orange/50',
+        icon: <Zap className="w-6 h-6 text-white animate-pulse" />,
+        bgClass: 'bg-gradient-to-br from-red-50/90 via-orange-50/95 to-amber-50/90 dark:from-red-900/25 dark:via-orange-900/30 dark:to-amber-900/25',
+        borderClass: 'border-orange-400/60 shadow-orange-300/40',
+        textClass: 'text-orange-700 dark:text-orange-400',
+        buttonClass: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold shadow-lg shadow-orange-500/40 hover:shadow-orange-500/60',
         progressText: `${activeContractsCount}/14 players`,
         buttonText: `Scout ${needed} More Players`,
-        accentColor: 'bg-brand-orange',
-        progressBarColor: 'bg-gradient-to-r from-brand-orange via-brand-orange-light to-brand-orange'
+        accentColor: 'bg-orange-500',
+        progressBarColor: 'bg-gradient-to-r from-orange-400 via-orange-500 to-red-500'
       }
     }
 
@@ -174,8 +174,12 @@ export function TeamBuildingAlert({ activeContractsCount }: TeamBuildingAlertPro
         <div className="flex items-start gap-3 p-3 sm:p-4">
           {/* Icon - Prominent with subtle glow */}
           <div className="flex-shrink-0 pt-0.5">
-            <div className={`w-11 h-11 flex items-center justify-center rounded-xl ${config.bgClass} border ${config.borderClass} shadow-lg backdrop-blur-sm`}>
-              <div className={`${config.textClass} drop-shadow-sm`}>
+            <div className={`w-11 h-11 flex items-center justify-center rounded-xl border shadow-lg backdrop-blur-sm ${
+              activeContractsCount < 8
+                ? 'bg-gradient-to-br from-orange-500 to-red-500 border-orange-400'
+                : `${config.bgClass} ${config.borderClass}`
+            }`}>
+              <div className={activeContractsCount < 8 ? 'text-white drop-shadow-sm' : `${config.textClass} drop-shadow-sm`}>
                 {config.icon}
               </div>
             </div>

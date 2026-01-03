@@ -116,7 +116,11 @@ export function CreateFriendlyMatch({
     prizeMoney: 0,
     hasPrizeMoney: false,
     notes: '',
-    teamSize: 8 // default for 5-a-side
+    teamSize: 8, // default for 5-a-side
+    opponentClub: '',
+    opponentEmail: '',
+    opponentPhone: '',
+    venue: 'home' // 'home', 'away', or 'neutral'
   })
 
   // Budget calculation

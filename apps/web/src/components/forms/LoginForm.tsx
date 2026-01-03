@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle, Mail } from 'lucide-react'
 
 // Validation schema
 const loginSchema = z.object({
@@ -111,8 +112,28 @@ export default function LoginForm() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+            <Alert
+              variant={error.toLowerCase().includes('email') && error.toLowerCase().includes('confirm') ? 'default' : 'destructive'}
+              className={
+                error.toLowerCase().includes('email') && error.toLowerCase().includes('confirm')
+                  ? 'bg-amber-50 dark:bg-amber-950 border-amber-500 dark:border-amber-700'
+                  : ''
+              }
+            >
+              <div className="flex items-start gap-2">
+                {error.toLowerCase().includes('email') && error.toLowerCase().includes('confirm') ? (
+                  <Mail className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                )}
+                <AlertDescription className={
+                  error.toLowerCase().includes('email') && error.toLowerCase().includes('confirm')
+                    ? 'text-amber-800 dark:text-amber-200 font-medium'
+                    : ''
+                }>
+                  {error}
+                </AlertDescription>
+              </div>
             </Alert>
           )}
 

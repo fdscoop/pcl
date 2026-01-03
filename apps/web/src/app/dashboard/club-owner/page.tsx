@@ -245,6 +245,21 @@ export default function ClubOwnerDashboard() {
                     Active
                   </span>
                 )}
+                {club?.kyc_verified ? (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-700 border border-blue-500/30">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-amber-500/20 text-amber-700 border border-amber-500/30">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Pending Verification
+                  </span>
+                )}
               </div>
               <p className="text-muted-foreground mb-2">
                 📍 {club?.city}, {club?.state}, {club?.country}
@@ -270,6 +285,30 @@ export default function ClubOwnerDashboard() {
             <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
               <p className="text-foreground">{club.description}</p>
             </div>
+          )}
+
+          {!club?.kyc_verified && (
+            <Alert className="mt-6 border-2 border-amber-500/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+              <div className="flex items-start gap-4">
+                <div className="text-2xl">⚠️</div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                    Verification Required
+                  </h3>
+                  <p className="text-sm text-amber-800 dark:text-amber-300 mb-3">
+                    Your club is not yet verified. Complete KYC verification to unlock additional features and build trust with other clubs.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => router.push('/dashboard/club-owner/kyc')}
+                    className="border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50"
+                  >
+                    Start Verification
+                  </Button>
+                </div>
+              </div>
+            </Alert>
           )}
         </div>
 

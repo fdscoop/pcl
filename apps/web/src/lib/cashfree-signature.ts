@@ -71,15 +71,20 @@ export function getCashfreePayoutHeaders(clientId: string, publicKey: string): R
 /**
  * Generate headers for Cashfree Verification API
  *
- * Supports TWO authentication methods:
- * 1. IP Whitelisting (x-client-secret): Requires server IP to be whitelisted
- * 2. E-Signature (x-cf-signature): Works from any IP, uses RSA encryption
+ * IMPORTANT: Cashfree Verification API requires BOTH x-client-secret AND signature
  *
- * If IP is not whitelisted, you'll get: "IP_NOT_WHITELISTED" error
- * Solution: Use e-signature authentication instead by passing publicKey parameter
+ * Authentication methods:
+ * 1. IP Whitelisting ONLY (x-client-secret): Requires server IP to be whitelisted
+ *    - Headers: X-Client-Id, x-client-secret
+ *    - Works ONLY from whitelisted IPs
  *
- * @param clientId - Cashfree client ID
- * @param clientSecret - Cashfree client secret (optional if using e-signature)
+ * 2. E-Signature (X-Cf-Signature + x-client-secret): Works from ANY IP
+ *    - Headers: X-Client-Id, X-Cf-Signature, x-client-secret
+ *    - Works from any IP (no whitelisting needed)
+ *    - Requires both publicKey AND clientSecret parameters
+ *
+ * @param clientId - Cashfree client ID (required)
+ * @param clientSecret - Cashfree client secret (required)
  * @param publicKey - Cashfree public key PEM (optional, for e-signature auth)
  * @returns Headers object ready for Verification API
  */
@@ -114,15 +119,24 @@ export function getCashfreeVerificationHeaders(
       console.log('✅ Attempting e-signature generation...')
       const signature = generateCashfreeSignature(clientId, publicKey!)
       console.log('✅ E-signature generated successfully')
-      console.log('✅ Using headers with capital letters: X-Client-Id, X-Cf-Signature')
+
+      // Cashfree Verification API requires BOTH x-client-secret AND X-Cf-Signature
+      if (!clientSecret) {
+        console.error('⚠️ E-signature generated but CASHFREE_SECRET_KEY is missing')
+        console.error('⚠️ Cashfree Verification API requires BOTH X-Cf-Signature AND x-client-secret')
+        throw new Error('CASHFREE_SECRET_KEY is required even when using e-signature authentication')
+      }
+
+      console.log('✅ Using e-signature authentication with both X-Cf-Signature and x-client-secret')
       return {
         'Content-Type': 'application/json',
         'X-Client-Id': clientId,
         'X-Cf-Signature': signature,
+        'x-client-secret': clientSecret,
         'x-api-version': '2022-09-01'
       }
     } catch (error) {
-      console.error('⚠️ E-signature generation failed, falling back to client-secret:', error)
+      console.error('⚠️ E-signature generation failed, falling back to client-secret only:', error)
       console.error('⚠️ Error details:', error)
       // Fall through to client-secret method
     }

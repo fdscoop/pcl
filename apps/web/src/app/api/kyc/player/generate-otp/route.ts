@@ -29,9 +29,13 @@ async function generateAadhaarOTP(aadhaarNumber: string): Promise<any> {
   }
 
   // Generate headers using e-signature or IP whitelisting
-  console.log('🔑 Authentication method:', publicKey ? 'E-Signature (x-cf-signature)' : 'IP Whitelisting (x-client-secret)')
+  console.log('🔑 Authentication method:', publicKey ? 'E-Signature (X-Cf-Signature)' : 'IP Whitelisting (x-client-secret)')
   const headers = getCashfreeVerificationHeaders(keyId, secretKey, publicKey)
-  console.log('📋 Headers:', JSON.stringify({ ...headers, 'x-client-secret': headers['x-client-secret'] ? '***' : undefined, 'x-cf-signature': headers['x-cf-signature'] ? '***' : undefined }, null, 2))
+  console.log('📋 Headers:', JSON.stringify({
+    ...headers,
+    'x-client-secret': headers['x-client-secret'] ? '***' : undefined,
+    'X-Cf-Signature': headers['X-Cf-Signature'] ? '***' : undefined
+  }, null, 2))
 
   const config = {
     headers
@@ -43,9 +47,9 @@ async function generateAadhaarOTP(aadhaarNumber: string): Promise<any> {
     console.log('📤 Aadhaar Number (masked):', aadhaarNumber.replace(/\d(?=\d{4})/g, '*'))
     console.log('📋 Request Headers:', {
       'Content-Type': config.headers['Content-Type'],
-      'x-client-id': config.headers['x-client-id']?.substring(0, 10) + '...',
+      'X-Client-Id': config.headers['X-Client-Id'] || config.headers['x-client-id'],
       'x-client-secret': config.headers['x-client-secret'] ? '✅ Present (****)' : '❌ Missing',
-      'x-cf-signature': config.headers['x-cf-signature'] ? '✅ Present (****)' : '❌ Missing',
+      'X-Cf-Signature': config.headers['X-Cf-Signature'] ? '✅ Present (****)' : '❌ Missing',
       'x-api-version': config.headers['x-api-version']
     })
 

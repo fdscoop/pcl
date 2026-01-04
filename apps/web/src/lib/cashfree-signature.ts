@@ -114,9 +114,12 @@ export function getCashfreeVerificationHeaders(
       console.log('✅ Attempting e-signature generation...')
       const signature = generateCashfreeSignature(clientId, publicKey!)
       console.log('✅ E-signature generated successfully')
+      console.log('✅ Using headers with capital letters: X-Client-Id, X-Cf-Signature')
       return {
-        ...baseHeaders,
-        'x-cf-signature': signature
+        'Content-Type': 'application/json',
+        'X-Client-Id': clientId,
+        'X-Cf-Signature': signature,
+        'x-api-version': '2022-09-01'
       }
     } catch (error) {
       console.error('⚠️ E-signature generation failed, falling back to client-secret:', error)

@@ -29,13 +29,13 @@ interface Player {
   total_goals_scored: number
   total_assists: number
   is_available_for_scout: boolean
-  users?: Array<{
+  users?: {
     id: string
     first_name: string
     last_name: string
     email: string
     bio?: string | null
-  }>
+  }
 }
 
 export default function ScoutPlayersPage() {

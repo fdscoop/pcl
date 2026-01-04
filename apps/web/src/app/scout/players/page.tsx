@@ -169,7 +169,7 @@ export default function ScoutPlayersPage() {
           total_matches_played,
           total_goals_scored,
           total_assists,
-          users:user_id (
+          users (
             id,
             first_name,
             last_name,

@@ -61,12 +61,14 @@ export default function SignupForm() {
       setError(null)
 
       const supabase = createClient()
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
       // 1. Sign up with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
+          emailRedirectTo: `${appUrl}/auth/callback`,
           data: {
             first_name: data.firstName,
             last_name: data.lastName,

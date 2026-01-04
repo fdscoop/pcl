@@ -92,19 +92,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if Aadhaar already registered
-    const { data: existingAadhaar } = await supabase
+    // Duplicate Prevention Logic (Per PCL Rules):
+    //
+    // ALLOW: Same person with different roles
+    //   - Player account (email1) + Club owner account (email2) = Same Aadhaar ✅
+    //   - This is the same physical person with dual roles
+    //
+    // BLOCK: Different people with same role
+    //   - Player A + Player B = Cannot share Aadhaar ❌
+    //   - Club A + Club B = Cannot share Aadhaar ❌
+    //   - This would be fraud (different people using same identity)
+    //
+    // Implementation: Check if this Aadhaar is already used by another CLUB OWNER
+    const { data: existingClubOwner } = await supabase
       .from('users')
-      .select('id')
+      .select('id, role, kyc_status')
       .eq('aadhaar_number', aadhaar_number)
+      .eq('role', 'club_owner')  // Only check for other CLUB OWNERS
+      .eq('kyc_status', 'verified')
       .neq('id', user.id)
       .single()
 
-    if (existingAadhaar) {
+    if (existingClubOwner) {
       return NextResponse.json(
-        { 
-          error: 'This Aadhaar number is already registered with another club',
-          code: 'DUPLICATE_AADHAAR'
+        {
+          error: 'Aadhaar Already Registered',
+          message: 'This Aadhaar number is already verified with another club owner account. Each Aadhaar can only be used by one club owner. If you believe this is an error, please contact support@professionalclubleague.com'
         },
         { status: 400 }
       )

@@ -70,19 +70,46 @@ export function getCashfreePayoutHeaders(clientId: string, publicKey: string): R
 
 /**
  * Generate headers for Cashfree Verification API
- * Note: Verification API uses client-id and client-secret (no signature required)
+ *
+ * Supports TWO authentication methods:
+ * 1. IP Whitelisting (x-client-secret): Requires server IP to be whitelisted
+ * 2. E-Signature (x-cf-signature): Works from any IP, uses RSA encryption
+ *
+ * If IP is not whitelisted, you'll get: "IP_NOT_WHITELISTED" error
+ * Solution: Use e-signature authentication instead by passing publicKey parameter
+ *
  * @param clientId - Cashfree client ID
- * @param clientSecret - Cashfree client secret
+ * @param clientSecret - Cashfree client secret (optional if using e-signature)
+ * @param publicKey - Cashfree public key PEM (optional, for e-signature auth)
  * @returns Headers object ready for Verification API
  */
 export function getCashfreeVerificationHeaders(
   clientId: string,
-  clientSecret: string
+  clientSecret?: string,
+  publicKey?: string
 ): Record<string, string> {
-  return {
+  const baseHeaders = {
     'Content-Type': 'application/json',
     'x-client-id': clientId,
-    'x-client-secret': clientSecret,
     'x-api-version': '2022-09-01'
   }
+
+  // Method 1: E-Signature Authentication (works from any IP)
+  if (publicKey) {
+    const signature = generateCashfreeSignature(clientId, publicKey)
+    return {
+      ...baseHeaders,
+      'x-cf-signature': signature
+    }
+  }
+
+  // Method 2: IP Whitelisting Authentication (requires whitelisted IP)
+  if (clientSecret) {
+    return {
+      ...baseHeaders,
+      'x-client-secret': clientSecret
+    }
+  }
+
+  throw new Error('Either clientSecret or publicKey must be provided for authentication')
 }

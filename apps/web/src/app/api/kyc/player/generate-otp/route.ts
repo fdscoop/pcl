@@ -1,28 +1,33 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
+import { getCashfreeVerificationHeaders } from '@/lib/cashfree-signature'
 
 const VERIFICATION_BASE_URL = 'https://api.cashfree.com'
 
 async function generateAadhaarOTP(aadhaarNumber: string): Promise<any> {
   const keyId = process.env.NEXT_PUBLIC_CASHFREE_KEY_ID
   const secretKey = process.env.CASHFREE_SECRET_KEY
+  const publicKey = process.env.CASHFREE_PUBLIC_KEY
 
-  if (!keyId || !secretKey) {
-    throw new Error('Cashfree credentials not configured')
+  if (!keyId) {
+    throw new Error('Cashfree client ID not configured')
+  }
+
+  // Prefer e-signature (works from any IP) over IP whitelisting
+  if (!publicKey && !secretKey) {
+    throw new Error('Either CASHFREE_PUBLIC_KEY or CASHFREE_SECRET_KEY must be configured')
   }
 
   const requestBody = {
     aadhaar_number: aadhaarNumber
   }
 
+  // Generate headers using e-signature or IP whitelisting
+  const headers = getCashfreeVerificationHeaders(keyId, secretKey, publicKey)
+
   const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-client-id': keyId,
-      'x-client-secret': secretKey,
-      'x-api-version': '2022-09-01'
-    }
+    headers
   }
 
   try {

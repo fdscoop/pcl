@@ -223,7 +223,7 @@ export default function ScoutPlayersPage() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       filtered = filtered.filter(p => {
-        const user = p.users?.[0]
+        const user = p.users
         return (
           `${user?.first_name} ${user?.last_name}`.toLowerCase().includes(term) ||
           user?.email?.toLowerCase().includes(term) ||
@@ -302,7 +302,7 @@ export default function ScoutPlayersPage() {
           description: 'Could not send message. Please try again.'
         })
       } else {
-        const user = messageModal.player?.users?.[0]
+        const user = messageModal.player?.users
         addToast({
           type: 'success',
           title: 'Message Sent',
@@ -688,7 +688,7 @@ export default function ScoutPlayersPage() {
           <Card className="w-full max-w-md shadow-lg animate-in scale-in duration-200">
             <CardHeader className="border-b">
               <CardTitle className="text-xl">
-                💬 Send Message to {messageModal.player.users?.[0]?.first_name}
+                💬 Send Message to {messageModal.player.users?.first_name}
               </CardTitle>
               <CardDescription className="text-sm">
                 Message from {club?.name || 'Your Club'}
@@ -742,7 +742,7 @@ export default function ScoutPlayersPage() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <CardTitle className="text-2xl">
-                    {viewModal.player.users?.[0]?.first_name} {viewModal.player.users?.[0]?.last_name}
+                    {viewModal.player.users?.first_name} {viewModal.player.users?.last_name}
                   </CardTitle>
                   <CardDescription className="text-sm">
                     Player ID: {viewModal.player.unique_player_id}
@@ -765,7 +765,7 @@ export default function ScoutPlayersPage() {
                 <div className="relative w-full h-64 rounded-lg overflow-hidden">
                   <Image
                     src={viewModal.player.photo_url}
-                    alt={`${viewModal.player.users?.[0]?.first_name} ${viewModal.player.users?.[0]?.last_name}`}
+                    alt={`${viewModal.player.users?.first_name} ${viewModal.player.users?.last_name}`}
                     fill
                     className="object-cover"
                   />
@@ -773,7 +773,7 @@ export default function ScoutPlayersPage() {
               )}
 
               {/* Player Bio/Description */}
-              {viewModal.player.users?.[0]?.bio && (
+              {viewModal.player.users?.bio && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h3 className="text-sm font-semibold text-slate-900 mb-2">About Player</h3>
                   <p className="text-sm text-slate-700 leading-relaxed">{viewModal.player.users[0].bio}</p>

@@ -95,11 +95,22 @@ export function getCashfreeVerificationHeaders(
   }
 
   // Method 1: E-Signature Authentication (works from any IP)
-  if (publicKey) {
-    const signature = generateCashfreeSignature(clientId, publicKey)
-    return {
-      ...baseHeaders,
-      'x-cf-signature': signature
+  // Validate that public key is not a placeholder
+  const isValidPublicKey = publicKey &&
+    !publicKey.includes('your_cashfree_public_key_pem_content_here') &&
+    !publicKey.includes('your_public_key_here') &&
+    publicKey.length > 100 // Real RSA keys are much longer
+
+  if (isValidPublicKey) {
+    try {
+      const signature = generateCashfreeSignature(clientId, publicKey!)
+      return {
+        ...baseHeaders,
+        'x-cf-signature': signature
+      }
+    } catch (error) {
+      console.error('⚠️ E-signature generation failed, falling back to client-secret:', error)
+      // Fall through to client-secret method
     }
   }
 
@@ -111,5 +122,5 @@ export function getCashfreeVerificationHeaders(
     }
   }
 
-  throw new Error('Either clientSecret or publicKey must be provided for authentication')
+  throw new Error('Either a valid CASHFREE_PUBLIC_KEY or CASHFREE_SECRET_KEY must be configured')
 }

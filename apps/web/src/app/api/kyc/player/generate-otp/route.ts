@@ -10,6 +10,11 @@ async function generateAadhaarOTP(aadhaarNumber: string): Promise<any> {
   const secretKey = process.env.CASHFREE_SECRET_KEY
   const publicKey = process.env.CASHFREE_PUBLIC_KEY
 
+  console.log('🔍 Environment Variables Check:')
+  console.log('  - keyId:', keyId ? '✅ Set' : '❌ Missing')
+  console.log('  - secretKey:', secretKey ? '✅ Set' : '❌ Missing')
+  console.log('  - publicKey:', publicKey ? `✅ Set (${publicKey.substring(0, 50)}...)` : '❌ Missing')
+
   if (!keyId) {
     throw new Error('Cashfree client ID not configured')
   }
@@ -24,7 +29,9 @@ async function generateAadhaarOTP(aadhaarNumber: string): Promise<any> {
   }
 
   // Generate headers using e-signature or IP whitelisting
+  console.log('🔑 Authentication method:', publicKey ? 'E-Signature (x-cf-signature)' : 'IP Whitelisting (x-client-secret)')
   const headers = getCashfreeVerificationHeaders(keyId, secretKey, publicKey)
+  console.log('📋 Headers:', JSON.stringify({ ...headers, 'x-client-secret': headers['x-client-secret'] ? '***' : undefined, 'x-cf-signature': headers['x-cf-signature'] ? '***' : undefined }, null, 2))
 
   const config = {
     headers

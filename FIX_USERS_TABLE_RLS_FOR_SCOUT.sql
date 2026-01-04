@@ -11,12 +11,15 @@
 -- Enable RLS on users table if not already enabled
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
--- Drop existing conflicting policies if they exist
+-- Drop ALL existing policies on users table first
 DROP POLICY IF EXISTS "Users can read own data" ON users;
 DROP POLICY IF EXISTS "Users can read their own data" ON users;
 DROP POLICY IF EXISTS "Public can read basic user info" ON users;
 DROP POLICY IF EXISTS "Authenticated users can read user profiles" ON users;
 DROP POLICY IF EXISTS "Authenticated users can read basic user info" ON users;
+DROP POLICY IF EXISTS "Authenticated users can read player profiles for scouting" ON users;
+DROP POLICY IF EXISTS "Users can update own data" ON users;
+DROP POLICY IF EXISTS "Users can insert own data" ON users;
 
 -- Policy 1: Users can read their own complete profile (primary security policy)
 CREATE POLICY "Users can read own data"

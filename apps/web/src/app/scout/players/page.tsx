@@ -169,7 +169,7 @@ export default function ScoutPlayersPage() {
           total_matches_played,
           total_goals_scored,
           total_assists,
-          users (
+          users!players_user_id_fkey (
             id,
             first_name,
             last_name,
@@ -186,6 +186,8 @@ export default function ScoutPlayersPage() {
       } else {
         console.log('✅ Players loaded:', playersData?.length || 0)
         console.log('📊 Players data sample:', playersData?.slice(0, 2))
+        console.log('🔍 First player users data:', playersData?.[0]?.users)
+        console.log('🔍 Sample user_id:', playersData?.[0]?.user_id)
         if (!playersData || playersData.length === 0) {
           console.warn('⚠️ No players found with is_available_for_scout = true')
           setNoPlayersMessage('No available players to scout right now. Make sure players have enabled "is_available_for_scout" in their profile settings.')

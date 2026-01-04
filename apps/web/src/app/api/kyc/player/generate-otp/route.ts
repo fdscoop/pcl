@@ -41,6 +41,13 @@ async function generateAadhaarOTP(aadhaarNumber: string): Promise<any> {
     console.log('🔐 Generating Aadhaar OTP with Cashfree...')
     console.log('📝 Request URL:', `${VERIFICATION_BASE_URL}/verification/offline-aadhaar/otp`)
     console.log('📤 Aadhaar Number (masked):', aadhaarNumber.replace(/\d(?=\d{4})/g, '*'))
+    console.log('📋 Request Headers:', {
+      'Content-Type': config.headers['Content-Type'],
+      'x-client-id': config.headers['x-client-id']?.substring(0, 10) + '...',
+      'x-client-secret': config.headers['x-client-secret'] ? '✅ Present (****)' : '❌ Missing',
+      'x-cf-signature': config.headers['x-cf-signature'] ? '✅ Present (****)' : '❌ Missing',
+      'x-api-version': config.headers['x-api-version']
+    })
 
     const response = await axios.post(
       `${VERIFICATION_BASE_URL}/verification/offline-aadhaar/otp`,

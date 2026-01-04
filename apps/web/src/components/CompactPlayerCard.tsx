@@ -17,11 +17,11 @@ interface PlayerCardProps {
     total_goals_scored: number
     total_assists: number
     is_available_for_scout: boolean
-    users?: Array<{
+    users?: {
       first_name: string
       last_name: string
       bio?: string | null
-    }>
+    }
   }
   onView: () => void
   onMessage: () => void
@@ -43,7 +43,7 @@ export default function CompactPlayerCard({
         {player.photo_url && !imageError ? (
           <Image
             src={player.photo_url}
-            alt={`${player.users?.[0]?.first_name} ${player.users?.[0]?.last_name}`}
+            alt={`${player.users?.first_name} ${player.users?.last_name}`}
             fill
             className="object-cover"
             onError={() => setImageError(true)}
@@ -79,7 +79,7 @@ export default function CompactPlayerCard({
       <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
         {/* Name */}
         <h3 className="text-lg font-bold text-white mb-1 drop-shadow-lg line-clamp-2">
-          {player.users?.[0]?.first_name} {player.users?.[0]?.last_name}
+          {player.users?.first_name} {player.users?.last_name}
         </h3>
 
         {/* Location */}
@@ -90,10 +90,10 @@ export default function CompactPlayerCard({
         </p>
 
         {/* Bio */}
-        {player.users?.[0]?.bio && (
+        {player.users?.bio && (
           <div className="bg-white/10 backdrop-blur-md rounded-lg p-2 mb-3 border border-white/20 line-clamp-2">
             <p className="text-xs text-white/90 drop-shadow">
-              {player.users?.[0]?.bio}
+              {player.users?.bio}
             </p>
           </div>
         )}

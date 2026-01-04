@@ -14,11 +14,11 @@ interface ElaboratedContractModalProps {
     state?: string | null
     district?: string | null
     address?: string | null
-    users?: Array<{
+    users?: {
       first_name: string
       last_name: string
       email?: string
-    }>
+    }
   } | null
   club: {
     id: string
@@ -196,7 +196,7 @@ export default function ElaboratedContractModal({
         clubId: club?.id
       })
 
-      const playerUser = player?.users?.[0]
+      const playerUser = player?.users
       addToast({
         type: 'success',
         title: 'Contract Created',
@@ -320,7 +320,7 @@ export default function ElaboratedContractModal({
                   <div>
                     <p className="text-xs text-slate-600 font-semibold">PLAYER NAME</p>
                     <p className="text-lg font-bold text-slate-900">
-                      {player.users?.[0]?.first_name} {player.users?.[0]?.last_name}
+                      {player.users?.first_name} {player.users?.last_name}
                     </p>
                   </div>
                   <div>
@@ -329,7 +329,7 @@ export default function ElaboratedContractModal({
                   </div>
                   <div>
                     <p className="text-xs text-slate-600 font-semibold">EMAIL</p>
-                    <p className="text-sm text-slate-700">{player.users?.[0]?.email || 'Not provided'}</p>
+                    <p className="text-sm text-slate-700">{player.users?.email || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-600 font-semibold">STATE</p>

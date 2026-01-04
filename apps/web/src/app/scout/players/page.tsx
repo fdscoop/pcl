@@ -188,6 +188,9 @@ export default function ScoutPlayersPage() {
         console.log('📊 Players data sample:', playersData?.slice(0, 2))
         console.log('🔍 First player users data:', playersData?.[0]?.users)
         console.log('🔍 Sample user_id:', playersData?.[0]?.user_id)
+        console.log('🔍 Users data type:', typeof playersData?.[0]?.users)
+        console.log('🔍 Is users an array?:', Array.isArray(playersData?.[0]?.users))
+        console.log('🔍 Users keys:', playersData?.[0]?.users ? Object.keys(playersData[0].users) : 'null')
         if (!playersData || playersData.length === 0) {
           console.warn('⚠️ No players found with is_available_for_scout = true')
           setNoPlayersMessage('No available players to scout right now. Make sure players have enabled "is_available_for_scout" in their profile settings.')

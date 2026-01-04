@@ -101,17 +101,30 @@ export function getCashfreeVerificationHeaders(
     !publicKey.includes('your_public_key_here') &&
     publicKey.length > 100 // Real RSA keys are much longer
 
+  console.log('🔍 Public Key Validation:', {
+    exists: !!publicKey,
+    length: publicKey?.length || 0,
+    isPlaceholder: publicKey?.includes('your_cashfree_public_key_pem_content_here'),
+    isValidPublicKey,
+    firstChars: publicKey?.substring(0, 30)
+  })
+
   if (isValidPublicKey) {
     try {
+      console.log('✅ Attempting e-signature generation...')
       const signature = generateCashfreeSignature(clientId, publicKey!)
+      console.log('✅ E-signature generated successfully')
       return {
         ...baseHeaders,
         'x-cf-signature': signature
       }
     } catch (error) {
       console.error('⚠️ E-signature generation failed, falling back to client-secret:', error)
+      console.error('⚠️ Error details:', error)
       // Fall through to client-secret method
     }
+  } else {
+    console.log('⚠️ Public key invalid, using client-secret method')
   }
 
   // Method 2: IP Whitelisting Authentication (requires whitelisted IP)

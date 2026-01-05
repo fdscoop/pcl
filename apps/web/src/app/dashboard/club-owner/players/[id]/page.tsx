@@ -36,6 +36,31 @@ interface Player {
     minutes_played: number
     season: string
   }>
+  contract?: {
+    id: string
+    status: string
+    salary_monthly: number
+    annual_salary: number
+    signing_bonus: number
+    goal_bonus: number
+    appearance_bonus: number
+    release_clause: number
+    medical_insurance: number
+    housing_allowance: number
+    contract_start_date: string
+    contract_end_date: string
+    jersey_number: number
+    position_assigned: string
+    contract_type: string
+    notice_period: number
+    training_days_per_week: number
+    image_rights: string
+    created_at: string
+  }
+  squad?: {
+    jersey_number: number
+    is_active: boolean
+  }
 }
 
 export default function ClubOwnerPlayerProfilePage() {
@@ -126,11 +151,105 @@ export default function ClubOwnerPlayerProfilePage() {
         console.error('Error loading stats:', statsError)
       }
 
+      // Fetch contract data for this player with the current club
+      let contractData = null
+      if (clubData && clubData.id) {
+        console.log('Fetching contract for player:', playerId, 'club:', clubData.id)
+
+        // Try to fetch all contracts first to see if we have permission
+        const { data: allContracts, error: allContractsError } = await supabase
+          .from('contracts')
+          .select('*')
+          .eq('player_id', playerId)
+          .eq('club_id', clubData.id)
+
+        if (allContractsError) {
+          console.error('Error loading contract:', allContractsError)
+          console.error('Contract error details:', JSON.stringify(allContractsError, null, 2))
+        } else {
+          console.log('All contracts query result:', allContracts)
+          // Get the most recent contract by sorting in JavaScript
+          if (allContracts && allContracts.length > 0) {
+            const sortedContracts = [...allContracts].sort((a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )
+            contractData = sortedContracts[0]
+          }
+        }
+      }
+
+      console.log('Contract data loaded:', contractData)
+
+      // Fetch squad data from team_squads table
+      let squadData = null
+      if (clubData && clubData.id) {
+        console.log('Fetching squad data for player:', playerId, 'club:', clubData.id)
+
+        // Get team_id from teams table for this club
+        const { data: teamData, error: teamError } = await supabase
+          .from('teams')
+          .select('id')
+          .eq('club_id', clubData.id)
+          .maybeSingle()
+
+        if (teamError) {
+          console.error('Error loading team:', teamError)
+        } else if (teamData) {
+          console.log('Team data:', teamData)
+
+          // Fetch squad data
+          const { data: squadResult, error: squadError } = await supabase
+            .from('team_squads')
+            .select('jersey_number, is_active')
+            .eq('player_id', playerId)
+            .eq('team_id', teamData.id)
+            .maybeSingle()
+
+          if (squadError) {
+            console.error('Error loading squad data:', squadError)
+          } else {
+            console.log('Squad data loaded:', squadResult)
+            squadData = squadResult
+
+            // Update contract if jersey_number or position_assigned is null
+            if (contractData && (contractData.jersey_number == null || contractData.position_assigned == null)) {
+              const updates: { jersey_number?: number; position_assigned?: string } = {}
+
+              if (contractData.jersey_number == null && squadResult?.jersey_number != null) {
+                updates.jersey_number = squadResult.jersey_number
+              }
+
+              if (contractData.position_assigned == null && playerData?.position != null) {
+                updates.position_assigned = playerData.position
+              }
+
+              if (Object.keys(updates).length > 0) {
+                console.log('Updating contract with:', updates)
+                const { error: updateError } = await supabase
+                  .from('contracts')
+                  .update(updates)
+                  .eq('id', contractData.id)
+
+                if (updateError) {
+                  console.error('Error updating contract:', updateError)
+                } else {
+                  console.log('Contract updated successfully')
+                  // Update local contractData to reflect the changes
+                  contractData = { ...contractData, ...updates }
+                }
+              }
+            }
+          }
+        }
+      }
+
       // Combine the data
       const combinedPlayer = {
         ...playerData,
         users: userData,
-        player_stats: statsData || []
+        player_stats: statsData || [],
+        contract: contractData,
+        squad: squadData
       }
 
       console.log('Combined player data:', combinedPlayer)
@@ -276,6 +395,155 @@ export default function ClubOwnerPlayerProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* Contract Info */}
+            {player.contract && (
+              <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 p-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-gray-900 text-lg">Contract Information</h3>
+                  <Badge className={
+                    player.contract.status === 'active' ? 'bg-green-100 text-green-700' :
+                    player.contract.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                    player.contract.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                    'bg-gray-100 text-gray-700'
+                  }>
+                    {player.contract.status.toUpperCase()}
+                  </Badge>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm text-gray-600">Jersey Number</span>
+                    <p className="font-semibold text-gray-900 text-lg">
+                      #{player.squad?.jersey_number ?? player.contract.jersey_number ?? 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Position Assigned</span>
+                    <p className="font-medium text-gray-900">
+                      {player.contract.position_assigned ?? player.position ?? 'N/A'}
+                    </p>
+                  </div>
+                  {player.squad && (
+                    <div>
+                      <span className="text-sm text-gray-600">Squad Status</span>
+                      <Badge className={player.squad.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                        {player.squad.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-sm text-gray-600">Contract Type</span>
+                    <p className="font-medium text-gray-900 capitalize">{player.contract.contract_type || 'N/A'}</p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100">
+                    <span className="text-sm text-gray-600 font-semibold">Financial Details</span>
+                  </div>
+
+                  {player.contract.annual_salary != null && (
+                    <div>
+                      <span className="text-sm text-gray-600">Annual Salary</span>
+                      <p className="font-semibold text-gray-900 text-lg">
+                        ₹{player.contract.annual_salary.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {player.contract.salary_monthly != null && (
+                    <div>
+                      <span className="text-sm text-gray-600">Monthly Salary</span>
+                      <p className="font-medium text-gray-900">
+                        ₹{player.contract.salary_monthly.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {player.contract.signing_bonus != null && player.contract.signing_bonus > 0 && (
+                    <div>
+                      <span className="text-sm text-gray-600">Signing Bonus</span>
+                      <p className="font-medium text-gray-900">
+                        ₹{player.contract.signing_bonus.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {player.contract.goal_bonus != null && player.contract.goal_bonus > 0 && (
+                    <div>
+                      <span className="text-sm text-gray-600">Goal Bonus</span>
+                      <p className="font-medium text-gray-900">
+                        ₹{player.contract.goal_bonus.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {player.contract.appearance_bonus != null && player.contract.appearance_bonus > 0 && (
+                    <div>
+                      <span className="text-sm text-gray-600">Appearance Bonus</span>
+                      <p className="font-medium text-gray-900">
+                        ₹{player.contract.appearance_bonus.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  {player.contract.release_clause != null && player.contract.release_clause > 0 && (
+                    <div>
+                      <span className="text-sm text-gray-600">Release Clause</span>
+                      <p className="font-medium text-gray-900">
+                        ₹{player.contract.release_clause.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-slate-100">
+                    <span className="text-sm text-gray-600">Contract Period</span>
+                    <p className="font-medium text-gray-900">
+                      {new Date(player.contract.contract_start_date).toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                      {' → '}
+                      {new Date(player.contract.contract_end_date).toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Contract Duration</span>
+                    <p className="font-medium text-gray-900">
+                      {(() => {
+                        const start = new Date(player.contract.contract_start_date)
+                        const end = new Date(player.contract.contract_end_date)
+                        const months = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
+                        const years = Math.floor(months / 12)
+                        const remainingMonths = months % 12
+                        return years > 0
+                          ? `${years} year${years > 1 ? 's' : ''}${remainingMonths > 0 ? ` ${remainingMonths} month${remainingMonths > 1 ? 's' : ''}` : ''}`
+                          : `${months} month${months > 1 ? 's' : ''}`
+                      })()}
+                    </p>
+                  </div>
+
+                  {player.contract.notice_period != null && (
+                    <div>
+                      <span className="text-sm text-gray-600">Notice Period</span>
+                      <p className="font-medium text-gray-900">{player.contract.notice_period} days</p>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-slate-100">
+                    <button
+                      onClick={() => router.push(`/dashboard/club-owner/contracts/${player.contract?.id}/view`)}
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-md"
+                    >
+                      View Full Contract
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Contact Info */}
             <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 p-6 mt-6">

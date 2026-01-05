@@ -30,6 +30,8 @@ interface FormationBuilderProps {
   players: Player[]
   clubId: string
   teamId?: string
+  matchId?: string
+  matchFormat?: string
 }
 
 type FieldPosition = {
@@ -328,7 +330,7 @@ const SQUAD_REQUIREMENTS = {
   '11s': { minPlayers: 14, playersOnField: 11, minSubs: 3, recommended: 18 }
 }
 
-export function FormationBuilder({ players, clubId, teamId }: FormationBuilderProps) {
+export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat }: FormationBuilderProps) {
   const totalPlayers = players.length
   const { addToast } = useToast()
 
@@ -358,6 +360,26 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>(players)
   const [substitutePlayers, setSubstitutePlayers] = useState<Player[]>([])
   const [showSaveDialog, setShowSaveDialog] = useState<boolean>(false)
+
+  // Update format when match is selected
+  useEffect(() => {
+    if (matchFormat) {
+      const formatMap: Record<string, string> = {
+        '5-a-side': '5s',
+        '7-a-side': '7s',
+        '11-a-side': '11s'
+      }
+      const mappedFormat = formatMap[matchFormat]
+      if (mappedFormat && availableFormats.includes(mappedFormat)) {
+        setSelectedFormat(mappedFormat)
+        // Reset formation to first available for this format
+        const newFormations = FORMATIONS[mappedFormat]
+        if (newFormations) {
+          setSelectedFormation(Object.keys(newFormations)[0])
+        }
+      }
+    }
+  }, [matchFormat, matchId])
 
   const currentFormations = FORMATIONS[selectedFormat] || FORMATIONS['5s']
   const formation: Formation =
@@ -703,12 +725,22 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
         '11s': '11-a-side'
       }
 
-      // Upsert lineup by team + format: if a lineup for this team and format exists, update it; otherwise create.
-      const { data: existingLineups } = await supabase
+      // Upsert lineup by team + format + match_id
+      // If matchId is provided, look for lineup for this specific match
+      // Otherwise, look for a template lineup (match_id is null)
+      let existingLineupsQuery = supabase
         .from('team_lineups')
         .select('*')
         .eq('team_id', teamId)
         .eq('format', formatMap[selectedFormat])
+
+      if (matchId) {
+        existingLineupsQuery = existingLineupsQuery.eq('match_id', matchId)
+      } else {
+        existingLineupsQuery = existingLineupsQuery.is('match_id', null)
+      }
+
+      const { data: existingLineups } = await existingLineupsQuery
         .order('created_at', { ascending: false })
         .limit(1)
 
@@ -741,16 +773,23 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
         lineup = existing
       } else {
         // Create new lineup
+        const lineupData: any = {
+          team_id: teamId,
+          lineup_name: lineupName,
+          format: formatMap[selectedFormat],
+          formation: selectedFormation,
+          is_default: false,
+          created_by: user.id
+        }
+
+        // Add match_id if this is a match-specific lineup
+        if (matchId) {
+          lineupData.match_id = matchId
+        }
+
         const { data: newLineup, error: lineupError } = await supabase
           .from('team_lineups')
-          .insert({
-            team_id: teamId,
-            lineup_name: lineupName,
-            format: formatMap[selectedFormat],
-            formation: selectedFormation,
-            is_default: false,
-            created_by: user.id
-          })
+          .insert(lineupData)
           .select()
           .single()
 
@@ -1095,11 +1134,21 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
         '11s': '11-a-side'
       }
 
-      const { data: lineups, error } = await supabase
+      let lineupsQuery = supabase
         .from('team_lineups')
         .select('id')
         .eq('team_id', teamId)
         .eq('format', formatMap[formatKey])
+
+      // If matchId is provided, prioritize match-specific lineup
+      // Otherwise, load template lineup (match_id is null)
+      if (matchId) {
+        lineupsQuery = lineupsQuery.eq('match_id', matchId)
+      } else {
+        lineupsQuery = lineupsQuery.is('match_id', null)
+      }
+
+      const { data: lineups, error } = await lineupsQuery
         .order('created_at', { ascending: false })
         .limit(1)
 
@@ -1118,21 +1167,21 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
     }
   }
 
-  // Auto-load latest lineup when team or format changes (only if team selected)
+  // Auto-load latest lineup when team, format, or match changes (only if team selected)
   useEffect(() => {
     if (!teamId) return
-    
+
     // When switching format, preserve assigned players but clear their positions
     // They will move to "available" tier where user can reposition them
     const previousAssignments = { ...assignments }
     const previousSubstitutes = [...substitutePlayers]
-    
+
     loadLatestLineupForFormat(selectedFormat)
-    
+
     // After loading, if no lineup was found for this format, keep the players
     // but they'll be repositioned by the user
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, selectedFormat])
+  }, [teamId, selectedFormat, matchId])
 
   // Handle formation layout changes (e.g., 2-2 to 1-2-1 within same 5-a-side format)
   // Re-assign players to compatible positions in the new formation

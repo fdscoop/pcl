@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FormationBuilder } from '@/components/FormationBuilder'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
 import { useToast } from '@/context/ToastContext'
@@ -23,6 +22,8 @@ interface Player {
     position: string
     photo_url: string
     unique_player_id: string
+    date_of_birth: string
+    nationality: string
     users: {
       first_name: string
       last_name: string
@@ -38,10 +39,10 @@ export default function TeamManagementPage() {
   const [players, setPlayers] = useState<Player[]>([]) // Players in team_squads (the squad/bench)
   const [contractedPlayers, setContractedPlayers] = useState<Player[]>([]) // All contracted players
   const [selectedPosition, setSelectedPosition] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<'list' | 'formation'>('list')
   const [editingJerseyPlayerId, setEditingJerseyPlayerId] = useState<string | null>(null)
   const [editingJerseyNumber, setEditingJerseyNumber] = useState<string>('')
   const [updatingJersey, setUpdatingJersey] = useState(false)
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const { addToast } = useToast()
   const {
     notifications,
@@ -130,7 +131,7 @@ export default function TeamManagementPage() {
         // Fetch player details for all
         const { data: playersData, error: playersError } = await supabase
           .from('players')
-          .select('id, position, photo_url, unique_player_id, user_id')
+          .select('id, position, photo_url, unique_player_id, user_id, date_of_birth, nationality')
           .in('id', allPlayerIds)
 
         if (!playersError && playersData) {
@@ -180,7 +181,7 @@ export default function TeamManagementPage() {
         const playerIds = contractsData.map(c => c.player_id)
         const { data: playersData, error: playersError } = await supabase
           .from('players')
-          .select('id, position, photo_url, unique_player_id, user_id')
+          .select('id, position, photo_url, unique_player_id, user_id, date_of_birth, nationality')
           .in('id', playerIds)
 
         if (!playersError && playersData) {
@@ -526,6 +527,16 @@ export default function TeamManagementPage() {
     ? players
     : players.filter(p => p.players?.position === selectedPosition)
 
+  // Auto-select first player when filtered players change
+  useEffect(() => {
+    if (filteredPlayers.length > 0) {
+      // Only auto-select if no player is currently selected or if the selected player is not in the filtered list
+      if (!selectedPlayer || !filteredPlayers.find(p => p.id === selectedPlayer.id)) {
+        setSelectedPlayer(filteredPlayers[0])
+      }
+    }
+  }, [filteredPlayers.length, selectedPosition])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -536,6 +547,22 @@ export default function TeamManagementPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #14b8a6;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #0d9488;
+        }
+      `}</style>
       {/* Navigation */}
       <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -591,75 +618,39 @@ export default function TeamManagementPage() {
                   ⚡ Add {contractedPlayers.length} New Player{contractedPlayers.length !== 1 ? 's' : ''} to Squad
                 </Button>
               )}
-              {team && players.length > 0 && (
-                <div className="flex gap-2 bg-muted/50 p-1.5 rounded-xl">
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="lg"
-                    className={viewMode === 'list' ? 'gradient-brand text-white shadow-lg border-0 hover:shadow-xl' : 'border-2 border-slate-200 text-slate-700 bg-white hover:border-orange-300 hover:text-orange-800 hover:bg-orange-50 transition-all duration-200'}
-                    onClick={() => setViewMode('list')}
-                  >
-                    📋 Roster List
-                  </Button>
-                  <Button
-                    variant={viewMode === 'formation' ? 'default' : 'ghost'}
-                    size="lg"
-                    className={viewMode === 'formation' ? 'gradient-brand text-white shadow-lg border-0 hover:shadow-xl' : 'border-2 border-slate-200 text-slate-700 bg-white hover:border-orange-300 hover:text-orange-800 hover:bg-orange-50 transition-all duration-200'}
-                    onClick={() => setViewMode('formation')}
-                  >
-                    ⚽ Formation
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Optimized Team Status Section */}
+          {/* Team Status - Compact */}
           {team && (
-            <div className="bg-gradient-to-r from-slate-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/50 rounded-xl p-4 mb-6 border border-slate-200/50 shadow-md">
+            <div className="bg-white rounded-xl p-4 mb-6 border border-gray-200 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
-                      <span className="text-white text-xl">🏆</span>
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-md">
+                    <span className="text-white text-lg">🏆</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Team</p>
+                    <p className="font-bold text-base">{team.team_name}</p>
+                  </div>
+                  <div className="ml-4 flex items-center gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Squad</p>
+                      <p className="font-bold text-brand-orange">{players.length}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Team</p>
-                      <p className="font-bold text-lg">{team.team_name}</p>
+                      <p className="text-xs text-gray-500">Contracted</p>
+                      <p className="font-bold">{contractedPlayers.length}</p>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">Squad Size</p>
-                      <p className="font-bold text-base text-brand-orange">{players.length} players</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">Contracted</p>
-                      <p className="font-bold text-base">{contractedPlayers.length} players</p>
-                    </div>
-                  </div>
-                  
-                  {players.length < contractedPlayers.length && (
-                    <Badge variant="outline" className="ml-2 border-red-400 text-red-700 bg-red-50 animate-pulse">
-                      {contractedPlayers.length - players.length} newly recruited players waiting
-                    </Badge>
-                  )}
                 </div>
-                {players.length < contractedPlayers.length && (
-                  <div className="flex flex-col gap-2">
-                    <Button 
-                      variant="default" 
-                      size="lg" 
-                      onClick={handleDeclareSquad} 
-                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-0 animate-pulse"
-                    >
-                      ✨ Add {contractedPlayers.length - players.length} New Player{contractedPlayers.length - players.length !== 1 ? 's' : ''} to Squad
-                    </Button>
-                    <p className="text-xs text-red-600 font-medium text-center">
-                      ⚠️ These players can't play until added to squad
-                    </p>
-                  </div>
+                {team && players.length > 0 && (
+                  <Button
+                    onClick={() => router.push('/dashboard/club-owner/formations')}
+                    className="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white"
+                  >
+                    ⚽ Build Formations
+                  </Button>
                 )}
               </div>
             </div>
@@ -668,102 +659,31 @@ export default function TeamManagementPage() {
 
         {/* Urgent Action Required - New Players Alert */}
         {players.length < contractedPlayers.length && (
-          <div className="mb-6 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 dark:from-red-950 dark:via-orange-950 dark:to-yellow-950 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 shadow-lg animate-pulse">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg animate-bounce">
-                <span className="text-white text-xl">🚨</span>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-red-900 dark:text-red-100 mb-1">
-                  Action Required: New Players Need Squad Assignment
-                </h3>
-                <p className="text-sm text-red-800 dark:text-red-200 mb-3">
-                  You have <strong>{contractedPlayers.length - players.length} newly recruited player{contractedPlayers.length - players.length !== 1 ? 's' : ''}</strong> who are contracted but not yet added to your team squad. 
-                  These players cannot participate in matches or formations until they are officially added to the squad.
-                </p>
-                <div className="flex items-center gap-3">
-                  <Button 
-                    onClick={handleDeclareSquad} 
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-0"
-                    size="lg"
-                  >
-                    ✅ Add All {contractedPlayers.length - players.length} Player{contractedPlayers.length - players.length !== 1 ? 's' : ''} to Squad Now
-                  </Button>
-                  <div className="flex items-center gap-2 text-xs text-red-700 dark:text-red-300">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-                    <span>Urgent action needed</span>
-                  </div>
+          <div className="mb-6 bg-gradient-to-r from-red-50 via-orange-50 to-yellow-50 border-2 border-red-200 rounded-xl p-4 shadow-lg">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
+                  <span className="text-white text-lg">🚨</span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-red-900 mb-1">
+                    {contractedPlayers.length - players.length} New Player{contractedPlayers.length - players.length !== 1 ? 's' : ''} Waiting
+                  </h3>
+                  <p className="text-sm text-red-800">
+                    Add them to your squad to make them available for matches
+                  </p>
                 </div>
               </div>
+              <Button 
+                onClick={handleDeclareSquad} 
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg"
+              >
+                ✅ Add to Squad
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Compact Information Section */}
-        <div className="mb-6 space-y-3">
-          {/* Quick Overview Card */}
-          <Card className="border-0 shadow-lg bg-gradient-to-r from-brand-orange/5 via-brand-orange/10 to-brand-orange-light/5 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg">ℹ️</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Team Management Overview</h3>
-                  <p className="text-sm text-muted-foreground">Build and declare your official team lineup for competitions</p>
-                </div>
-              </div>
-              
-              {/* Key Actions Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
-                  <span className="text-blue-600">✓</span>
-                  <span className="text-xs font-medium">Create Teams</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
-                  <span className="text-blue-600">✓</span>
-                  <span className="text-xs font-medium">Manage Squad</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
-                  <span className="text-blue-600">✓</span>
-                  <span className="text-xs font-medium">Set Formations</span>
-                </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/50">
-                  <span className="text-blue-600">✓</span>
-                  <span className="text-xs font-medium">Jersey Numbers</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Important Rules - Compact Banner */}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border border-amber-200 dark:border-amber-800 rounded-xl p-3 shadow-md">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div className="flex-1">
-                <h4 className="font-semibold text-amber-900 dark:text-amber-100 text-sm mb-2">Tournament Compliance Rules</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-amber-800 dark:text-amber-200">
-                  <div className="flex items-center gap-1">
-                    <span className="text-red-500">•</span>
-                    <span>Declare team before matches</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-red-500">•</span>
-                    <span>No suspended players in lineups</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-red-500">•</span>
-                    <span>Notify changes immediately</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-red-500">•</span>
-                    <span>Ensure squad compliance</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
         {!team ? (
           <Card className="border-2 border-dashed">
             <CardContent className="py-12">
@@ -773,16 +693,11 @@ export default function TeamManagementPage() {
                   No Team Created
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Create your first team to start managing your squad and formations.
+                  Create your first team to start managing players
                 </p>
                 <Button variant="gradient" onClick={handleCreateTeam} size="lg">
-                  ➕ Create Your First Team
+                  ➕ Create Team
                 </Button>
-                {contractedPlayers.length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-4">
-                    You have {contractedPlayers.length} contracted player{contractedPlayers.length !== 1 ? 's' : ''} ready to join your team.
-                  </p>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -790,110 +705,34 @@ export default function TeamManagementPage() {
           <Card className="border-2 border-dashed border-amber-300">
             <CardContent className="py-12">
               <div className="text-center">
-                <div className="text-6xl mb-4">�</div>
+                <div className="text-6xl mb-4">⚽</div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
-                  Squad Not Declared Yet
+                  No Squad Players
                 </h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Your team exists, but you haven't declared your squad yet. Add your contracted players to the team squad to start building formations and lineups.
+                <p className="text-muted-foreground mb-6">
+                  Add your contracted players to the squad
                 </p>
                 {contractedPlayers.length > 0 ? (
-                  <>
-                    <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 mb-6 max-w-md mx-auto">
-                      <p className="text-sm text-emerald-800 dark:text-emerald-200 mb-3">
-                        🎉 Great! You have <strong>{contractedPlayers.length} contracted player{contractedPlayers.length !== 1 ? 's' : ''}</strong> ready to join your squad.
-                      </p>
-                      <Button 
-                        variant="default" 
-                        onClick={handleDeclareSquad} 
-                        size="lg"
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-0"
-                      >
-                        ✅ Add All {contractedPlayers.length} Player{contractedPlayers.length !== 1 ? 's' : ''} to Squad
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      This will make all your contracted players available for formations and match lineups.
-                    </p>
-                  </>
+                  <Button 
+                    variant="default" 
+                    onClick={handleDeclareSquad} 
+                    size="lg"
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+                  >
+                    ✅ Add {contractedPlayers.length} Player{contractedPlayers.length !== 1 ? 's' : ''} to Squad
+                  </Button>
                 ) : (
-                  <>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      You don't have any contracted players yet. Start by scouting and signing players.
-                    </p>
-                    <Button
-                      variant="gradient"
-                      onClick={() => router.push('/scout/players')}
-                    >
-                      🔍 Scout Players
-                    </Button>
-                  </>
+                  <Button
+                    variant="gradient"
+                    onClick={() => router.push('/dashboard/club-owner/scout-players')}
+                  >
+                    🔍 Scout Players
+                  </Button>
                 )}
               </div>
             </CardContent>
           </Card>
         ) : (
-          <>
-            {/* Enhanced Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-brand-orange/5 via-brand-orange/10 to-brand-orange-light/10 border border-brand-orange/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-brand-orange/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg">⚽</span>
-                  </div>
-                  <span className="text-2xl sm:text-3xl font-black text-brand-orange">{players.length}</span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-slate-700">Total Players</p>
-              </div>
-              
-              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-slate-100 via-slate-200/50 to-slate-300/30 border border-slate-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-slate-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg">🥅</span>
-                  </div>
-                  <span className="text-2xl sm:text-3xl font-black text-slate-700">{players.filter(p => p.players?.position === 'Goalkeeper').length}</span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-slate-700">Goalkeepers</p>
-              </div>
-              
-              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-blue-100 via-blue-200/50 to-blue-300/30 border border-blue-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg">🛡️</span>
-                  </div>
-                  <span className="text-2xl sm:text-3xl font-black text-blue-700">{players.filter(p => p.players?.position === 'Defender').length}</span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-blue-700">Defenders</p>
-              </div>
-              
-              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-emerald-100 via-emerald-200/50 to-emerald-300/30 border border-emerald-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-emerald-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg">⚡</span>
-                  </div>
-                  <span className="text-2xl sm:text-3xl font-black text-emerald-700">{players.filter(p => p.players?.position === 'Midfielder').length}</span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-emerald-700">Midfielders</p>
-              </div>
-              
-              <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-indigo-100 via-indigo-200/50 to-indigo-300/30 border border-indigo-300/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-indigo-400/20 to-transparent rounded-full -translate-y-4 translate-x-4"></div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg">🎯</span>
-                  </div>
-                  <span className="text-2xl sm:text-3xl font-black text-indigo-700">{players.filter(p => p.players?.position === 'Forward').length}</span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-indigo-700">Forwards</p>
-              </div>
-            </div>
-
-            {/* Content based on view mode */}
-            {viewMode === 'list' ? (
           <>
             {/* Position Filter */}
             {players.length > 0 && (
@@ -920,26 +759,7 @@ export default function TeamManagementPage() {
               </div>
             )}
 
-            {/* Optimized Player List Header */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-orange to-brand-orange-light flex items-center justify-center shadow-lg">
-                    <span className="text-white text-lg">📋</span>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground">
-                      Team Roster - {selectedPosition === 'all' ? 'All Players' : selectedPosition + 's'}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {filteredPlayers.length} {filteredPlayers.length === 1 ? 'player' : 'players'} • Ready for match lineups
-                    </p>
-                  </div>
-                </div>
-                <div className="text-3xl">🏆</div>
-              </div>
-
-              {filteredPlayers.length === 0 ? (
+            {filteredPlayers.length === 0 ? (
                 <Card className="border-dashed">
                   <CardContent className="py-12">
                     <div className="text-center text-muted-foreground">
@@ -955,7 +775,7 @@ export default function TeamManagementPage() {
                       {players.length === 0 && (
                         <Button
                           variant="gradient"
-                          onClick={() => router.push('/scout/players')}
+                          onClick={() => router.push('/dashboard/club-owner/scout-players')}
                         >
                           🔍 Scout Players
                         </Button>
@@ -964,166 +784,340 @@ export default function TeamManagementPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {filteredPlayers.map((player) => {
-                    const getPositionGradient = (position: string) => {
+                // Two-column layout: Player list on left, Selected player details on right
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                  {/* Left Column - Player List */}
+                  <div className="lg:col-span-2 space-y-3 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
+                    {filteredPlayers.map((player, index) => {
+                    const getPositionColor = (position: string) => {
                       switch (position) {
                         case 'Goalkeeper':
-                          return 'from-slate-600 to-slate-700' // Professional dark gray
+                          return {
+                            bg: 'from-slate-50 to-slate-100',
+                            border: 'border-slate-200',
+                            accent: 'bg-slate-600',
+                            text: 'text-slate-700'
+                          }
                         case 'Defender':
-                          return 'from-blue-600 to-blue-700' // Brand-aligned blue
+                          return {
+                            bg: 'from-blue-50 to-blue-100',
+                            border: 'border-blue-200',
+                            accent: 'bg-blue-600',
+                            text: 'text-blue-700'
+                          }
                         case 'Midfielder':
-                          return 'from-orange-500 to-orange-600' // Brand orange
+                          return {
+                            bg: 'from-teal-50 to-cyan-100',
+                            border: 'border-teal-200',
+                            accent: 'bg-gradient-to-r from-teal-500 to-teal-600',
+                            text: 'text-teal-700'
+                          }
                         case 'Forward':
-                          return 'from-indigo-600 to-indigo-700' // Professional indigo
+                          return {
+                            bg: 'from-orange-50 to-orange-100',
+                            border: 'border-orange-200',
+                            accent: 'bg-orange-600',
+                            text: 'text-orange-700'
+                          }
                         default:
-                          return 'from-gray-600 to-gray-700'
+                          return {
+                            bg: 'from-gray-50 to-gray-100',
+                            border: 'border-gray-200',
+                            accent: 'bg-gray-600',
+                            text: 'text-gray-700'
+                          }
                       }
                     }
+
+                    const colors = getPositionColor(player.players?.position || '')
+                    const isSelected = selectedPlayer?.id === player.id
 
                     return (
                       <div
                         key={player.id}
-                        className="relative overflow-hidden rounded-3xl shadow-2xl aspect-[4/5] group cursor-pointer transform transition-transform hover:scale-105"
+                        className={`relative overflow-hidden rounded-2xl bg-white border-2 ${
+                          isSelected ? 'border-teal-500 shadow-lg shadow-teal-200' : colors.border
+                        } shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer`}
                       >
-                        {/* Background Image */}
-                        <div className="absolute inset-0">
-                          {player.players?.photo_url ? (
-                            <img
-                              src={player.players.photo_url}
-                              alt={`${player.players.users?.first_name} ${player.players.users?.last_name}`}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className={`w-full h-full bg-gradient-to-br ${getPositionGradient(player.players?.position || '')}`} />
-                          )}
-                          {/* Gradient Overlay */}
-                          <div className={`absolute inset-0 bg-gradient-to-br ${getPositionGradient(
-                            player.players?.position || ''
-                          )} opacity-60 mix-blend-multiply`} />
-                          {/* Dark gradient from bottom */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                        </div>
-
-                        {/* Jersey Number Badge */}
-                        <div className="absolute top-4 right-4 z-20">
-                          <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform border-2 border-white/30">
-                            <span className="text-2xl font-bold text-white">#{player.jersey_number || '?'}</span>
-                          </div>
-                        </div>
-
-                        {/* Position Badge */}
-                        <div className="absolute top-4 left-4 z-20">
-                          <div className="inline-block bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg border border-white/30">
-                            {player.players?.position?.toUpperCase()}
-                          </div>
-                        </div>
-
-                        {/* Curved accent line */}
-                        <div className="absolute right-0 top-1/4 w-1/2 h-1/2 opacity-30 z-10">
-                          <svg viewBox="0 0 100 200" className="w-full h-full">
-                            <path
-                              d="M0 0 Q 50 100 0 200"
-                              fill="none"
-                              stroke="rgba(255,255,255,0.6)"
-                              strokeWidth="10"
-                            />
-                          </svg>
-                        </div>
-
-                        {/* Info Section - Lower Half */}
-                        <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                          {/* Player Info */}
-                          <div className="text-white">
-                            <h4 className="text-2xl font-bold mb-1 drop-shadow-lg">
-                              {player.players?.users?.first_name} {player.players?.users?.last_name}
-                            </h4>
-                            <p className="text-sm text-white/90 mb-3 drop-shadow">
-                              ID: {player.players?.unique_player_id}
-                            </p>
-
-                            {/* Jersey Edit Box */}
-                            {editingJerseyPlayerId === player.id ? (
-                              <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 mb-3">
-                                <div className="flex gap-2">
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="99"
-                                    value={editingJerseyNumber}
-                                    onChange={(e) => setEditingJerseyNumber(e.target.value)}
-                                    placeholder="Jersey #"
-                                    className="bg-white/20 border-white/30 text-white placeholder:text-white/60"
-                                    autoFocus
-                                  />
-                                  <Button
-                                    size="sm"
-                                    className="bg-orange-500 hover:bg-orange-600 text-white border-0"
-                                    onClick={() => {
-                                      const num = parseInt(editingJerseyNumber)
-                                      if (!isNaN(num)) {
-                                        handleUpdateJerseyNumber(player.id, num)
-                                      }
-                                    }}
-                                    disabled={updatingJersey || !editingJerseyNumber}
-                                  >
-                                    ✓
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    className="bg-white/20 hover:bg-white/30 text-white border-0"
-                                    onClick={() => {
-                                      setEditingJerseyPlayerId(null)
-                                      setEditingJerseyNumber('')
-                                    }}
-                                    disabled={updatingJersey}
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </Button>
+                        <div 
+                          className="flex items-center gap-4 p-3"
+                          onClick={(e) => {
+                            // Don't trigger if clicking on jersey edit area
+                            if (editingJerseyPlayerId !== player.id) {
+                              setSelectedPlayer(player)
+                            }
+                          }}
+                        >
+                          {/* Player Photo */}
+                          <div className="relative flex-shrink-0">
+                            <div className={`w-16 h-16 rounded-xl overflow-hidden shadow-lg bg-gradient-to-br ${colors.bg} ${colors.border} border-2`}>
+                              {player.players?.photo_url ? (
+                                <img
+                                  src={player.players.photo_url}
+                                  alt={`${player.players.users?.first_name} ${player.players.users?.last_name}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className={`w-full h-full flex items-center justify-center ${colors.accent} text-white text-lg font-bold`}>
+                                  {player.players?.users?.first_name?.[0]}{player.players?.users?.last_name?.[0]}
                                 </div>
+                              )}
+                            </div>
+                            {/* Jersey Number Badge */}
+                            <div className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-md">
+                              <span className={`text-xs font-black ${colors.text}`}>
+                                {player.jersey_number || '?'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Player Info */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-bold text-gray-900 truncate">
+                              {player.players?.users?.first_name} {player.players?.users?.last_name}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge className={`${colors.accent} text-white text-[10px] font-semibold px-2 py-0`}>
+                                {player.players?.position === 'Goalkeeper' ? 'GK' : 
+                                 player.players?.position === 'Defender' ? 'DF' :
+                                 player.players?.position === 'Midfielder' ? 'MF' : 'FW'}
+                              </Badge>
+                              <span className="text-xs text-gray-500 truncate">
+                                ID: {player.players?.unique_player_id}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Jersey Edit Button */}
+                          <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            {editingJerseyPlayerId === player.id ? (
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="99"
+                                  value={editingJerseyNumber}
+                                  onChange={(e) => setEditingJerseyNumber(e.target.value)}
+                                  placeholder="#"
+                                  className="h-8 w-16 text-sm text-center"
+                                  autoFocus
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <Button
+                                  size="sm"
+                                  className={`${colors.accent} hover:opacity-90 text-white border-0 h-8 px-2`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    const num = parseInt(editingJerseyNumber)
+                                    if (!isNaN(num)) {
+                                      handleUpdateJerseyNumber(player.id, num)
+                                    }
+                                  }}
+                                  disabled={updatingJersey || !editingJerseyNumber}
+                                >
+                                  ✓
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditingJerseyPlayerId(null)
+                                    setEditingJerseyNumber('')
+                                  }}
+                                  disabled={updatingJersey}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
                               </div>
                             ) : (
-                              <div 
-                                className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors"
-                                onClick={() => {
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   setEditingJerseyPlayerId(player.id)
                                   setEditingJerseyNumber(player.jersey_number?.toString() || '')
                                 }}
                               >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <div className="text-xs text-white/80 font-medium mb-0.5">
-                                      Jersey Number
-                                    </div>
-                                    <div className="text-2xl font-bold text-orange-300">
-                                      #{player.jersey_number || '?'}
-                                    </div>
-                                  </div>
-                                  <Edit2 className="w-5 h-5 text-white/60" />
-                                </div>
-                              </div>
+                                <Edit2 className="w-4 h-4 text-gray-400" />
+                              </Button>
                             )}
                           </div>
                         </div>
 
-                        {/* Large watermark text */}
-                        <div className="absolute bottom-16 left-0 right-0 pointer-events-none overflow-hidden z-10">
-                          <div className="text-[80px] font-black text-white/10 leading-none">
-                            PCL
-                          </div>
-                        </div>
+                        {/* Hover effect indicator */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                          isSelected ? 'bg-teal-500 opacity-100' : `${colors.accent} opacity-0 group-hover:opacity-100`
+                        } transition-opacity duration-300`}></div>
                       </div>
                     )
                   })}
+                  </div>
+
+                  {/* Right Column - Selected Player Details */}
+                  <div className="lg:col-span-3">
+                    {selectedPlayer ? (
+                      <div className="sticky top-6 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-teal-500 to-teal-700">
+                        <div className="flex flex-col lg:flex-row">
+                          {/* Left Side - Player Image */}
+                          <div className="lg:w-2/5 relative">
+                            <div className="aspect-[3/4] lg:h-full relative overflow-hidden">
+                              {selectedPlayer.players?.photo_url ? (
+                                <img
+                                  src={selectedPlayer.players.photo_url}
+                                  alt={`${selectedPlayer.players.users?.first_name} ${selectedPlayer.players.users?.last_name}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-teal-600 to-teal-800 flex items-center justify-center">
+                                  <span className="text-9xl text-white/30 font-bold">
+                                    {selectedPlayer.players?.users?.first_name?.[0]}{selectedPlayer.players?.users?.last_name?.[0]}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Gradient Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                            </div>
+                            {/* Position Badge */}
+                            <div className="absolute top-6 left-6">
+                              <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-sm font-bold text-white shadow-lg border border-white/30">
+                                {selectedPlayer.players?.position?.toUpperCase()}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right Side - Player Details */}
+                          <div className="lg:w-3/5 p-8 lg:p-12 relative">
+                            {/* Player Name */}
+                            <div className="mb-8">
+                              <h3 className="text-4xl lg:text-5xl font-black text-white mb-2">
+                                {selectedPlayer.players?.users?.first_name}<br />
+                                {selectedPlayer.players?.users?.last_name}
+                              </h3>
+                              <div className="flex flex-wrap items-center gap-2 mt-4">
+                                <Badge className="bg-white text-teal-700 text-xs font-semibold px-3 py-1">
+                                  AGE: {selectedPlayer.players?.date_of_birth ? (() => {
+                                    const birthDate = new Date(selectedPlayer.players.date_of_birth)
+                                    const today = new Date()
+                                    let age = today.getFullYear() - birthDate.getFullYear()
+                                    const monthDiff = today.getMonth() - birthDate.getMonth()
+                                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                                      age--
+                                    }
+                                    return age
+                                  })() : 'N/A'}
+                                </Badge>
+                                <Badge className="bg-white text-teal-700 text-xs font-semibold px-3 py-1">
+                                  NATIONALITY: {selectedPlayer.players?.nationality || 'N/A'}
+                                </Badge>
+                                <Badge className="bg-white text-teal-700 text-xs font-semibold px-3 py-1">
+                                  POSITION: {selectedPlayer.players?.position === 'Midfielder' ? 'CAM' : selectedPlayer.players?.position?.toUpperCase()}
+                                </Badge>
+                              </div>
+                              <div className="mt-6">
+                                <button
+                                  onClick={() => router.push(`/dashboard/club-owner/players/${selectedPlayer.players?.id}`)}
+                                  className="px-6 py-2.5 bg-white text-teal-700 rounded-lg font-semibold hover:bg-teal-50 transition-all shadow-lg flex items-center gap-2"
+                                >
+                                  <span className="text-lg">👤</span>
+                                  View Full Player Profile
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Stats - Simulated for now */}
+                            <div className="space-y-4">
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-white font-semibold text-sm">Athleticism</span>
+                                  <span className="text-white font-bold">86</span>
+                                </div>
+                                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-green-400 to-green-500" style={{ width: '86%' }}></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-white font-semibold text-sm">Shooting</span>
+                                  <span className="text-white font-bold">60</span>
+                                </div>
+                                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-pink-400 to-pink-500" style={{ width: '60%' }}></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-white font-semibold text-sm">Technical Ability</span>
+                                  <span className="text-white font-bold">85</span>
+                                </div>
+                                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: '85%' }}></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-white font-semibold text-sm">Defending</span>
+                                  <span className="text-white font-bold">40</span>
+                                </div>
+                                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-red-400 to-red-500" style={{ width: '40%' }}></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-white font-semibold text-sm">Mentality</span>
+                                  <span className="text-white font-bold">72</span>
+                                </div>
+                                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-purple-400 to-purple-500" style={{ width: '72%' }}></div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-white font-semibold text-sm">Passing</span>
+                                  <span className="text-white font-bold">86</span>
+                                </div>
+                                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: '86%' }}></div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Jersey Number - Large Display */}
+                            <div className="absolute bottom-8 right-8 opacity-10">
+                              <span className="text-[120px] font-black text-white leading-none">
+                                {selectedPlayer.jersey_number || '?'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="sticky top-6 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12">
+                        <div className="text-center text-gray-500">
+                          <div className="text-6xl mb-4">👈</div>
+                          <h3 className="text-xl font-bold text-gray-700 mb-2">
+                            Select a Player
+                          </h3>
+                          <p className="text-sm">
+                            Click on any player from the list to view their detailed stats and information
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
-          </>
-        ) : (
-          <FormationBuilder players={players} clubId={club?.id} teamId={team?.id} />
-        )}
-      </>
-    )}
+        </>
+      )}
       </main>
     </div>
   )

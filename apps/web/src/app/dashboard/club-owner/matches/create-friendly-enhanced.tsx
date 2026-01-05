@@ -44,9 +44,12 @@ interface Stadium {
   id: string
   stadium_name: string
   location: string
-  district: string
+  district: string | null
+  city?: string
+  state?: string
   hourly_rate: number
-  facilities: string[]
+  facilities?: string[]
+  amenities?: string[]
   is_available: boolean
 }
 
@@ -92,8 +95,8 @@ export function CreateFriendlyMatch({
   const [loadingData, setLoadingData] = useState(true)
 
   // Multi-step wizard state
-  const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 4
+  const [currentStep, setCurrentStep] = useState<number>(1)
+  const totalSteps = 5
   
   // Available data
   const [availableClubs, setAvailableClubs] = useState<Club[]>([])
@@ -189,15 +192,9 @@ export function CreateFriendlyMatch({
   }, [clubSearchTerm, availableClubs])
 
   useEffect(() => {
-    // Filter stadiums based on club's district if opponent is selected
-    if (formData.selectedClub) {
-      const filtered = availableStadiums.filter(stadium =>
-        stadium.district === club.district || stadium.district === formData.selectedClub?.district
-      )
-      setFilteredStadiums(filtered)
-    } else {
-      setFilteredStadiums(availableStadiums)
-    }
+    // Don't filter stadiums by district since most have null district
+    // Show all available stadiums
+    setFilteredStadiums(availableStadiums)
   }, [formData.selectedClub, availableStadiums, club.district])
 
   const loadInitialData = async () => {
@@ -230,10 +227,17 @@ export function CreateFriendlyMatch({
       // Load stadiums
       const { data: stadiumsData } = await supabase
         .from('stadiums')
-        .select('id, stadium_name, location, district, hourly_rate, facilities, is_available')
+        .select('id, stadium_name, location, district, city, state, hourly_rate, amenities, is_available')
         .eq('is_available', true)
 
-      setAvailableStadiums(stadiumsData || [])
+      // Transform stadiums to use amenities as facilities
+      const transformedStadiums = stadiumsData?.map(s => ({
+        ...s,
+        facilities: s.amenities || [],
+        district: s.district || s.city || s.state || 'Unknown'
+      })) || []
+
+      setAvailableStadiums(transformedStadiums)
 
       // Load referees
       const { data: refereesData } = await supabase
@@ -395,7 +399,9 @@ export function CreateFriendlyMatch({
     const subtotal = stadiumCost + refereeCost + staffCost
     const processingFee = subtotal * 0.05 // 5% processing fee
     const totalCost = subtotal + processingFee
-    const costPerPlayer = totalCost / formData.teamSize
+    // Cost per player split between both teams (your team + opponent team)
+    const totalPlayers = formData.teamSize * 2
+    const costPerPlayer = totalCost / totalPlayers
 
     setBudget({
       stadiumCost,
@@ -416,37 +422,168 @@ export function CreateFriendlyMatch({
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) throw new Error('User not authenticated')
 
-      // Create a notification entry that can be used to track the request
-      const requestData = {
-        type: 'friendly_match_request',
-        title: `Friendly Match Request from ${club.name}`,
-        message: `${club.name} has requested a ${formData.matchType} friendly match: ${formData.matchFormat} on ${format(formData.matchDate, 'PPP')} at ${formData.matchTime} for ${formData.duration} hours. Stadium: ${formData.selectedStadium?.stadium_name || 'TBD'}. Additional notes: ${formData.notes || 'None'}.`,
-        action_url: `/dashboard/matches/requests/${userData.user.id}`,
-        metadata: {
-          requesting_club: club.name,
-          requesting_club_id: club.id,
-          requesting_team_id: formData.teamId,
-          opponent_club: formData.selectedClub?.name || 'Manual Entry',
-          opponent_club_id: formData.selectedClub?.id || null,
-          match_format: formData.matchFormat,
-          match_type: formData.matchType,
-          match_date: format(formData.matchDate, 'yyyy-MM-dd'),
-          match_time: formData.matchTime,
-          duration: formData.duration,
-          stadium_id: formData.stadiumId,
-          referee_ids: formData.refereeIds,
-          staff_ids: formData.staffIds,
-          prize_money: formData.hasPrizeMoney ? formData.prizeMoney : 0,
-          budget: budget,
-          notes: formData.notes
+      // Validate required fields
+      if (!formData.stadiumId) throw new Error('Stadium is required')
+      if (!selectedDate) throw new Error('Match date is required')
+      if (!formData.matchTime) throw new Error('Match time is required')
+      if (!formData.teamId) throw new Error('Team is required')
+
+      // Get the home team details
+      const { data: homeTeam } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('id', formData.teamId)
+        .single()
+
+      if (!homeTeam) throw new Error('Team not found')
+
+      // For friendly matches, we need an away team. 
+      // If opponent is selected, use their team with same format
+      // If not available, use their first team regardless of format
+      let awayTeamId = null
+
+      if (formData.selectedClub?.id) {
+        // First, try to find a team with matching format
+        const { data: opponentTeamsSameFormat } = await supabase
+          .from('teams')
+          .select('*')
+          .eq('club_id', formData.selectedClub.id)
+          .eq('format', formData.matchFormat)
+          .limit(1)
+
+        if (opponentTeamsSameFormat && opponentTeamsSameFormat.length > 0) {
+          awayTeamId = opponentTeamsSameFormat[0].id
+        } else {
+          // If no matching format, use any team from opponent club
+          const { data: opponentTeamsAny } = await supabase
+            .from('teams')
+            .select('*')
+            .eq('club_id', formData.selectedClub.id)
+            .limit(1)
+
+          if (opponentTeamsAny && opponentTeamsAny.length > 0) {
+            awayTeamId = opponentTeamsAny[0].id
+          }
         }
       }
 
-      console.log('Friendly match request created:', requestData)
+      // If still no away team found, create a temporary/placeholder team for opponent
+      if (!awayTeamId && formData.selectedClub?.id) {
+        // Create a temporary team for the opponent club
+        const { data: newTeam, error: teamCreateError } = await supabase
+          .from('teams')
+          .insert([
+            {
+              club_id: formData.selectedClub.id,
+              team_name: `${formData.selectedClub.name} - ${formData.matchFormat}`,
+              format: formData.matchFormat,
+              status: 'active'
+            }
+          ])
+          .select()
+
+        if (teamCreateError) {
+          console.error('Error creating temporary team:', teamCreateError)
+          throw new Error('Unable to find or create opponent team. Please ensure the opponent club exists.')
+        }
+
+        if (newTeam && newTeam.length > 0) {
+          awayTeamId = newTeam[0].id
+        }
+      }
+
+      // Final check - ensure both teams exist and are different
+      if (!awayTeamId) {
+        throw new Error('Unable to find or create opponent team. Please select a valid opponent club.')
+      }
+
+      if (homeTeam.id === awayTeamId) {
+        throw new Error('Home and away teams cannot be the same. Please select a different opponent club.')
+      }
+
+      console.log('Match setup - Home Team:', homeTeam.id, 'Away Team:', awayTeamId)
+
+      // Insert into matches table using correct schema
+      const { data: matchData, error: matchError } = await supabase
+        .from('matches')
+        .insert([
+          {
+            home_team_id: homeTeam.id,
+            away_team_id: awayTeamId,
+            stadium_id: formData.stadiumId,
+            match_date: format(selectedDate, 'yyyy-MM-dd'),
+            match_time: formData.matchTime,
+            match_format: formData.matchFormat,
+            status: 'scheduled',
+            created_by: userData.user.id
+          }
+        ])
+        .select()
+
+      if (matchError) throw matchError
+      if (!matchData || matchData.length === 0) throw new Error('Failed to create match')
+
+      const createdMatch = matchData[0]
+      console.log('Match created:', createdMatch.id, 'Home:', createdMatch.home_team_id, 'Away:', createdMatch.away_team_id)
+
+      // Handle referee/staff assignments if it's an official match
+      if (formData.matchType === 'official' && formData.refereeIds.length > 0) {
+        const assignments = formData.refereeIds.map(refereeId => ({
+          match_id: createdMatch.id,
+          referee_id: refereeId,
+          assignment_type: 'referee',
+          status: 'pending'
+        }))
+
+        await supabase.from('match_assignments').insert(assignments)
+      }
+
+      if (formData.matchType === 'official' && formData.staffIds.length > 0) {
+        const assignments = formData.staffIds.map(staffId => ({
+          match_id: createdMatch.id,
+          staff_id: staffId,
+          assignment_type: 'staff',
+          status: 'pending'
+        }))
+
+        await supabase.from('match_assignments').insert(assignments)
+      }
+
+      // Create notification for the opponent club
+      if (formData.selectedClub?.id) {
+        // Get the opponent club's owner to notify them
+        const { data: opponentClub } = await supabase
+          .from('clubs')
+          .select('owner_id')
+          .eq('id', formData.selectedClub.id)
+          .single()
+
+        if (opponentClub?.owner_id) {
+          const matchDateStr = format(selectedDate, 'PPP')
+          const stadiumName = formData.selectedStadium?.stadium_name || 'TBD'
+          
+          const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert([
+              {
+                user_id: opponentClub.owner_id,
+                type: 'friendly_match_request',
+                title: `Friendly Match Request from ${club.name}`,
+                message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}`,
+                action_url: `/dashboard/matches/${createdMatch.id}`,
+                read: false
+              }
+            ])
+
+          if (notificationError) console.error('Notification error:', notificationError)
+        }
+      }
+
+      console.log('Match created successfully:', createdMatch)
 
       addToast({
         title: 'Success',
-        description: 'Friendly match request has been recorded! You can follow up directly with the opponent club.',
+        description: 'Friendly match has been created successfully!',
         type: 'success'
       })
 
@@ -455,7 +592,7 @@ export function CreateFriendlyMatch({
       console.error('Error creating friendly match:', error)
       addToast({
         title: 'Error',
-        description: error.message || 'Failed to create friendly match request',
+        description: error.message || 'Failed to create friendly match',
         type: 'error'
       })
     } finally {
@@ -484,6 +621,10 @@ export function CreateFriendlyMatch({
       stadiumId: stadium.id,
       selectedStadium: stadium
     }))
+    // Load scheduled matches for this stadium
+    if (selectedDate) {
+      loadScheduledMatches()
+    }
   }
 
   const canSelectTimeSlot = (startTime: string): boolean => {
@@ -525,10 +666,14 @@ export function CreateFriendlyMatch({
   }
 
   const validateStep2 = (): boolean => {
-    return !!(formData.stadiumId && selectedDate && formData.matchTime)
+    return !!(formData.stadiumId)
   }
 
   const validateStep3 = (): boolean => {
+    return !!(selectedDate && formData.matchTime)
+  }
+
+  const validateStep4 = (): boolean => {
     // For hobby matches, no validation needed
     // For official matches, at least one referee is recommended but not required
     return true
@@ -542,6 +687,8 @@ export function CreateFriendlyMatch({
         return validateStep2()
       case 3:
         return validateStep3()
+      case 4:
+        return validateStep4()
       default:
         return true
     }
@@ -599,38 +746,39 @@ export function CreateFriendlyMatch({
             Create Enhanced Friendly Match
           </CardTitle>
           <CardDescription>
-            Step {currentStep} of {totalSteps}: {
-              currentStep === 1 ? 'Match Setup' :
-              currentStep === 2 ? 'Venue & Schedule' :
-              currentStep === 3 ? 'Officials & Resources' :
-              'Review & Confirm'
-            }
+            Step {currentStep} of {totalSteps}:{' '}
+            {currentStep === 1 ? 'Match Setup' :
+             currentStep === 2 ? 'Select Stadium' :
+             currentStep === 3 ? 'Date & Time' :
+             currentStep === 4 ? 'Officials & Resources' :
+             'Review & Confirm'}
           </CardDescription>
 
           {/* Progress Bar */}
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
-              {[1, 2, 3, 4].map((step) => (
+              {[1, 2, 3, 4, 5].map((step) => (
                 <div key={step} className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     <div className={`
                       w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all
                       ${currentStep >= step
                         ? 'bg-blue-600 text-white shadow-lg'
-                        : 'bg-gray-200 text-gray-500'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                       }
                     `}>
                       {step}
                     </div>
-                    <span className={`text-xs mt-1 ${currentStep >= step ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                    <span className={`text-xs mt-1 text-center ${currentStep >= step ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                       {step === 1 && 'Setup'}
-                      {step === 2 && 'Schedule'}
-                      {step === 3 && 'Officials'}
-                      {step === 4 && 'Review'}
+                      {step === 2 && 'Stadium'}
+                      {step === 3 && 'Schedule'}
+                      {step === 4 && 'Officials'}
+                      {step === 5 && 'Review'}
                     </span>
                   </div>
-                  {step < 4 && (
-                    <div className={`h-1 flex-1 mx-2 rounded ${currentStep > step ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                  {step < 5 && (
+                    <div className={`h-1 flex-1 mx-2 rounded ${currentStep > step ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`} />
                   )}
                 </div>
               ))}
@@ -848,92 +996,434 @@ export function CreateFriendlyMatch({
             {currentStep === 2 && (
               <div className="space-y-6">
                 {/* Stadium Selection */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold flex items-center gap-2 text-lg">
-                  <Building className="h-5 w-5" />
-                  Stadium Selection
-                  <Badge variant="outline">{filteredStadiums.length} available</Badge>
-                </h3>
-                {formData.stadiumId && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFormData(prev => ({ ...prev, stadiumId: '' }))}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Unselect Stadium
-                  </Button>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredStadiums.map((stadium) => (
-                  <div
-                    key={stadium.id}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      formData.stadiumId === stadium.id
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                    }`}
-                    onClick={() => selectStadium(stadium)}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <h4 className="font-semibold">{stadium.stadium_name}</h4>
-                        <Badge variant="outline">₹{stadium.hourly_rate}/hr</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600">{stadium.location}</p>
-                      <p className="text-xs text-gray-500">District: {stadium.district}</p>
-                      {stadium.facilities && stadium.facilities.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {stadium.facilities.slice(0, 3).map((facility, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {facility}
-                            </Badge>
-                          ))}
-                          {stadium.facilities.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{stadium.facilities.length - 3} more
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-            )}
-
-            {/* STEP 3: Officials & Resources */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-            {/* Referees & Staff Selection (for Official matches) */}
-            {formData.matchType === 'official' && (
-              <div className="space-y-6">
-                {/* Referees */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold flex items-center gap-2">
-                      <UserCheck className="h-4 w-4" />
-                      Select Referees ({formData.refereeIds.length} selected)
-                    </Label>
-                    {formData.refereeIds.length > 0 && (
+                    <h3 className="font-semibold flex items-center gap-2 text-lg">
+                      <Building className="h-5 w-5 text-purple-600" />
+                      Select Stadium
+                      <Badge variant="outline" className="ml-2">{filteredStadiums.length} available</Badge>
+                    </h3>
+                    {formData.stadiumId && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setFormData(prev => ({ ...prev, refereeIds: [] }))}
+                        onClick={() => setFormData(prev => ({ ...prev, stadiumId: '', selectedStadium: null }))}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-4 w-4 mr-1" />
-                        Clear All Referees
+                        Clear Selection
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                  {filteredStadiums.length === 0 ? (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                      <Building className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                      <p className="text-gray-600 font-medium mb-1">No Stadiums Available</p>
+                      <p className="text-sm text-gray-500">No stadiums found in the selected districts</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Selected Stadium Display */}
+                      {formData.stadiumId && formData.selectedStadium && (
+                        <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-300 rounded-lg shadow-sm">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <Building className="h-6 w-6 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h4 className="font-semibold text-purple-900 text-lg">{formData.selectedStadium.stadium_name}</h4>
+                                  <p className="text-sm text-purple-700">{formData.selectedStadium.location}</p>
+                                  <p className="text-xs text-purple-600">District: {formData.selectedStadium.district}</p>
+                                </div>
+                                <div className="text-right">
+                                  <Badge className="bg-purple-600 text-white">₹{formData.selectedStadium.hourly_rate}/hr</Badge>
+                                  <p className="text-xs text-purple-600 mt-1">
+                                    Total: ₹{formData.selectedStadium.hourly_rate * formData.duration}
+                                  </p>
+                                </div>
+                              </div>
+                              {formData.selectedStadium.facilities && formData.selectedStadium.facilities.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {formData.selectedStadium.facilities.map((facility, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs bg-white">
+                                      {facility}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Stadium Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {filteredStadiums.map((stadium) => (
+                          <div
+                            key={stadium.id}
+                            className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                              formData.stadiumId === stadium.id
+                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                            }`}
+                            onClick={() => selectStadium(stadium)}
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between">
+                                <h4 className="font-semibold text-gray-900 dark:text-white">{stadium.stadium_name}</h4>
+                                <div className="text-right">
+                                  <Badge variant="outline" className="whitespace-nowrap">₹{stadium.hourly_rate}/hr</Badge>
+                                  {formData.stadiumId === stadium.id && (
+                                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-1 ml-auto" />
+                                  )}
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {stadium.location}
+                                </p>
+                                <p className="text-xs text-gray-500">District: {stadium.district}</p>
+                              </div>
+                              {stadium.facilities && stadium.facilities.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {stadium.facilities.slice(0, 3).map((facility, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {facility}
+                                    </Badge>
+                                  ))}
+                                  {stadium.facilities.length > 3 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      +{stadium.facilities.length - 3} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: Date & Time Scheduling */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                {/* Modern Match Scheduling */}
+                <div className="space-y-6">
+                  <h3 className="font-semibold flex items-center gap-2 text-lg">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                    Select Date & Time
+                  </h3>
+
+                  {/* Stadium Selection Alert */}
+                  {!formData.stadiumId && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                        <div>
+                          <p className="font-medium text-amber-800">Stadium Required</p>
+                          <p className="text-sm text-amber-600">Please go back to Step 2 and select a stadium first.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Modern Calendar with Session Navigation */}
+                  {formData.stadiumId && (
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
+                      {/* Calendar Header */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                          <div>
+                            <h4 className="font-semibold text-gray-800 dark:text-white">Select Match Date & Time</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Choose your preferred date and time slot</p>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-green-500 rounded"></div>
+                              <span className="text-gray-600 dark:text-gray-400">Available</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-red-500 rounded"></div>
+                              <span className="text-gray-600 dark:text-gray-400">Booked</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-orange-500 rounded"></div>
+                              <span className="text-gray-600 dark:text-gray-400">Insufficient</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                              <span className="text-gray-600 dark:text-gray-400">Selected</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Calendar Content */}
+                      <div className="p-6">
+                        {/* Date Selection */}
+                        <div className="mb-6">
+                          <Label className="text-base font-medium mb-3 block">1. Choose Date</Label>
+                          <div className="relative">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full md:w-80 justify-start text-left h-12 bg-white dark:bg-gray-800 border-2 hover:border-blue-300"
+                              onClick={() => setShowDatePicker(!showDatePicker)}
+                            >
+                              <Calendar className="h-4 w-4 mr-3 text-blue-600" />
+                              <span className="font-medium">
+                                {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : 'Pick a date'}
+                              </span>
+                            </Button>
+                            
+                            {showDatePicker && (
+                              <div className="absolute top-14 left-0 z-50 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-4">
+                                <DayPicker
+                                  mode="single"
+                                  selected={selectedDate}
+                                  onSelect={(date) => {
+                                    setSelectedDate(date)
+                                    setFormData({ ...formData, matchDate: date || new Date() })
+                                    setShowDatePicker(false)
+                                    if (date && formData.stadiumId) {
+                                      loadScheduledMatches()
+                                    }
+                                  }}
+                                  disabled={(date) => {
+                                    return isBefore(date, startOfDay(new Date()))
+                                  }}
+                                  className="!font-medium"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Time Slot Grid */}
+                        <div className="space-y-3">
+                          <Label className="text-base font-medium">2. Choose Time Slot</Label>
+                          
+                          {!selectedDate ? (
+                            <div className="text-center py-12 bg-gray-50 dark:bg-gray-900/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                              <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                              <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">Date Required</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-500">Select a date above to view available time slots</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {/* Morning Session */}
+                              <div>
+                                <h5 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                                  Morning Session (6:00 AM - 12:00 PM)
+                                </h5>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                                  {['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'].map((time) => {
+                                    const isBlocked = blockedTimeSlots.includes(time)
+                                    const isSelected = formData.matchTime === time
+                                    const isAvailable = availableTimeSlots.includes(time)
+                                    const canSelect = canSelectTimeSlot(time)
+                                    const affectedSlots = formData.matchTime ? getAffectedSlots(formData.matchTime) : []
+                                    const isInSelectedRange = affectedSlots.includes(time)
+
+                                    return (
+                                      <button
+                                        key={time}
+                                        type="button"
+                                        disabled={isBlocked || !isAvailable || !canSelect}
+                                        onClick={() => setFormData({ ...formData, matchTime: time })}
+                                        className={`
+                                          p-3 rounded-lg border-2 transition-all font-medium text-sm relative
+                                          ${isSelected
+                                            ? 'bg-blue-600 text-white border-blue-700 shadow-lg ring-2 ring-blue-300'
+                                            : isInSelectedRange && !isSelected
+                                              ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300'
+                                              : isBlocked
+                                                ? 'bg-red-100 text-red-600 border-red-300 cursor-not-allowed dark:bg-red-900/30 dark:text-red-400'
+                                                : !canSelect
+                                                  ? 'bg-orange-50 text-orange-600 border-orange-200 cursor-not-allowed dark:bg-orange-900/30 dark:text-orange-400'
+                                                  : isAvailable
+                                                    ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400 dark:bg-green-900/30 dark:text-green-300'
+                                                    : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600'
+                                          }
+                                        `}
+                                      >
+                                        {time}
+                                        {isSelected && formData.duration > 1 && (
+                                          <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {formData.duration}h
+                                          </span>
+                                        )}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Afternoon Session */}
+                              <div>
+                                <h5 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                                  Afternoon Session (12:00 PM - 6:00 PM)
+                                </h5>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                                  {['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map((time) => {
+                                    const isBlocked = blockedTimeSlots.includes(time)
+                                    const isSelected = formData.matchTime === time
+                                    const isAvailable = availableTimeSlots.includes(time)
+                                    const canSelect = canSelectTimeSlot(time)
+                                    const affectedSlots = formData.matchTime ? getAffectedSlots(formData.matchTime) : []
+                                    const isInSelectedRange = affectedSlots.includes(time)
+
+                                    return (
+                                      <button
+                                        key={time}
+                                        type="button"
+                                        disabled={isBlocked || !isAvailable || !canSelect}
+                                        onClick={() => setFormData({ ...formData, matchTime: time })}
+                                        className={`
+                                          p-3 rounded-lg border-2 transition-all font-medium text-sm relative
+                                          ${isSelected
+                                            ? 'bg-blue-600 text-white border-blue-700 shadow-lg ring-2 ring-blue-300'
+                                            : isInSelectedRange && !isSelected
+                                              ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300'
+                                              : isBlocked
+                                                ? 'bg-red-100 text-red-600 border-red-300 cursor-not-allowed dark:bg-red-900/30 dark:text-red-400'
+                                                : !canSelect
+                                                  ? 'bg-orange-50 text-orange-600 border-orange-200 cursor-not-allowed dark:bg-orange-900/30 dark:text-orange-400'
+                                                  : isAvailable
+                                                    ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400 dark:bg-green-900/30 dark:text-green-300'
+                                                    : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600'
+                                          }
+                                        `}
+                                      >
+                                        {time}
+                                        {isSelected && formData.duration > 1 && (
+                                          <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {formData.duration}h
+                                          </span>
+                                        )}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Evening Session */}
+                              <div>
+                                <h5 className="font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                  Evening Session (6:00 PM - 10:00 PM)
+                                </h5>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                                  {['18:00', '19:00', '20:00', '21:00'].map((time) => {
+                                    const isBlocked = blockedTimeSlots.includes(time)
+                                    const isSelected = formData.matchTime === time
+                                    const isAvailable = availableTimeSlots.includes(time)
+                                    const canSelect = canSelectTimeSlot(time)
+                                    const affectedSlots = formData.matchTime ? getAffectedSlots(formData.matchTime) : []
+                                    const isInSelectedRange = affectedSlots.includes(time)
+
+                                    return (
+                                      <button
+                                        key={time}
+                                        type="button"
+                                        disabled={isBlocked || !isAvailable || !canSelect}
+                                        onClick={() => setFormData({ ...formData, matchTime: time })}
+                                        className={`
+                                          p-3 rounded-lg border-2 transition-all font-medium text-sm relative
+                                          ${isSelected
+                                            ? 'bg-blue-600 text-white border-blue-700 shadow-lg ring-2 ring-blue-300'
+                                            : isInSelectedRange && !isSelected
+                                              ? 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300'
+                                              : isBlocked
+                                                ? 'bg-red-100 text-red-600 border-red-300 cursor-not-allowed dark:bg-red-900/30 dark:text-red-400'
+                                                : !canSelect
+                                                  ? 'bg-orange-50 text-orange-600 border-orange-200 cursor-not-allowed dark:bg-orange-900/30 dark:text-orange-400'
+                                                  : isAvailable
+                                                    ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400 dark:bg-green-900/30 dark:text-green-300'
+                                                    : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600'
+                                          }
+                                        `}
+                                      >
+                                        {time}
+                                        {isSelected && formData.duration > 1 && (
+                                          <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                            {formData.duration}h
+                                          </span>
+                                        )}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Selected Time Summary */}
+                              {formData.matchTime && (
+                                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                  <div className="flex items-center gap-3">
+                                    <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                    <div className="flex-1">
+                                      <p className="font-medium text-blue-800 dark:text-blue-200">Time Slot Selected</p>
+                                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                                        {format(selectedDate || new Date(), 'EEEE, MMMM d')} at {formData.matchTime}
+                                        {formData.duration > 1 && (() => {
+                                          const [hours] = formData.matchTime.split(':').map(Number)
+                                          const endHour = hours + formData.duration
+                                          return ` - ${String(endHour).padStart(2, '0')}:00`
+                                        })()}
+                                      </p>
+                                      <p className="text-xs text-blue-500 dark:text-blue-500 mt-1">
+                                        Duration: {formData.duration} hour{formData.duration > 1 ? 's' : ''}
+                                        {formData.duration > 1 && ` (${getAffectedSlots(formData.matchTime).join(', ')})`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: Officials & Resources */}
+            {currentStep === 4 && (
+              <div className="space-y-6">
+                {formData.matchType === 'official' ? (
+                  <>
+                    {/* Referees */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-semibold flex items-center gap-2">
+                          <UserCheck className="h-4 w-4" />
+                          Select Referees ({formData.refereeIds.length} selected)
+                        </Label>
+                        {formData.refereeIds.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormData(prev => ({ ...prev, refereeIds: [] }))}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Clear All Referees
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {availableReferees.map((referee) => (
                       <div
                         key={referee.id}
@@ -1015,404 +1505,94 @@ export function CreateFriendlyMatch({
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Modern Match Scheduling */}
-            <div className="space-y-6">
-              <h3 className="font-semibold flex items-center gap-2 text-lg">
-                <Calendar className="h-5 w-5" />
-                Match Scheduling
-              </h3>
-
-              {/* Stadium Selection Alert */}
-              {selectedDate && !formData.stadiumId && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                    <div>
-                      <p className="font-medium text-amber-800">Stadium Selection Required</p>
-                      <p className="text-sm text-amber-600">Please select a stadium above to view available time slots for your chosen date.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Modern Calendar with Session Navigation */}
-              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                {/* Calendar Header */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-gray-800">Select Match Date</h4>
-                      <p className="text-sm text-gray-600">Choose your preferred date and time slot</p>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500 rounded"></div>
-                        <span className="text-gray-600">Available</span>
+                  </>
+                ) : (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-8 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                        <Info className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-500 rounded"></div>
-                        <span className="text-gray-600">Booked</span>
+                      <div>
+                        <h3 className="font-semibold text-lg text-blue-900 dark:text-blue-100 mb-2">
+                          Hobby Match - No Officials Required
+                        </h3>
+                        <p className="text-blue-700 dark:text-blue-300 text-sm max-w-md">
+                          Hobby matches don't require referees or PCL staff. You can proceed directly to review your match details.
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-orange-500 rounded"></div>
-                        <span className="text-gray-600">Insufficient</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                        <span className="text-gray-600">Selected</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Calendar Content */}
-                <div className="p-6">
-                  {/* Date Selection */}
-                  <div className="mb-6">
-                    <Label className="text-base font-medium mb-3 block">1. Choose Date</Label>
-                    <div className="relative">
                       <Button
                         type="button"
-                        variant="outline"
-                        className="w-full md:w-80 justify-start text-left h-12 bg-white border-2 hover:border-blue-300"
-                        onClick={() => setShowDatePicker(!showDatePicker)}
+                        onClick={handleNextStep}
+                        className="mt-4 bg-blue-600 hover:bg-blue-700"
                       >
-                        <Calendar className="h-4 w-4 mr-3 text-blue-600" />
-                        <span className="font-medium">
-                          {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : 'Pick a date'}
-                        </span>
+                        Continue to Review →
                       </Button>
-                      
-                      {showDatePicker && (
-                        <div className="absolute top-14 left-0 z-50 bg-white border-2 border-gray-200 rounded-xl shadow-xl p-4">
-                          <DayPicker
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={(date) => {
-                              setSelectedDate(date)
-                              setFormData({ ...formData, matchDate: date || new Date() })
-                              setShowDatePicker(false)
-                            }}
-                            disabled={(date) => {
-                              return isBefore(date, startOfDay(new Date()))
-                            }}
-                            className="!font-medium"
-                          />
-                        </div>
-                      )}
                     </div>
                   </div>
-
-                  {/* Time Slot Grid */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-medium">2. Choose Time Slot</Label>
-                    
-                    {!formData.stadiumId ? (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <Building className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                        <p className="text-gray-600 font-medium mb-1">Stadium Required</p>
-                        <p className="text-sm text-gray-500">Select a stadium above to view time slots</p>
-                      </div>
-                    ) : !selectedDate ? (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                        <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                        <p className="text-gray-600 font-medium mb-1">Date Required</p>
-                        <p className="text-sm text-gray-500">Select a date to view available time slots</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Morning Session */}
-                        <div>
-                          <h5 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                            Morning Session (6:00 AM - 12:00 PM)
-                          </h5>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                            {['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'].map((time) => {
-                              const isBlocked = blockedTimeSlots.includes(time)
-                              const isSelected = formData.matchTime === time
-                              const isAvailable = availableTimeSlots.includes(time)
-                              const canSelect = canSelectTimeSlot(time)
-                              const affectedSlots = formData.matchTime ? getAffectedSlots(formData.matchTime) : []
-                              const isInSelectedRange = affectedSlots.includes(time)
-
-                              return (
-                                <button
-                                  key={time}
-                                  type="button"
-                                  disabled={isBlocked || !isAvailable || !canSelect}
-                                  onClick={() => setFormData({ ...formData, matchTime: time })}
-                                  className={`
-                                    p-3 rounded-lg border-2 transition-all font-medium text-sm relative
-                                    ${isSelected
-                                      ? 'bg-blue-600 text-white border-blue-700 shadow-lg ring-2 ring-blue-300'
-                                      : isInSelectedRange && !isSelected
-                                        ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                        : isBlocked
-                                          ? 'bg-red-100 text-red-600 border-red-300 cursor-not-allowed'
-                                          : !canSelect
-                                            ? 'bg-orange-50 text-orange-600 border-orange-200 cursor-not-allowed'
-                                            : isAvailable
-                                              ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400'
-                                              : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                                    }
-                                  `}
-                                >
-                                  {time}
-                                  {isSelected && formData.duration > 1 && (
-                                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                      {formData.duration}h
-                                    </span>
-                                  )}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Afternoon Session */}
-                        <div>
-                          <h5 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                            Afternoon Session (12:00 PM - 6:00 PM)
-                          </h5>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                            {['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map((time) => {
-                              const isBlocked = blockedTimeSlots.includes(time)
-                              const isSelected = formData.matchTime === time
-                              const isAvailable = availableTimeSlots.includes(time)
-                              const canSelect = canSelectTimeSlot(time)
-                              const affectedSlots = formData.matchTime ? getAffectedSlots(formData.matchTime) : []
-                              const isInSelectedRange = affectedSlots.includes(time)
-
-                              return (
-                                <button
-                                  key={time}
-                                  type="button"
-                                  disabled={isBlocked || !isAvailable || !canSelect}
-                                  onClick={() => setFormData({ ...formData, matchTime: time })}
-                                  className={`
-                                    p-3 rounded-lg border-2 transition-all font-medium text-sm relative
-                                    ${isSelected
-                                      ? 'bg-blue-600 text-white border-blue-700 shadow-lg ring-2 ring-blue-300'
-                                      : isInSelectedRange && !isSelected
-                                        ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                        : isBlocked
-                                          ? 'bg-red-100 text-red-600 border-red-300 cursor-not-allowed'
-                                          : !canSelect
-                                            ? 'bg-orange-50 text-orange-600 border-orange-200 cursor-not-allowed'
-                                            : isAvailable
-                                              ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400'
-                                              : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                                    }
-                                  `}
-                                >
-                                  {time}
-                                  {isSelected && formData.duration > 1 && (
-                                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                      {formData.duration}h
-                                    </span>
-                                  )}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Evening Session */}
-                        <div>
-                          <h5 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                            Evening Session (6:00 PM - 10:00 PM)
-                          </h5>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                            {['18:00', '19:00', '20:00', '21:00'].map((time) => {
-                              const isBlocked = blockedTimeSlots.includes(time)
-                              const isSelected = formData.matchTime === time
-                              const isAvailable = availableTimeSlots.includes(time)
-                              const canSelect = canSelectTimeSlot(time)
-                              const affectedSlots = formData.matchTime ? getAffectedSlots(formData.matchTime) : []
-                              const isInSelectedRange = affectedSlots.includes(time)
-
-                              return (
-                                <button
-                                  key={time}
-                                  type="button"
-                                  disabled={isBlocked || !isAvailable || !canSelect}
-                                  onClick={() => setFormData({ ...formData, matchTime: time })}
-                                  className={`
-                                    p-3 rounded-lg border-2 transition-all font-medium text-sm relative
-                                    ${isSelected
-                                      ? 'bg-blue-600 text-white border-blue-700 shadow-lg ring-2 ring-blue-300'
-                                      : isInSelectedRange && !isSelected
-                                        ? 'bg-blue-100 text-blue-700 border-blue-300'
-                                        : isBlocked
-                                          ? 'bg-red-100 text-red-600 border-red-300 cursor-not-allowed'
-                                          : !canSelect
-                                            ? 'bg-orange-50 text-orange-600 border-orange-200 cursor-not-allowed'
-                                            : isAvailable
-                                              ? 'bg-green-50 text-green-700 border-green-300 hover:bg-green-100 hover:border-green-400'
-                                              : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                                    }
-                                  `}
-                                >
-                                  {time}
-                                  {isSelected && formData.duration > 1 && (
-                                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                      {formData.duration}h
-                                    </span>
-                                  )}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Selected Time Summary */}
-                        {formData.matchTime && (
-                          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex items-center gap-3">
-                              <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                              <div className="flex-1">
-                                <p className="font-medium text-blue-800">Time Slot Selected</p>
-                                <p className="text-sm text-blue-600">
-                                  {format(selectedDate || new Date(), 'EEEE, MMMM d')} at {formData.matchTime}
-                                  {formData.duration > 1 && (() => {
-                                    const [hours] = formData.matchTime.split(':').map(Number)
-                                    const endHour = hours + formData.duration
-                                    return ` - ${String(endHour).padStart(2, '0')}:00`
-                                  })()}
-                                </p>
-                                <p className="text-xs text-blue-500 mt-1">
-                                  Duration: {formData.duration} hour{formData.duration > 1 ? 's' : ''}
-                                  {formData.duration > 1 && ` (${getAffectedSlots(formData.matchTime).join(', ')})`}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
-
-              {/* Duration Info */}
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <Info className="h-5 w-5 text-indigo-600" />
-                  <div>
-                    <p className="font-medium text-indigo-800">Auto-Calculated Duration</p>
-                    <p className="text-sm text-indigo-600">
-                      {formData.matchFormat === '5-a-side' && 'Your 5-a-side match requires 1 hour (20 min/half + buffer)'}
-                      {formData.matchFormat === '7-a-side' && 'Your 7-a-side match requires 2 hours (35 min/half + buffer)'}
-                      {formData.matchFormat === '11-a-side' && 'Your 11-a-side match requires 3 hours (45 min/half + buffer)'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Prize Money */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="hasPrizeMoney"
-                  checked={formData.hasPrizeMoney}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    hasPrizeMoney: e.target.checked,
-                    prizeMoney: e.target.checked ? formData.prizeMoney : 0
-                  })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="hasPrizeMoney" className="flex items-center gap-2 cursor-pointer">
-                  <Trophy className="h-4 w-4" />
-                  Add Prize Money
-                </Label>
-              </div>
-
-              {formData.hasPrizeMoney && (
-                <div className="space-y-2">
-                  <Label htmlFor="prizeMoney">Prize Money Amount (₹)</Label>
-                  <Input
-                    id="prizeMoney"
-                    type="number"
-                    min="0"
-                    value={formData.prizeMoney}
-                    onChange={(e) => setFormData({ ...formData, prizeMoney: parseInt(e.target.value) || 0 })}
-                    placeholder="Enter prize money amount"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
             )}
 
-            {/* STEP 4: Review & Confirm */}
-            {currentStep === 4 && (
+            {/* STEP 5: Review & Confirm */}
+            {(currentStep as number) === 5 && (
               <div className="space-y-6">
                 {/* Match Summary */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-                  <h3 className="font-semibold text-xl mb-4 text-blue-900">Match Summary</h3>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                  <h3 className="font-semibold text-xl mb-4 text-blue-900 dark:text-blue-100">Match Summary</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm text-gray-600">Match Format</p>
-                        <p className="font-semibold text-gray-900">{formData.matchFormat}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Match Format</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formData.matchFormat}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Match Type</p>
-                        <p className="font-semibold text-gray-900 capitalize">{formData.matchType}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Match Type</p>
+                        <p className="font-semibold text-gray-900 dark:text-white capitalize">{formData.matchType}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Your Team</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Your Team</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
                           {teams.find(t => t.id === formData.teamId)?.team_name || 'Not selected'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Opponent</p>
-                        <p className="font-semibold text-gray-900">{formData.selectedClub?.name || 'Not selected'}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Opponent</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formData.selectedClub?.name || 'Not selected'}</p>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm text-gray-600">Stadium</p>
-                        <p className="font-semibold text-gray-900">{formData.selectedStadium?.stadium_name || 'Not selected'}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Stadium</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formData.selectedStadium?.stadium_name || 'Not selected'}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Date & Time</p>
-                        <p className="font-semibold text-gray-900">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Date & Time</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">
                           {selectedDate ? format(selectedDate, 'PPP') : 'Not selected'} at {formData.matchTime}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Duration</p>
-                        <p className="font-semibold text-gray-900">{formData.duration} hour{formData.duration > 1 ? 's' : ''}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Duration</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formData.duration} hour{formData.duration > 1 ? 's' : ''}</p>
                       </div>
                       {formData.matchType === 'official' && (
                         <div>
-                          <p className="text-sm text-gray-600">Officials</p>
-                          <p className="font-semibold text-gray-900">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Officials</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">
                             {formData.refereeIds.length} Referee{formData.refereeIds.length !== 1 ? 's' : ''}, {formData.staffIds.length} Staff
                           </p>
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex gap-2 flex-wrap">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentStep(1)}
-                      className="text-blue-600 hover:text-blue-700"
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     >
                       Edit Match Setup
                     </Button>
@@ -1421,7 +1601,16 @@ export function CreateFriendlyMatch({
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentStep(2)}
-                      className="text-blue-600 hover:text-blue-700"
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                    >
+                      Edit Stadium
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentStep(3)}
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
                     >
                       Edit Schedule
                     </Button>
@@ -1430,8 +1619,8 @@ export function CreateFriendlyMatch({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentStep(3)}
-                        className="text-blue-600 hover:text-blue-700"
+                        onClick={() => setCurrentStep(4)}
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
                       >
                         Edit Officials
                       </Button>
@@ -1486,7 +1675,7 @@ export function CreateFriendlyMatch({
                       ₹{budget.costPerPlayer.toFixed(2)}
                     </div>
                     <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                      Based on {formData.teamSize} players
+                      Split between {formData.teamSize * 2} players (both teams)
                     </p>
                   </div>
                   
@@ -1536,7 +1725,7 @@ export function CreateFriendlyMatch({
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-between pt-6 border-t">
+            <div className="flex items-center justify-between pt-6 border-t dark:border-gray-700">
               {currentStep > 1 ? (
                 <Button
                   type="button"
@@ -1561,7 +1750,11 @@ export function CreateFriendlyMatch({
                 </Button>
               ) : (
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleSubmit(e as any)
+                  }}
                   disabled={loading || !formData.selectedClub || !formData.stadiumId}
                   className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
                 >

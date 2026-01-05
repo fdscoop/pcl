@@ -38,6 +38,16 @@ interface Club {
   district: string
   kyc_verified: boolean
   logo_url?: string
+  available_formats?: {
+    '5-a-side': boolean
+    '7-a-side': boolean
+    '11-a-side': boolean
+  }
+  squad_sizes?: {
+    '5-a-side': number
+    '7-a-side': number
+    '11-a-side': number
+  }
 }
 
 interface Stadium {
@@ -202,27 +212,86 @@ export function CreateFriendlyMatch({
       setLoadingData(true)
       const supabase = createClient()
 
-      // Load active clubs (excluding own club)
+      // Minimum squad sizes required for each format
+      const MIN_SQUAD_SIZES = {
+        '5-a-side': 8,   // 5 starters + 3 subs
+        '7-a-side': 11,  // 7 starters + 4 subs
+        '11-a-side': 14  // 11 starters + 3 subs
+      }
+
+      // Load active and KYC verified clubs with their teams (excluding own club)
       const { data: clubsData } = await supabase
         .from('clubs')
-        .select('id, club_name, city, state, country, logo_url, category, is_active')
+        .select(`
+          id,
+          club_name,
+          city,
+          state,
+          country,
+          logo_url,
+          category,
+          is_active,
+          kyc_verified,
+          teams!inner(
+            id,
+            format,
+            total_players
+          )
+        `)
         .eq('is_active', true)
+        .eq('kyc_verified', true)
         .neq('id', club.id)
         .order('club_name', { ascending: true })
 
-      // Transform data to match the Club interface
-      const transformedClubs = clubsData?.map(c => ({
-        id: c.id,
-        name: c.club_name,
-        city: c.city,
-        state: c.state,
-        district: c.city, // Use city as district proxy for now
-        kyc_verified: true,
-        logo_url: c.logo_url,
-        category: c.category
-      })) || []
+      // Transform and enrich club data with format availability
+      const transformedClubs = clubsData?.map(c => {
+        // Group teams by format and sum players
+        const formatData = {
+          '5-a-side': { hasTeam: false, totalPlayers: 0 },
+          '7-a-side': { hasTeam: false, totalPlayers: 0 },
+          '11-a-side': { hasTeam: false, totalPlayers: 0 }
+        }
 
-      setAvailableClubs(transformedClubs)
+        // Process teams
+        if (c.teams && Array.isArray(c.teams)) {
+          c.teams.forEach((team: any) => {
+            if (team.format && formatData[team.format as keyof typeof formatData]) {
+              formatData[team.format as keyof typeof formatData].hasTeam = true
+              formatData[team.format as keyof typeof formatData].totalPlayers = team.total_players || 0
+            }
+          })
+        }
+
+        return {
+          id: c.id,
+          name: c.club_name,
+          city: c.city,
+          state: c.state,
+          district: c.city,
+          kyc_verified: c.kyc_verified,
+          logo_url: c.logo_url,
+          category: c.category,
+          available_formats: {
+            '5-a-side': formatData['5-a-side'].hasTeam && formatData['5-a-side'].totalPlayers >= MIN_SQUAD_SIZES['5-a-side'],
+            '7-a-side': formatData['7-a-side'].hasTeam && formatData['7-a-side'].totalPlayers >= MIN_SQUAD_SIZES['7-a-side'],
+            '11-a-side': formatData['11-a-side'].hasTeam && formatData['11-a-side'].totalPlayers >= MIN_SQUAD_SIZES['11-a-side']
+          },
+          squad_sizes: {
+            '5-a-side': formatData['5-a-side'].totalPlayers,
+            '7-a-side': formatData['7-a-side'].totalPlayers,
+            '11-a-side': formatData['11-a-side'].totalPlayers
+          }
+        }
+      }) || []
+
+      // Filter clubs that have at least one format available
+      const clubsWithTeams = transformedClubs.filter(club =>
+        club.available_formats?.['5-a-side'] ||
+        club.available_formats?.['7-a-side'] ||
+        club.available_formats?.['11-a-side']
+      )
+
+      setAvailableClubs(clubsWithTeams)
 
       // Load stadiums
       const { data: stadiumsData } = await supabase
@@ -437,66 +506,45 @@ export function CreateFriendlyMatch({
 
       if (!homeTeam) throw new Error('Team not found')
 
-      // For friendly matches, we need an away team. 
-      // If opponent is selected, use their team with same format
-      // If not available, use their first team regardless of format
+      // For friendly matches, we need an away team with matching format
       let awayTeamId = null
 
       if (formData.selectedClub?.id) {
-        // First, try to find a team with matching format
-        const { data: opponentTeamsSameFormat } = await supabase
+        // Find opponent team with matching format
+        const { data: opponentTeam, error: opponentTeamError } = await supabase
           .from('teams')
           .select('*')
           .eq('club_id', formData.selectedClub.id)
           .eq('format', formData.matchFormat)
           .limit(1)
+          .single()
 
-        if (opponentTeamsSameFormat && opponentTeamsSameFormat.length > 0) {
-          awayTeamId = opponentTeamsSameFormat[0].id
-        } else {
-          // If no matching format, use any team from opponent club
-          const { data: opponentTeamsAny } = await supabase
-            .from('teams')
-            .select('*')
-            .eq('club_id', formData.selectedClub.id)
-            .limit(1)
-
-          if (opponentTeamsAny && opponentTeamsAny.length > 0) {
-            awayTeamId = opponentTeamsAny[0].id
-          }
-        }
-      }
-
-      // If still no away team found, create a temporary/placeholder team for opponent
-      if (!awayTeamId && formData.selectedClub?.id) {
-        // Create a temporary team for the opponent club
-        const { data: newTeam, error: teamCreateError } = await supabase
-          .from('teams')
-          .insert([
-            {
-              club_id: formData.selectedClub.id,
-              team_name: `${formData.selectedClub.name} - ${formData.matchFormat}`,
-              format: formData.matchFormat,
-              status: 'active'
-            }
-          ])
-          .select()
-
-        if (teamCreateError) {
-          console.error('Error creating temporary team:', teamCreateError)
-          throw new Error('Unable to find or create opponent team. Please ensure the opponent club exists.')
+        if (opponentTeamError || !opponentTeam) {
+          throw new Error(
+            `${formData.selectedClub.name} does not have a ${formData.matchFormat} team ready. Please select a different opponent or format.`
+          )
         }
 
-        if (newTeam && newTeam.length > 0) {
-          awayTeamId = newTeam[0].id
+        awayTeamId = opponentTeam.id
+
+        // Validate squad size
+        const MIN_SQUAD_SIZES: Record<string, number> = {
+          '5-a-side': 8,
+          '7-a-side': 11,
+          '11-a-side': 14
         }
+
+        const minRequired = MIN_SQUAD_SIZES[formData.matchFormat as keyof typeof MIN_SQUAD_SIZES]
+        if (opponentTeam.total_players < minRequired) {
+          throw new Error(
+            `${formData.selectedClub.name}'s ${formData.matchFormat} team has only ${opponentTeam.total_players} players. Minimum ${minRequired} required.`
+          )
+        }
+      } else {
+        throw new Error('Please select an opponent club.')
       }
 
-      // Final check - ensure both teams exist and are different
-      if (!awayTeamId) {
-        throw new Error('Unable to find or create opponent team. Please select a valid opponent club.')
-      }
-
+      // Final check - ensure teams are different
       if (homeTeam.id === awayTeamId) {
         throw new Error('Home and away teams cannot be the same. Please select a different opponent club.')
       }
@@ -907,27 +955,63 @@ export function CreateFriendlyMatch({
                   
                   {showClubDropdown && filteredClubs.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                      {filteredClubs.map((club) => (
-                        <div
-                          key={club.id}
-                          className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0"
-                          onClick={() => selectClub(club)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">{club.name}</div>
-                              <div className="text-sm text-gray-500">
-                                {club.city}, {club.district}
+                      {filteredClubs.map((club) => {
+                        const canPlayFormat = club.available_formats?.[formData.matchFormat as keyof typeof club.available_formats]
+                        const squadSize = club.squad_sizes?.[formData.matchFormat as keyof typeof club.squad_sizes] || 0
+
+                        return (
+                          <div
+                            key={club.id}
+                            className={`p-3 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 ${
+                              canPlayFormat
+                                ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                : 'opacity-60 hover:bg-red-50 dark:hover:bg-red-900/20'
+                            }`}
+                            onClick={() => canPlayFormat && selectClub(club)}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex-1">
+                                <div className="font-medium flex items-center gap-2">
+                                  {club.name}
+                                  {club.kyc_verified && (
+                                    <Badge className="bg-green-500 text-white text-xs">
+                                      <UserCheck className="h-3 w-3 mr-1" />
+                                      Verified
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {club.city}, {club.district}
+                                </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">
-                                KYC ✓
-                              </Badge>
+
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {club.available_formats?.['5-a-side'] && (
+                                <Badge className="bg-orange-500 text-white text-xs">
+                                  5s ({club.squad_sizes?.['5-a-side']} players)
+                                </Badge>
+                              )}
+                              {club.available_formats?.['7-a-side'] && (
+                                <Badge className="bg-emerald-500 text-white text-xs">
+                                  7s ({club.squad_sizes?.['7-a-side']} players)
+                                </Badge>
+                              )}
+                              {club.available_formats?.['11-a-side'] && (
+                                <Badge className="bg-blue-500 text-white text-xs">
+                                  11s ({club.squad_sizes?.['11-a-side']} players)
+                                </Badge>
+                              )}
+
+                              {!canPlayFormat && (
+                                <Badge variant="destructive" className="text-xs">
+                                  No {formData.matchFormat} team
+                                </Badge>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>

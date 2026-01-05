@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import ThreadItem from '@/components/messages/ThreadItem'
+import ThreadItemSkeleton from '@/components/messages/ThreadItemSkeleton'
+import ConversationSkeleton from '@/components/messages/ConversationSkeleton'
 import MessageBubble from '@/components/messages/MessageBubble'
 import {
   getInboxMessages,
@@ -35,7 +37,8 @@ type ThreadSummary = {
 
 export default function ClubOwnerMessagesPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -113,8 +116,12 @@ export default function ClubOwnerMessagesPage() {
     [threads, selectedThreadKey]
   )
 
-  const loadMessages = async (id: string) => {
-    setLoading(true)
+  const loadMessages = async (id: string, isInitial = false) => {
+    if (isInitial) {
+      setInitialLoading(true)
+    } else {
+      setLoading(true)
+    }
     setError(null)
     setSuccessMessage(null)
 
@@ -134,7 +141,11 @@ export default function ClubOwnerMessagesPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load messages')
     } finally {
-      setLoading(false)
+      if (isInitial) {
+        setInitialLoading(false)
+      } else {
+        setLoading(false)
+      }
     }
   }
 
@@ -162,7 +173,7 @@ export default function ClubOwnerMessagesPage() {
       }
 
       setClubLogoUrl(clubData?.logo_url || null)
-      await loadMessages(user.id)
+      await loadMessages(user.id, true)
     }
 
     loadUser()
@@ -287,60 +298,77 @@ export default function ClubOwnerMessagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              Messages
-              {threads.filter(t => t.unreadCount > 0).length > 0 && (
-                <Badge variant="destructive" className="animate-pulse">
-                  {threads.reduce((sum, t) => sum + t.unreadCount, 0)} new
-                </Badge>
-              )}
-            </h1>
-            <p className="text-muted-foreground">Review player communications and reply when needed.</p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="btn-lift" onClick={() => router.back()}>
-              Back
-            </Button>
-            <Button
-              variant="gradient"
-              className="btn-lift"
-              onClick={() => userId && loadMessages(userId)}
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : 'Refresh'}
-            </Button>
+    <div className="min-h-screen">
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-teal-600 font-medium mb-1">welcome back 👋</p>
+              <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
+                Messages
+                {threads.filter(t => t.unreadCount > 0).length > 0 && (
+                  <Badge variant="destructive" className="animate-pulse text-sm px-3 py-1">
+                    {threads.reduce((sum, t) => sum + t.unreadCount, 0)} new
+                  </Badge>
+                )}
+              </h1>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.back()}
+                className="px-4 py-2 text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => userId && loadMessages(userId)}
+                disabled={loading}
+                className="px-6 py-2 text-sm bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
           </div>
         </div>
 
         {error && (
-          <Card className="mb-6 border-destructive/30 bg-destructive/5">
-            <CardContent className="py-4 text-destructive font-medium">
+          <div className="mb-6 rounded-xl border-2 border-red-200 bg-red-50/50 backdrop-blur-sm px-5 py-4 shadow-md">
+            <p className="text-red-700 font-medium flex items-center gap-2">
+              <span className="text-xl">⚠️</span>
               {error}
-            </CardContent>
-          </Card>
+            </p>
+          </div>
         )}
         {successMessage && (
-          <Card className="mb-6 border-success/30 bg-success/10">
-            <CardContent className="py-4 text-success font-medium">
+          <div className="mb-6 rounded-xl border-2 border-green-200 bg-green-50/50 backdrop-blur-sm px-5 py-4 shadow-md">
+            <p className="text-green-700 font-medium flex items-center gap-2">
+              <span className="text-xl">✓</span>
               {successMessage}
-            </CardContent>
-          </Card>
+            </p>
+          </div>
         )}
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-          <Card className="border-0 bg-gradient-to-b from-sky-50/10 via-transparent to-primary/5 shadow-xl my-6 bg-card/70">
-            <CardHeader className="rounded-t-2xl bg-sky-100/30 border-b border-sky-200/40">
-              <CardTitle>Conversations</CardTitle>
-              <CardDescription>Your latest player threads</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 max-h-[560px] overflow-auto bg-sky-50/5">
-              {loading ? (
-                <div className="text-sm text-muted-foreground">Loading messages...</div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
+          {/* Conversations List */}
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+            <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
+              <h2 className="text-xl font-bold text-white">Conversations</h2>
+              <p className="text-teal-50 text-sm mt-1">Your latest player threads</p>
+            </div>
+            <div className="px-4 py-3 space-y-2 max-h-[calc(100vh-280px)] overflow-auto bg-gradient-to-b from-sky-50/20 to-transparent">
+              {initialLoading ? (
+                <>
+                  <ThreadItemSkeleton />
+                  <ThreadItemSkeleton />
+                  <ThreadItemSkeleton />
+                  <ThreadItemSkeleton />
+                </>
               ) : threads.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No conversations yet.</div>
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-4">💬</div>
+                  <p className="text-sm font-semibold text-gray-700">No conversations yet</p>
+                  <p className="text-xs text-gray-500 mt-2">Messages from players will appear here</p>
+                </div>
               ) : (
                 threads.map((thread) => (
                   <ThreadItem
@@ -351,22 +379,25 @@ export default function ClubOwnerMessagesPage() {
                   />
                 ))
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="border-0 bg-gradient-to-b from-primary/10 via-transparent to-accent/5 shadow-xl bg-card/70">
-            <CardHeader className="rounded-t-2xl bg-sky-100/30 border-b border-sky-200/40 py-3 my-4">
-              <CardTitle>Conversation</CardTitle>
-              <CardDescription>
+          {/* Conversation Detail */}
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+            <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
+              <h2 className="text-xl font-bold text-white">Conversation</h2>
+              <p className="text-teal-50 text-sm mt-1">
                 {selectedThread
                   ? `Chat with ${selectedThread.otherPartyName}`
                   : 'Select a conversation to view details'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedThread ? (
-                <div className="space-y-4">
-                  <div className="space-y-4 max-h-[360px] overflow-auto scroll-smooth" id="message-container">
+              </p>
+            </div>
+            <div className="px-6 py-5">
+              {initialLoading ? (
+                <ConversationSkeleton />
+              ) : selectedThread ? (
+                <div className="space-y-5">
+                  <div className="space-y-4 max-h-[calc(100vh-480px)] overflow-auto scroll-smooth pr-2" id="message-container">
                     {selectedThread.messages.map((message) => (
                       <MessageBubble
                         key={message.id}
@@ -384,33 +415,34 @@ export default function ClubOwnerMessagesPage() {
                     )}
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-sm font-semibold text-foreground">Reply</label>
+                  <div className="space-y-3 pt-4 border-t-2 border-slate-200">
+                    <label className="text-sm font-bold text-gray-900">Reply</label>
                     <textarea
-                      className="w-full min-h-[120px] rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      className="w-full min-h-[120px] rounded-xl border-2 border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all resize-none"
                       placeholder="Write your response..."
                       value={replyContent}
                       onChange={(event) => setReplyContent(event.target.value)}
                     />
-                    <Button
-                      variant="gradient"
-                      className="btn-lift"
+                    <button
                       disabled={sending || !replyContent.trim()}
                       onClick={handleSendReply}
+                      className="px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sending ? 'Sending...' : 'Send Reply'}
-                    </Button>
+                    </button>
                   </div>
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">
-                  Choose a conversation from the list to view the full thread.
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">📨</div>
+                  <p className="text-base font-semibold text-gray-700">Select a conversation</p>
+                  <p className="text-sm text-gray-500 mt-2">Choose a thread from the left to view messages</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

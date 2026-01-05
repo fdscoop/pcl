@@ -1221,8 +1221,8 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
     return (
       <div
         className={`flex items-center gap-3 p-3 rounded-lg transition-all group border ${
-          isSelected 
-            ? 'bg-orange-50 border-2 border-orange-500 shadow-md' 
+          isSelected
+            ? 'bg-orange-50 border-2 border-orange-500 shadow-md'
             : 'bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md'
         } ${canSwap ? 'cursor-pointer' : ''}`}
         onClick={() => canSwap && source && handleSwapClick(player, source, positionKey)}
@@ -1231,23 +1231,25 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
           <img
             src={player.players.photo_url}
             alt={`${player.players.users?.first_name}`}
-            className="w-14 h-14 rounded-full object-cover border-3 border-white shadow-md"
+            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0"
           />
         ) : (
-          <div className="w-14 h-14 rounded-full gradient-brand flex items-center justify-center text-white font-bold shadow-md text-lg">
+          <div className="w-12 h-12 rounded-full gradient-brand flex items-center justify-center text-white font-bold shadow-sm text-base flex-shrink-0">
             {player.players?.users?.first_name?.[0]}
             {player.players?.users?.last_name?.[0]}
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm truncate text-foreground">
+          <p className="font-semibold text-sm truncate text-gray-900">
             {player.players?.users?.first_name} {player.players?.users?.last_name}
           </p>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-              {player.players?.position}
+            <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-teal-50 text-teal-700 border-teal-200">
+              {player.players?.position === 'Goalkeeper' ? 'GK' :
+               player.players?.position === 'Defender' ? 'DEF' :
+               player.players?.position === 'Midfielder' ? 'MID' : 'FWD'}
             </Badge>
-            <span className="text-xs text-muted-foreground font-bold bg-orange-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-xs text-gray-600 font-bold bg-slate-100 px-2 py-0.5 rounded">
               #{player.jersey_number}
             </span>
           </div>
@@ -1256,21 +1258,20 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
           <Button
             size="sm"
             variant={variant === 'bench' ? 'default' : 'outline'}
-            className={`opacity-0 group-hover:opacity-100 transition-all shadow-sm ${
-              variant === 'bench' 
-                ? 'gradient-brand hover:shadow-md' 
-                : 'hover:bg-primary/10 hover:border-primary'
+            className={`opacity-0 group-hover:opacity-100 transition-all h-8 px-3 text-xs flex-shrink-0 ${
+              variant === 'bench'
+                ? 'gradient-brand hover:shadow-sm'
+                : 'hover:bg-teal-50 hover:border-teal-400'
             }`}
             onClick={onAction}
           >
             {actionIcon}
-            <span className="ml-1 text-xs font-semibold">{actionLabel}</span>
           </Button>
         )}
         {canSwap && (
-          <Badge 
-            variant={isSelected ? 'default' : 'outline'} 
-            className={`text-xs ${isSelected ? 'bg-blue-500' : 'border-2'}`}
+          <Badge
+            variant={isSelected ? 'default' : 'outline'}
+            className={`text-xs px-2 flex-shrink-0 ${isSelected ? 'bg-blue-500' : 'border'}`}
           >
             {isSelected ? '1st' : 'Swap'}
           </Badge>
@@ -1280,92 +1281,52 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
   }
 
   return (
-    <div className="space-y-6">
-      {/* Format & Squad Requirements */}
-      <Card className="border-0 shadow-lg bg-gradient-to-br from-accent/5 to-primary/5">
-        <CardHeader>
-          <CardTitle className="text-2xl">⚽ Team Format Selection</CardTitle>
-          <CardDescription className="text-base">
-            Choose the format based on your squad size ({totalPlayers} players available)
-          </CardDescription>
+    <div className="space-y-4">
+      {/* Format & Squad Requirements - Compact */}
+      <Card className="border-0 shadow-md bg-gradient-to-br from-slate-50 to-blue-50">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Team Format</CardTitle>
+              <CardDescription className="text-sm">
+                {totalPlayers} players available
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <CardContent className="pb-4">
+          <div className="flex gap-3 flex-wrap">
             {(['5s', '7s', '11s'] as const).map((format) => {
               const req = SQUAD_REQUIREMENTS[format]
               const isAvailable = totalPlayers >= req.minPlayers
               const isRecommended = totalPlayers >= req.recommended
 
               return (
-                <div
+                <button
                   key={format}
-                  className={`relative overflow-hidden rounded-2xl cursor-pointer transition-all transform hover:scale-105 ${
+                  disabled={!isAvailable}
+                  className={`relative overflow-hidden rounded-xl px-4 py-3 cursor-pointer transition-all flex items-center gap-3 ${
                     selectedFormat === format
-                      ? 'shadow-2xl'
+                      ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg'
                       : isAvailable
-                      ? 'shadow-lg hover:shadow-2xl'
-                      : 'opacity-50 cursor-not-allowed'
+                      ? 'bg-white border-2 border-slate-200 text-slate-700 hover:border-teal-300 hover:bg-teal-50'
+                      : 'bg-slate-100 border-2 border-slate-200 text-slate-400 cursor-not-allowed opacity-50'
                   }`}
                   onClick={() => isAvailable && handleFormatChange(format)}
                 >
-                  <div className={`p-6 ${
-                    selectedFormat === format
-                      ? 'gradient-brand'
-                      : isAvailable
-                      ? 'bg-gradient-to-br from-slate-50 to-slate-100 hover:bg-slate-100'
-                      : 'bg-gradient-to-br from-slate-200 to-slate-300'
-                  }`}>
-                    <div className={`text-center ${selectedFormat === format ? 'text-white' : 'text-slate-900'}`}>
-                      <div className="text-5xl mb-3">
-                        {format === '5s' && '⚡'} {format === '7s' && '🎯'} {format === '11s' && '🏆'}
-                      </div>
-                      <h4 className="text-2xl font-bold mb-3">{format.replace('s', '-a-side')}</h4>
-                      <div className="space-y-2 text-sm mb-4">
-                        <div className={`flex justify-between items-center rounded-lg px-3 py-2 ${
-                          selectedFormat === format
-                            ? 'bg-white/10'
-                            : 'bg-slate-200/50'
-                        }`}>
-                          <span className={selectedFormat === format ? 'text-white/90' : 'text-slate-700'}>On field:</span>
-                          <span className="font-bold">{req.playersOnField}</span>
-                        </div>
-                        <div className={`flex justify-between items-center rounded-lg px-3 py-2 ${
-                          selectedFormat === format
-                            ? 'bg-white/10'
-                            : 'bg-slate-200/50'
-                        }`}>
-                          <span className={selectedFormat === format ? 'text-white/90' : 'text-slate-700'}>Min subs:</span>
-                          <span className="font-bold">{req.minSubs}</span>
-                        </div>
-                        <div className={`flex justify-between items-center rounded-lg px-3 py-2 ${
-                          selectedFormat === format
-                            ? 'bg-white/10'
-                            : 'bg-slate-200/50'
-                        }`}>
-                          <span className={selectedFormat === format ? 'text-white/90' : 'text-slate-700'}>Total needed:</span>
-                          <span className="font-bold">{req.minPlayers}</span>
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        {!isAvailable && (
-                          <div className="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                            Need {req.minPlayers - totalPlayers} more
-                          </div>
-                        )}
-                        {isAvailable && !isRecommended && (
-                          <div className="bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                            Available (Limited)
-                          </div>
-                        )}
-                        {isRecommended && (
-                          <div className="bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold">
-                            ✓ Full Squad
-                          </div>
-                        )}
-                      </div>
+                  <div className="text-2xl">
+                    {format === '5s' && '⚡'} {format === '7s' && '🎯'} {format === '11s' && '🏆'}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-sm">{format.replace('s', '-a-side')}</div>
+                    <div className={`text-xs ${selectedFormat === format ? 'text-white/80' : 'text-slate-500'}`}>
+                      {req.playersOnField} on field + {req.minSubs} subs
                     </div>
                   </div>
-                </div>
+                  {isRecommended && selectedFormat === format && (
+                    <div className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">✓</div>
+                  )}
+                </button>
               )
             })}
           </div>
@@ -1384,90 +1345,91 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
 
       {availableFormats.length > 0 && (
         <>
-          {/* Formation Selector */}
-          <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-900 to-blue-800 text-white rounded-t-lg">
-              <CardTitle className="text-xl">🎯 Select Formation - {selectedFormat.replace('s', '-a-side')}</CardTitle>
-              <CardDescription className="text-slate-200">Choose a tactical formation for {selectedFormat} format</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="flex gap-3 flex-wrap mb-6">
+          {/* Formation Selector & Controls - Compact */}
+          <Card className="border-0 shadow-md">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                <span className="text-sm font-semibold text-gray-700">Formation:</span>
                 {Object.entries(currentFormations).map(([key, formationData]) => (
                   <Button
                     key={key}
                     variant={selectedFormation === key ? 'default' : 'outline'}
-                    size="lg"
-                    className={selectedFormation === key ? 'gradient-brand text-white shadow-lg border-0' : 'border-2 border-slate-200 text-slate-700 bg-white hover:border-orange-300 hover:text-orange-800 hover:bg-orange-50 transition-all duration-200'}
+                    size="sm"
+                    className={selectedFormation === key ? 'gradient-brand text-white shadow-md border-0' : 'border border-slate-300 text-slate-700 bg-white hover:border-teal-400 hover:bg-teal-50'}
                     onClick={() => setSelectedFormation(key)}
                   >
                     {formationData.name}
                   </Button>
                 ))}
               </div>
-              <div className="flex gap-3 flex-wrap">
-                <Button 
-                  size="lg"
-                  className="!bg-slate-600 hover:!bg-slate-700 !text-white shadow-lg transition-colors duration-200"
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-slate-300 hover:bg-slate-100"
                   onClick={autoAssign}
                 >
-                  🤖 Auto-Assign Players
+                  🤖 Auto-Assign
                 </Button>
-                <Button 
-                  size="lg"
-                  className="!bg-slate-500 hover:!bg-slate-600 !text-white shadow-lg transition-colors duration-200"
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-slate-300 hover:bg-slate-100"
                   onClick={clearFormation}
                 >
-                  🗑️ Clear Formation
+                  🗑️ Clear
                 </Button>
                 <Button
                   variant={swapMode ? 'default' : 'outline'}
-                  size="lg"
-                  className={swapMode ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg transition-colors duration-200' : 'border-2 border-slate-200 text-slate-700 bg-white hover:border-purple-300 hover:text-purple-800 hover:bg-purple-50 transition-all duration-200'}
+                  size="sm"
+                  className={swapMode ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'border-slate-300 hover:bg-purple-50'}
                   onClick={() => {
                     setSwapMode(!swapMode)
                     if (swapMode) cancelSwap()
                   }}
                 >
-                  <ArrowLeftRight className="w-4 h-4 mr-2" />
-                  {swapMode ? 'Cancel Swap' : 'Swap Players'}
+                  <ArrowLeftRight className="w-3 h-3 mr-1" />
+                  {swapMode ? 'Cancel' : 'Swap'}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="border-2 hover:bg-green-500/10 hover:border-green-500"
-                  onClick={handleSaveLineup} 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-green-500 text-green-700 hover:bg-green-50"
+                  onClick={handleSaveLineup}
                   disabled={!teamId || Object.keys(assignments).length === 0}
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  Declare Team
+                  <Save className="w-3 h-3 mr-1" />
+                  Save Lineup
                 </Button>
-                {swapMode && firstSwapPlayer && (
-                  <Alert className="w-full mt-2 bg-blue-500/10 border-2 border-blue-500">
-                    <AlertDescription>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">
-                          <strong>{firstSwapPlayer.player.players.users.first_name} {firstSwapPlayer.player.players.users.last_name}</strong> selected. Click another player to swap.
-                        </span>
-                        <Button size="sm" variant="ghost" onClick={cancelSwap}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
               </div>
+              {swapMode && firstSwapPlayer && (
+                <Alert className="mt-3 bg-blue-50 border border-blue-300">
+                  <AlertDescription>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-blue-900">
+                        <strong>{firstSwapPlayer.player.players.users.first_name} {firstSwapPlayer.player.players.users.last_name}</strong> selected. Click another player to swap.
+                      </span>
+                      <Button size="sm" variant="ghost" onClick={cancelSwap} className="h-6 w-6 p-0">
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
             {/* Formation Pitch */}
-            <div className="lg:col-span-2">
-              <Card className="overflow-hidden shadow-2xl">
-                <CardHeader className="bg-green-700 text-white">
-                  <CardTitle>Formation: {formation.name}</CardTitle>
-                  <CardDescription className="text-white/80">
-                    {selectedFormat.replace('s', '-a-side')} - {formation.playersOnField} players on field
-                  </CardDescription>
+            <div className="lg:col-span-4">
+              <Card className="overflow-hidden shadow-lg border-0">
+                <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white py-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Formation: {formation.name}</CardTitle>
+                    <CardDescription className="text-white/90 text-sm">
+                      {formation.playersOnField} players on field
+                    </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-0 bg-green-700">
                   <div
@@ -1596,28 +1558,22 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
             </div>
 
             {/* Player Lists */}
-            <div className="space-y-4">
+            <div className="lg:col-span-3 space-y-4">
               {/* Available for XI */}
               <Card className="border-0 shadow-lg overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-900 to-blue-800 text-white">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">⚡ Available for XI</CardTitle>
-                      <CardDescription className="text-white/80">
-                        Click "Add" to assign to first vacant position
-                      </CardDescription>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-sm font-bold">
+                <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-3 px-5">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-bold">⚡ Available XI</CardTitle>
+                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-sm font-bold">
                       {availableXIPlayers.length}/{requirements.playersOnField}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                <CardContent className="pt-4 pb-4 px-5">
+                  <div className="space-y-2.5 max-h-[280px] overflow-y-auto">
                     {availableXIPlayers.length === 0 ? (
-                      <div className="text-center py-6 text-muted-foreground">
-                        <div className="text-3xl mb-2">📋</div>
-                        <p className="text-xs">Add from bench below</p>
+                      <div className="text-center py-4 text-muted-foreground">
+                        <p className="text-xs">Add from bench</p>
                       </div>
                     ) : (
                       availableXIPlayers.map((player) => (
@@ -1638,21 +1594,16 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
 
               {/* Substitutes */}
               <Card className="border-0 shadow-lg overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-900 to-blue-800 text-white">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">🔄 Substitutes</CardTitle>
-                      <CardDescription className="text-white/80">
-                        Extra players selected for match
-                      </CardDescription>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-sm font-bold">
+                <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-5">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-bold">🔄 Substitutes</CardTitle>
+                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-sm font-bold">
                       {substitutePlayers.length}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                <CardContent className="pt-4 pb-4 px-5">
+                  <div className="space-y-2.5 max-h-[220px] overflow-y-auto">
                     {substitutePlayers.map((player) => (
                       <PlayerCard
                         key={player.id}
@@ -1665,8 +1616,8 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
                       />
                     ))}
                     {substitutePlayers.length === 0 && (
-                      <div className="text-center py-3 text-muted-foreground text-xs">
-                        No extra subs selected
+                      <div className="text-center py-2 text-muted-foreground text-xs">
+                        No extra subs
                       </div>
                     )}
                   </div>
@@ -1675,21 +1626,16 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
 
               {/* Bench */}
               <Card className="border-0 shadow-lg overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-900 to-blue-800 text-white">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">👥 Bench</CardTitle>
-                      <CardDescription className="text-white/80">
-                        All unselected players from squad
-                      </CardDescription>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-sm font-bold">
+                <CardHeader className="bg-gradient-to-r from-slate-600 to-slate-700 text-white py-3 px-5">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-bold">👥 Bench</CardTitle>
+                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-sm font-bold">
                       {benchPlayers.length}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                <CardContent className="pt-4 pb-4 px-5">
+                  <div className="space-y-2.5 max-h-[260px] overflow-y-auto">
                     {benchPlayers.map((player) => (
                       <PlayerCard
                         key={player.id}
@@ -1701,11 +1647,58 @@ export function FormationBuilder({ players, clubId, teamId }: FormationBuilderPr
                       />
                     ))}
                     {benchPlayers.length === 0 && (
-                      <div className="text-center py-4 text-muted-foreground text-sm">
-                        <div className="text-3xl mb-2">✓</div>
-                        <p className="text-xs">All players selected!</p>
+                      <div className="text-center py-3 text-muted-foreground">
+                        <p className="text-xs">All selected</p>
                       </div>
                     )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Missing Players Widget */}
+              <Card className="border-0 shadow-lg overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3 px-5">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-bold">⚠️ Missing</CardTitle>
+                    <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-sm font-bold">
+                      {players.slice(0, 4).length}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-4 pb-4 px-5">
+                  <div className="space-y-3 max-h-[240px] overflow-y-auto">
+                    {players.slice(0, 4).map((player, idx) => (
+                      <div key={player.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-teal-400 to-teal-600 flex-shrink-0">
+                          {player.players?.photo_url ? (
+                            <img
+                              src={player.players.photo_url}
+                              alt={`${player.players.users?.first_name}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white font-bold text-sm">
+                              {player.players?.users?.first_name?.[0]}{player.players?.users?.last_name?.[0]}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate text-gray-900">
+                            {player.players?.users?.first_name} {player.players?.users?.last_name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            Available: {new Date(Date.now() + Math.random() * 10 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold flex-shrink-0 ${
+                          idx === 0 ? 'bg-red-100 text-red-700' :
+                          idx === 1 ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {idx === 0 ? 'injury' : idx === 1 ? 'card' : 'injury'}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

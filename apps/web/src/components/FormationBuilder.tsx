@@ -1350,18 +1350,30 @@ export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat
               const isAvailable = totalPlayers >= req.minPlayers
               const isRecommended = totalPlayers >= req.recommended
 
+              // Check if this format matches the selected match format
+              const matchFormatMap: Record<string, string> = {
+                '5-a-side': '5s',
+                '7-a-side': '7s',
+                '11-a-side': '11s'
+              }
+              const matchRequiredFormat = matchFormat ? matchFormatMap[matchFormat] : null
+              const isMatchFormat = matchRequiredFormat === format
+              const isDisabledByMatch = !!(matchId && matchRequiredFormat && !isMatchFormat)
+
               return (
                 <button
                   key={format}
-                  disabled={!isAvailable}
-                  className={`relative overflow-hidden rounded-xl px-4 py-3 cursor-pointer transition-all flex items-center gap-3 ${
+                  disabled={!isAvailable || isDisabledByMatch}
+                  className={`relative overflow-hidden rounded-xl px-4 py-3 transition-all flex items-center gap-3 ${
                     selectedFormat === format
                       ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg'
+                      : isDisabledByMatch
+                      ? 'bg-slate-50 border-2 border-slate-200 text-slate-300 cursor-not-allowed opacity-40'
                       : isAvailable
-                      ? 'bg-white border-2 border-slate-200 text-slate-700 hover:border-teal-300 hover:bg-teal-50'
+                      ? 'bg-white border-2 border-slate-200 text-slate-700 hover:border-teal-300 hover:bg-teal-50 cursor-pointer'
                       : 'bg-slate-100 border-2 border-slate-200 text-slate-400 cursor-not-allowed opacity-50'
                   }`}
-                  onClick={() => isAvailable && handleFormatChange(format)}
+                  onClick={() => (isAvailable && !isDisabledByMatch) && handleFormatChange(format)}
                 >
                   <div className="text-2xl">
                     {format === '5s' && '⚡'} {format === '7s' && '🎯'} {format === '11s' && '🏆'}
@@ -1371,9 +1383,17 @@ export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat
                     <div className={`text-xs ${selectedFormat === format ? 'text-white/80' : 'text-slate-500'}`}>
                       {req.playersOnField} on field + {req.minSubs} subs
                     </div>
+                    {isDisabledByMatch && (
+                      <div className="text-xs text-slate-400 mt-0.5">
+                        Match requires {matchRequiredFormat?.replace('s', '-a-side')}
+                      </div>
+                    )}
                   </div>
                   {isRecommended && selectedFormat === format && (
                     <div className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">✓</div>
+                  )}
+                  {isMatchFormat && matchId && (
+                    <div className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">Match</div>
                   )}
                 </button>
               )

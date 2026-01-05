@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ToastProvider, useToast } from '@/hooks/useToast'
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
@@ -325,26 +323,22 @@ function ContractsPageContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-slate-600">Loading contracts...</div>
+        <div className="text-muted-foreground">Loading contracts...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                PCL
-              </h1>
-              <span className="text-slate-400">|</span>
-              <span className="text-slate-600 font-medium">{club?.club_name}</span>
+    <div className="min-h-screen">
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-teal-600 font-medium mb-1">welcome back 👋</p>
+              <h1 className="text-4xl font-bold text-gray-900">Contract Management</h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <NotificationCenter
                 notifications={notifications}
                 unreadCount={unreadCount}
@@ -352,133 +346,146 @@ function ContractsPageContent() {
                 onMarkAllAsRead={markAllAsRead}
                 loading={notificationsLoading}
               />
-              <Button onClick={() => router.push('/dashboard/club-owner')} variant="outline" size="sm">
+              <button
+                onClick={() => router.push('/dashboard/club-owner')}
+                className="px-4 py-2 text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors"
+              >
                 Back to Dashboard
-              </Button>
+              </button>
             </div>
           </div>
         </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Contract Management
-          </h1>
-          <p className="text-slate-600">
-            View and manage all player contracts for {club?.club_name}
-          </p>
-        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter('all')}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Total</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{contracts.length}</div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter('pending')}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-yellow-600">Pending</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-yellow-600">
-                {contracts.filter(c => c.status === 'pending').length}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div
+            onClick={() => setFilter('all')}
+            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer border border-slate-200 p-5"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600 mb-1">Total</p>
+                <p className="text-3xl font-bold text-gray-900">{contracts.length}</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter('active')}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-600">Active</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
-                {contracts.filter(c => c.status === 'active').length}
+              <div className="text-3xl">📋</div>
+            </div>
+          </div>
+          <div
+            onClick={() => setFilter('pending')}
+            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer border border-yellow-200 p-5"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-yellow-600 mb-1">Pending</p>
+                <p className="text-3xl font-bold text-yellow-600">
+                  {contracts.filter(c => c.status === 'pending').length}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter('rejected')}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-red-600">Rejected</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-600">
-                {contracts.filter(c => c.status === 'rejected').length}
+              <div className="text-3xl">⏳</div>
+            </div>
+          </div>
+          <div
+            onClick={() => setFilter('active')}
+            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer border border-green-200 p-5"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600 mb-1">Active</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {contracts.filter(c => c.status === 'active').length}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilter('terminated')}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Terminated</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-600">
-                {contracts.filter(c => c.status === 'terminated').length}
+              <div className="text-3xl">✅</div>
+            </div>
+          </div>
+          <div
+            onClick={() => setFilter('rejected')}
+            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer border border-red-200 p-5"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600 mb-1">Rejected</p>
+                <p className="text-3xl font-bold text-red-600">
+                  {contracts.filter(c => c.status === 'rejected').length}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="text-3xl">❌</div>
+            </div>
+          </div>
+          <div
+            onClick={() => setFilter('terminated')}
+            className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer border border-gray-200 p-5"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Terminated</p>
+                <p className="text-3xl font-bold text-gray-600">
+                  {contracts.filter(c => c.status === 'terminated').length}
+                </p>
+              </div>
+              <div className="text-3xl">🚫</div>
+            </div>
+          </div>
         </div>
 
         {/* Contracts List */}
-        <Card>
-          <CardHeader>
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+          <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle>
+                <h2 className="text-xl font-bold text-white">
                   {filter === 'all' ? 'All Contracts' : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Contracts`}
-                </CardTitle>
-                <CardDescription>
+                </h2>
+                <p className="text-teal-50 text-sm mt-1">
                   {filteredContracts.length} contract{filteredContracts.length !== 1 ? 's' : ''} found
-                </CardDescription>
+                </p>
               </div>
               {filter !== 'all' && (
-                <Button variant="outline" size="sm" onClick={() => setFilter('all')}>
+                <button
+                  onClick={() => setFilter('all')}
+                  className="px-4 py-2 text-sm bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors backdrop-blur-sm"
+                >
                   Show All
-                </Button>
+                </button>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="px-6 py-5">
             {filteredContracts.length === 0 ? (
-              <div className="text-center py-12 text-slate-500">
+              <div className="text-center py-12">
                 <div className="text-6xl mb-4">📋</div>
-                <p className="text-lg font-medium mb-2">No contracts found</p>
-                <p className="text-sm">
+                <p className="text-lg font-semibold text-gray-700 mb-2">No contracts found</p>
+                <p className="text-sm text-gray-500 mb-4">
                   {filter === 'all'
                     ? 'Start scouting players and send contract offers!'
                     : `No ${filter} contracts at this time.`}
                 </p>
-                <Button
-                  className="mt-4"
+                <button
                   onClick={() => router.push('/scout/players')}
+                  className="px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg"
                 >
                   Scout Players
-                </Button>
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
                 {filteredContracts.map((contract) => (
                   <div
                     key={contract.id}
-                    className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    className="border-2 border-slate-200 rounded-2xl p-5 hover:shadow-xl transition-all bg-gradient-to-br from-white to-slate-50"
                   >
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-5">
                       {/* Player Photo */}
                       <div className="flex-shrink-0">
                         {contract.players?.photo_url ? (
                           <img
                             src={contract.players.photo_url}
                             alt={`${contract.players.users?.first_name} ${contract.players.users?.last_name}`}
-                            className="h-16 w-16 rounded-full object-cover border-2 border-slate-200"
+                            className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-lg"
                           />
                         ) : (
-                          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                            <span className="text-2xl">⚽</span>
+                          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-lg border-4 border-white">
+                            <span className="text-3xl">⚽</span>
                           </div>
                         )}
                       </div>
@@ -634,41 +641,43 @@ function ContractsPageContent() {
 
                         {/* Action buttons based on status */}
                         <div className="mt-4 flex gap-2 flex-wrap">
-                          <Button
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                          <button
                             onClick={() => router.push(`/dashboard/club-owner/contracts/${contract.id}/view`)}
+                            className="px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
                           >
                             👁️ View Contract
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
+                          </button>
+                          <button
                             onClick={() => setExpandedContract(expandedContract === contract.id ? null : contract.id)}
+                            className="px-4 py-2 text-sm border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors"
                           >
                             {expandedContract === contract.id ? 'Hide Details' : 'View Details'}
-                          </Button>
+                          </button>
+                          {contract.players?.id && (
+                            <button
+                              onClick={() => router.push(`/dashboard/club-owner/players/${contract.players.id}`)}
+                              className="px-4 py-2 text-sm border border-teal-300 text-teal-700 rounded-lg font-medium hover:bg-teal-50 transition-colors"
+                            >
+                              👤 View Player
+                            </button>
+                          )}
                           {contract.status === 'pending' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 hover:text-red-700"
+                            <button
                               onClick={() => setConfirmDialog({ isOpen: true, contractId: contract.id, action: 'cancel' })}
                               disabled={processing === contract.id}
+                              className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {processing === contract.id ? 'Cancelling...' : 'Cancel Offer'}
-                            </Button>
+                            </button>
                           )}
                           {contract.status === 'active' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-orange-600 hover:text-orange-700"
+                            <button
                               onClick={() => setConfirmDialog({ isOpen: true, contractId: contract.id, action: 'terminate' })}
                               disabled={processing === contract.id}
+                              className="px-4 py-2 text-sm border border-orange-300 text-orange-600 rounded-lg font-medium hover:bg-orange-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {processing === contract.id ? 'Terminating...' : 'Terminate Contract'}
-                            </Button>
+                            </button>
                           )}
                         </div>
                       </div>
@@ -677,8 +686,8 @@ function ContractsPageContent() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
 
       {/* Confirmation Dialog */}

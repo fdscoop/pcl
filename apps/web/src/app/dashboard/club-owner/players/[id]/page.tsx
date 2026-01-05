@@ -82,28 +82,29 @@ export default function ClubOwnerPlayerProfilePage() {
         return
       }
 
-      // Fetch player data
+      // Fetch player data with user information using join
       const { data: playerData, error: playerError } = await supabase
         .from('players')
-        .select('*')
+        .select(`
+          *,
+          users!players_user_id_fkey (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number
+          )
+        `)
         .eq('id', playerId)
         .single()
 
       if (playerError) {
+        console.error('Error loading player:', playerError)
         setError('Player not found')
         return
       }
 
-      // Fetch user data
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, first_name, last_name, email, phone_number')
-        .eq('id', playerData.user_id)
-        .single()
-
-      if (userError) {
-        console.error('Error loading user:', userError)
-      }
+      console.log('Player data loaded:', playerData)
 
       // Fetch player stats
       const { data: statsData, error: statsError } = await supabase
@@ -116,11 +117,17 @@ export default function ClubOwnerPlayerProfilePage() {
         console.error('Error loading stats:', statsError)
       }
 
-      setPlayer({
+      // Normalize the data structure
+      const normalizedPlayer = {
         ...playerData,
-        users: userData || null,
+        users: typeof playerData.users === 'object' && !Array.isArray(playerData.users)
+          ? playerData.users
+          : null,
         player_stats: statsData || []
-      })
+      }
+
+      console.log('Normalized player data:', normalizedPlayer)
+      setPlayer(normalizedPlayer)
     } catch (err) {
       console.error('Error:', err)
       setError('Failed to load player data')

@@ -82,19 +82,10 @@ export default function ClubOwnerPlayerProfilePage() {
         return
       }
 
-      // Fetch player data with user information using join
+      // Fetch player data
       const { data: playerData, error: playerError } = await supabase
         .from('players')
-        .select(`
-          *,
-          users!players_user_id_fkey (
-            id,
-            first_name,
-            last_name,
-            email,
-            phone_number
-          )
-        `)
+        .select('*')
         .eq('id', playerId)
         .single()
 
@@ -105,6 +96,24 @@ export default function ClubOwnerPlayerProfilePage() {
       }
 
       console.log('Player data loaded:', playerData)
+
+      // Fetch user data separately
+      let userData = null
+      if (playerData.user_id) {
+        const { data: userDataResult, error: userError } = await supabase
+          .from('users')
+          .select('id, first_name, last_name, email, phone_number')
+          .eq('id', playerData.user_id)
+          .maybeSingle()
+
+        if (userError) {
+          console.error('Error loading user:', userError)
+        } else {
+          userData = userDataResult
+        }
+      }
+
+      console.log('User data loaded:', userData)
 
       // Fetch player stats
       const { data: statsData, error: statsError } = await supabase
@@ -117,17 +126,15 @@ export default function ClubOwnerPlayerProfilePage() {
         console.error('Error loading stats:', statsError)
       }
 
-      // Normalize the data structure
-      const normalizedPlayer = {
+      // Combine the data
+      const combinedPlayer = {
         ...playerData,
-        users: typeof playerData.users === 'object' && !Array.isArray(playerData.users)
-          ? playerData.users
-          : null,
+        users: userData,
         player_stats: statsData || []
       }
 
-      console.log('Normalized player data:', normalizedPlayer)
-      setPlayer(normalizedPlayer)
+      console.log('Combined player data:', combinedPlayer)
+      setPlayer(combinedPlayer)
     } catch (err) {
       console.error('Error:', err)
       setError('Failed to load player data')

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Mail, AlertCircle } from 'lucide-react'
 
 // User role types
 const userRoles = [
@@ -40,6 +41,9 @@ type SignupFormData = z.infer<typeof signupSchema>
 export default function SignupForm() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [selectedRole, setSelectedRole] = useState<string>('player')
 
@@ -59,6 +63,9 @@ export default function SignupForm() {
     try {
       setLoading(true)
       setError(null)
+      setSuccess(false)
+      setEmailSent(false)
+      setUserEmail(data.email)
 
       const supabase = createClient()
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -102,19 +109,22 @@ export default function SignupForm() {
 
       if (userError) {
         console.error('User creation error:', userError)
-        throw new Error('Failed to create user profile')
+        
+        // If user record creation fails, we should still inform about email confirmation
+        if (authData.user.identities && authData.user.identities.length === 0) {
+          // Email already exists
+          throw new Error('An account with this email already exists')
+        }
+        
+        // User was created in auth, show success message for email confirmation
+        setEmailSent(true)
+        setSuccess(true)
+        return
       }
 
-      // 3. Redirect based on role
-      const redirectPaths: Record<string, string> = {
-        player: '/onboarding/player',
-        club_owner: '/onboarding/club-owner',
-        referee: '/onboarding/referee',
-        staff: '/onboarding/staff',
-        stadium_owner: '/onboarding/stadium-owner',
-      }
-
-      router.push(redirectPaths[data.role] || '/dashboard')
+      // 3. Success - show email confirmation message
+      setEmailSent(true)
+      setSuccess(true)
 
     } catch (err: any) {
       console.error('Signup error:', err)
@@ -133,11 +143,59 @@ export default function SignupForm() {
         </CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Show success message if email was sent */}
+      {emailSent && success ? (
+        <CardContent className="py-12">
+          <div className="text-center space-y-6">
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+              <Mail className="w-8 h-8 text-green-600 dark:text-green-400" />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-foreground">Check Your Email!</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                We've sent a confirmation link to <span className="font-semibold text-foreground">{userEmail}</span>
+              </p>
+            </div>
+
+            <Alert className="max-w-md mx-auto bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+              <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <strong className="block mb-1">Important:</strong>
+                Click the confirmation link in your email to activate your account. Check your spam folder if you don't see it.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-3 pt-4">
+              <Button 
+                onClick={() => router.push('/auth/login')}
+                variant="gradient"
+                className="w-full max-w-xs mx-auto btn-lift"
+              >
+                Go to Login
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Didn't receive the email?{' '}
+                <button 
+                  onClick={() => {
+                    setEmailSent(false)
+                    setSuccess(false)
+                  }}
+                  className="text-accent hover:underline font-medium"
+                >
+                  Try again
+                </button>
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-6">
           {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive" className="border-2">
+              <AlertCircle className="h-5 w-5" />
+              <AlertDescription className="font-medium">{error}</AlertDescription>
             </Alert>
           )}
 
@@ -290,6 +348,7 @@ export default function SignupForm() {
           </p>
         </CardFooter>
       </form>
+      )}
     </Card>
   )
 }

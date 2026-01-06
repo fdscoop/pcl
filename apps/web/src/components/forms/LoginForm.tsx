@@ -48,11 +48,20 @@ export default function LoginForm() {
       })
 
       if (authError) {
+        // Check if it's an email confirmation error
+        if (authError.message.toLowerCase().includes('email') || authError.message.toLowerCase().includes('confirm')) {
+          throw new Error('Please confirm your email address before signing in. Check your inbox for the confirmation link.')
+        }
         throw new Error(authError.message)
       }
 
       if (!authData.user) {
         throw new Error('Login failed')
+      }
+
+      // Check if email is confirmed
+      if (!authData.user.email_confirmed_at) {
+        throw new Error('Please confirm your email address before signing in. Check your inbox for the confirmation link.')
       }
 
       // Get user role from our users table
@@ -63,7 +72,8 @@ export default function LoginForm() {
         .single()
 
       if (userError || !userData) {
-        throw new Error('Failed to fetch user profile')
+        console.error('User fetch error:', userError)
+        throw new Error('Your account setup is incomplete. Please contact support or try signing up again.')
       }
 
       // Check if user is active

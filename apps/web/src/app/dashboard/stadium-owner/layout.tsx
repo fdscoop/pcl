@@ -22,7 +22,7 @@ export default function StadiumOwnerLayout({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { showToast } = useToast()
+  const { addToast } = useToast()
   const [stadium, setStadium] = useState<Stadium | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -49,7 +49,11 @@ export default function StadiumOwnerLayout({
         .single()
 
       if (error || !stadiumData) {
-        showToast('No active stadium found for your account', 'error')
+        addToast({
+          title: 'No active stadium found',
+          description: 'Please make sure you have registered a stadium',
+          type: 'error'
+        })
         router.push('/dashboard')
         return
       }

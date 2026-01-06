@@ -332,7 +332,7 @@ export function CreateFriendlyMatch({
       setAvailableStadiums(transformedStadiums)
 
       // Load referees - filter by district/city through users table
-      let refereeQuery = supabase
+      const { data: refereesData } = await supabase
         .from('referees')
         .select(`
           id, unique_referee_id, certification_level, hourly_rate, is_available,
@@ -340,26 +340,29 @@ export function CreateFriendlyMatch({
         `)
         .eq('is_available', true)
 
-      // Apply district/city filtering through users table
-      if (club.district) {
-        // District-level filtering (priority)
-        refereeQuery = refereeQuery.eq('users.district', club.district)
-      } else if (club.city) {
-        // City-level filtering (fallback)
-        refereeQuery = refereeQuery.eq('users.city', club.city)
-      }
-
-      const { data: refereesData } = await refereeQuery
-
-      const formattedReferees = refereesData?.map(ref => ({
+      // Format referees first
+      let formattedReferees = refereesData?.map(ref => ({
         ...ref,
         users: Array.isArray(ref.users) ? ref.users[0] : ref.users
       })) || []
 
+      // Apply district/city filtering in JavaScript (PostgREST doesn't support nested filtering)
+      if (club.district) {
+        // District-level filtering (priority)
+        formattedReferees = formattedReferees.filter(ref =>
+          ref.users && (ref.users as any).district === club.district
+        )
+      } else if (club.city) {
+        // City-level filtering (fallback)
+        formattedReferees = formattedReferees.filter(ref =>
+          ref.users && (ref.users as any).city === club.city
+        )
+      }
+
       setAvailableReferees(formattedReferees as Referee[])
 
       // Load staff - filter by district/city through users table
-      let staffQuery = supabase
+      const { data: staffData } = await supabase
         .from('staff')
         .select(`
           id, unique_staff_id, role_type, hourly_rate, is_available,
@@ -367,21 +370,24 @@ export function CreateFriendlyMatch({
         `)
         .eq('is_available', true)
 
-      // Apply district/city filtering through users table
-      if (club.district) {
-        // District-level filtering (priority)
-        staffQuery = staffQuery.eq('users.district', club.district)
-      } else if (club.city) {
-        // City-level filtering (fallback)
-        staffQuery = staffQuery.eq('users.city', club.city)
-      }
-
-      const { data: staffData } = await staffQuery
-
-      const formattedStaff = staffData?.map(staff => ({
+      // Format staff first
+      let formattedStaff = staffData?.map(staff => ({
         ...staff,
         users: Array.isArray(staff.users) ? staff.users[0] : staff.users
       })) || []
+
+      // Apply district/city filtering in JavaScript (PostgREST doesn't support nested filtering)
+      if (club.district) {
+        // District-level filtering (priority)
+        formattedStaff = formattedStaff.filter(staff =>
+          staff.users && (staff.users as any).district === club.district
+        )
+      } else if (club.city) {
+        // City-level filtering (fallback)
+        formattedStaff = formattedStaff.filter(staff =>
+          staff.users && (staff.users as any).city === club.city
+        )
+      }
 
       setAvailableStaff(formattedStaff as Staff[])
     } catch (error) {

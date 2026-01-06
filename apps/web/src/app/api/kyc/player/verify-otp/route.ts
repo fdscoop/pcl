@@ -389,6 +389,20 @@ export async function POST(request: NextRequest) {
       console.log('📝 Updating user profile with Aadhaar DOB:', userUpdateData.date_of_birth)
     }
 
+    // Add location data to user profile (for referee/staff filtering)
+    if (addressData.city) {
+      userUpdateData.city = addressData.city
+      console.log('📝 Updating user profile with city:', addressData.city)
+    }
+    if (addressData.district) {
+      userUpdateData.district = addressData.district
+      console.log('📝 Updating user profile with district:', addressData.district)
+    }
+    if (addressData.state) {
+      userUpdateData.state = addressData.state
+      console.log('📝 Updating user profile with state:', addressData.state)
+    }
+
     const { error: userError } = await supabase
       .from('users')
       .update(userUpdateData)

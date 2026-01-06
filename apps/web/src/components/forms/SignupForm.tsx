@@ -70,15 +70,15 @@ export default function SignupForm() {
       const supabase = createClient()
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-      // 1. Sign up with Supabase Auth
+      // 1. Sign up with Supabase Auth (with user data in metadata for later use)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           emailRedirectTo: `${appUrl}/auth/callback`,
           data: {
-            first_name: data.firstName,
-            last_name: data.lastName,
+            firstName: data.firstName,
+            lastName: data.lastName,
             phone: data.phone,
             role: data.role,
           },
@@ -248,9 +248,13 @@ export default function SignupForm() {
                 {...register('firstName')}
                 placeholder="John"
                 disabled={loading}
+                className={errors.firstName ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
               {errors.firstName && (
-                <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                <div className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 p-2">
+                  <AlertCircle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                  <p className="text-xs text-red-700 font-medium">{errors.firstName.message}</p>
+                </div>
               )}
             </div>
 
@@ -261,9 +265,13 @@ export default function SignupForm() {
                 {...register('lastName')}
                 placeholder="Doe"
                 disabled={loading}
+                className={errors.lastName ? 'border-red-500 focus-visible:ring-red-500' : ''}
               />
               {errors.lastName && (
-                <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                <div className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 p-2">
+                  <AlertCircle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                  <p className="text-xs text-red-700 font-medium">{errors.lastName.message}</p>
+                </div>
               )}
             </div>
           </div>
@@ -277,9 +285,13 @@ export default function SignupForm() {
               {...register('email')}
               placeholder="john.doe@example.com"
               disabled={loading}
+              className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <div className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 p-3">
+                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                <p className="text-sm text-red-700 font-medium">{errors.email.message}</p>
+              </div>
             )}
           </div>
 
@@ -292,9 +304,13 @@ export default function SignupForm() {
               {...register('phone')}
               placeholder="+1 234 567 8900"
               disabled={loading}
+              className={errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
             {errors.phone && (
-              <p className="text-sm text-destructive">{errors.phone.message}</p>
+              <div className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 p-3">
+                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                <p className="text-sm text-red-700 font-medium">{errors.phone.message}</p>
+              </div>
             )}
           </div>
 
@@ -307,9 +323,13 @@ export default function SignupForm() {
               {...register('password')}
               placeholder="At least 8 characters"
               disabled={loading}
+              className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <div className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 p-3">
+                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                <p className="text-sm text-red-700 font-medium">{errors.password.message}</p>
+              </div>
             )}
           </div>
 
@@ -322,9 +342,13 @@ export default function SignupForm() {
               {...register('confirmPassword')}
               placeholder="Re-enter your password"
               disabled={loading}
+              className={errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              <div className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 p-3">
+                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                <p className="text-sm text-red-700 font-medium">{errors.confirmPassword.message}</p>
+              </div>
             )}
           </div>
         </CardContent>

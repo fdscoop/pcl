@@ -65,15 +65,45 @@ export default function LoginForm() {
       }
 
       // Get user role from our users table
-      const { data: userData, error: userError } = await supabase
+      let { data: userData, error: userError } = await supabase
         .from('users')
         .select('role, kyc_status, is_active')
         .eq('id', authData.user.id)
         .single()
 
-      if (userError || !userData) {
+      // If user record doesn't exist, create it now (after email confirmation)
+      if (userError && userError.code === 'PGRST116') {
+        console.log('User record not found, creating now after email confirmation...')
+        
+        // Get role from user metadata (set during signup)
+        const role = authData.user.user_metadata?.role || 'player'
+        
+        // Create user record
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: authData.user.email!,
+            first_name: authData.user.user_metadata?.firstName || '',
+            last_name: authData.user.user_metadata?.lastName || '',
+            phone: authData.user.user_metadata?.phone || null,
+            role: role,
+            is_active: true,
+            kyc_status: 'pending',
+            last_login: new Date().toISOString(),
+          })
+          .select('role, kyc_status, is_active')
+          .single()
+
+        if (createError) {
+          console.error('Failed to create user record:', createError)
+          throw new Error('Failed to complete account setup. Please contact support.')
+        }
+
+        userData = newUser
+      } else if (userError || !userData) {
         console.error('User fetch error:', userError)
-        throw new Error('Your account setup is incomplete. Please contact support or try signing up again.')
+        throw new Error('Failed to load your account. Please try again or contact support.')
       }
 
       // Check if user is active

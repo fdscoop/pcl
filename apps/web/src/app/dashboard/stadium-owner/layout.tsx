@@ -40,23 +40,47 @@ export default function StadiumOwnerLayout({
         return
       }
 
-      // Get stadium owned by this user
-      const { data: stadiumData, error } = await supabase
-        .from('stadiums')
-        .select('*')
-        .eq('owner_id', user.id)
-        .eq('is_active', true)
+      // Verify user has stadium_owner role
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role, is_active')
+        .eq('id', user.id)
         .single()
 
-      if (error || !stadiumData) {
+      if (userError || !userData) {
+        console.error('Error fetching user data:', userError)
+        router.push('/dashboard')
+        return
+      }
+
+      if (userData.role !== 'stadium_owner') {
         addToast({
-          title: 'No active stadium found',
-          description: 'Please make sure you have registered a stadium',
+          title: 'Access Denied',
+          description: 'You do not have permission to access stadium owner dashboard',
           type: 'error'
         })
         router.push('/dashboard')
         return
       }
+
+      if (!userData.is_active) {
+        addToast({
+          title: 'Account Inactive',
+          description: 'Your account has been deactivated',
+          type: 'error'
+        })
+        await supabase.auth.signOut()
+        router.push('/auth/login')
+        return
+      }
+
+      // Try to get stadium owned by this user (optional - they might not have one yet)
+      const { data: stadiumData } = await supabase
+        .from('stadiums')
+        .select('*')
+        .eq('owner_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle()
 
       setStadium(stadiumData)
     } catch (error) {

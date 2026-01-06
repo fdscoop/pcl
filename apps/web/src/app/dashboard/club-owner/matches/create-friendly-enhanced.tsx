@@ -220,7 +220,8 @@ export function CreateFriendlyMatch({
       }
 
       // Load active and KYC verified clubs with their teams (excluding own club)
-      const { data: clubsData } = await supabase
+      // Filter by district first, fallback to city if no district match
+      let clubQuery = supabase
         .from('clubs')
         .select(`
           id,
@@ -228,6 +229,7 @@ export function CreateFriendlyMatch({
           city,
           state,
           country,
+          district,
           logo_url,
           category,
           is_active,
@@ -241,7 +243,17 @@ export function CreateFriendlyMatch({
         .eq('is_active', true)
         .eq('kyc_verified', true)
         .neq('id', club.id)
-        .order('club_name', { ascending: true })
+
+      // Apply district/city filtering for PCL match organization
+      if (club.district) {
+        // District-level filtering (priority)
+        clubQuery = clubQuery.eq('district', club.district)
+      } else if (club.city) {
+        // City-level filtering (fallback)
+        clubQuery = clubQuery.eq('city', club.city)
+      }
+
+      const { data: clubsData } = await clubQuery.order('club_name', { ascending: true })
 
       // Transform and enrich club data with format availability
       const transformedClubs = clubsData?.map(c => {
@@ -267,7 +279,7 @@ export function CreateFriendlyMatch({
           name: c.club_name,
           city: c.city,
           state: c.state,
-          district: c.city,
+          district: c.district || c.city,
           kyc_verified: c.kyc_verified,
           logo_url: c.logo_url,
           category: c.category,
@@ -293,11 +305,22 @@ export function CreateFriendlyMatch({
 
       setAvailableClubs(clubsWithTeams)
 
-      // Load stadiums
-      const { data: stadiumsData } = await supabase
+      // Load stadiums - filter by district/city for PCL match organization
+      let stadiumQuery = supabase
         .from('stadiums')
         .select('id, stadium_name, location, district, city, state, hourly_rate, amenities, is_available')
         .eq('is_available', true)
+
+      // Apply district/city filtering
+      if (club.district) {
+        // District-level filtering (priority)
+        stadiumQuery = stadiumQuery.eq('district', club.district)
+      } else if (club.city) {
+        // City-level filtering (fallback)
+        stadiumQuery = stadiumQuery.eq('city', club.city)
+      }
+
+      const { data: stadiumsData } = await stadiumQuery
 
       // Transform stadiums to use amenities as facilities
       const transformedStadiums = stadiumsData?.map(s => ({
@@ -308,14 +331,25 @@ export function CreateFriendlyMatch({
 
       setAvailableStadiums(transformedStadiums)
 
-      // Load referees
-      const { data: refereesData } = await supabase
+      // Load referees - filter by district/city through users table
+      let refereeQuery = supabase
         .from('referees')
         .select(`
           id, unique_referee_id, certification_level, hourly_rate, is_available,
-          users!inner(first_name, last_name)
+          users!inner(first_name, last_name, city, district)
         `)
         .eq('is_available', true)
+
+      // Apply district/city filtering through users table
+      if (club.district) {
+        // District-level filtering (priority)
+        refereeQuery = refereeQuery.eq('users.district', club.district)
+      } else if (club.city) {
+        // City-level filtering (fallback)
+        refereeQuery = refereeQuery.eq('users.city', club.city)
+      }
+
+      const { data: refereesData } = await refereeQuery
 
       const formattedReferees = refereesData?.map(ref => ({
         ...ref,
@@ -324,14 +358,25 @@ export function CreateFriendlyMatch({
 
       setAvailableReferees(formattedReferees as Referee[])
 
-      // Load staff
-      const { data: staffData } = await supabase
+      // Load staff - filter by district/city through users table
+      let staffQuery = supabase
         .from('staff')
         .select(`
           id, unique_staff_id, role_type, hourly_rate, is_available,
-          users!inner(first_name, last_name)
+          users!inner(first_name, last_name, city, district)
         `)
         .eq('is_available', true)
+
+      // Apply district/city filtering through users table
+      if (club.district) {
+        // District-level filtering (priority)
+        staffQuery = staffQuery.eq('users.district', club.district)
+      } else if (club.city) {
+        // City-level filtering (fallback)
+        staffQuery = staffQuery.eq('users.city', club.city)
+      }
+
+      const { data: staffData } = await staffQuery
 
       const formattedStaff = staffData?.map(staff => ({
         ...staff,
@@ -835,6 +880,24 @@ export function CreateFriendlyMatch({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* District/City Level Info Banner */}
+            {(club.district || club.city) && currentStep === 1 && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                      {club.district ? 'District-Level Match Organization' : 'City-Level Match Organization'}
+                    </h4>
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      This match will be organized at the <span className="font-semibold">{club.district || club.city}</span> level.
+                      All opponent clubs, stadiums, referees, and staff shown are filtered to match your location for PCL matches.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* STEP 1: Match Setup */}
             {currentStep === 1 && (
               <div className="space-y-6">
@@ -886,10 +949,18 @@ export function CreateFriendlyMatch({
 
             {/* Enhanced Opponent Selection */}
             <div className="space-y-4">
-              <h3 className="font-semibold flex items-center gap-2 text-lg">
-                <Users className="h-5 w-5" />
-                Opponent Club Selection
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5" />
+                  Opponent Club Selection
+                </h3>
+                {(club.district || club.city) && (
+                  <Badge className="bg-blue-500 text-white">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    {club.district ? `${club.district} District` : `${club.city} City`}
+                  </Badge>
+                )}
+              </div>
               
               <div className="space-y-3">
                 {/* Filter by Location */}
@@ -1082,11 +1153,19 @@ export function CreateFriendlyMatch({
                 {/* Stadium Selection */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold flex items-center gap-2 text-lg">
-                      <Building className="h-5 w-5 text-purple-600" />
-                      Select Stadium
-                      <Badge variant="outline" className="ml-2">{filteredStadiums.length} available</Badge>
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold flex items-center gap-2 text-lg">
+                        <Building className="h-5 w-5 text-purple-600" />
+                        Select Stadium
+                        <Badge variant="outline" className="ml-2">{filteredStadiums.length} available</Badge>
+                      </h3>
+                      {(club.district || club.city) && (
+                        <Badge className="bg-blue-500 text-white">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {club.district ? `${club.district} District` : `${club.city} City`}
+                        </Badge>
+                      )}
+                    </div>
                     {formData.stadiumId && (
                       <Button
                         variant="outline"
@@ -1491,10 +1570,18 @@ export function CreateFriendlyMatch({
                     {/* Referees */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="text-base font-semibold flex items-center gap-2">
-                          <UserCheck className="h-4 w-4" />
-                          Select Referees ({formData.refereeIds.length} selected)
-                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-base font-semibold flex items-center gap-2">
+                            <UserCheck className="h-4 w-4" />
+                            Select Referees ({formData.refereeIds.length} selected)
+                          </Label>
+                          {(club.district || club.city) && (
+                            <Badge className="bg-blue-500 text-white text-xs">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              {club.district ? `${club.district} District` : `${club.city} City`}
+                            </Badge>
+                          )}
+                        </div>
                         {formData.refereeIds.length > 0 && (
                           <Button
                             variant="outline"
@@ -1542,10 +1629,18 @@ export function CreateFriendlyMatch({
                 {/* Staff */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="text-base font-semibold flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Select PCL Staff ({formData.staffIds.length} selected)
-                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Select PCL Staff ({formData.staffIds.length} selected)
+                      </Label>
+                      {(club.district || club.city) && (
+                        <Badge className="bg-blue-500 text-white text-xs">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {club.district ? `${club.district} District` : `${club.city} City`}
+                        </Badge>
+                      )}
+                    </div>
                     {formData.staffIds.length > 0 && (
                       <Button
                         variant="outline"

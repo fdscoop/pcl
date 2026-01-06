@@ -336,6 +336,23 @@ export async function POST(request: NextRequest) {
       console.log('📝 Updating user profile with Aadhaar DOB:', userUpdateData.date_of_birth)
     }
 
+    // Parse Aadhaar address data early to extract location for users table
+    const addressData = parseAadhaarAddress(aadhaarData)
+
+    // Add location data to user profile (for referee/staff filtering)
+    if (addressData.city) {
+      userUpdateData.city = addressData.city
+      console.log('📝 Updating user profile with city:', addressData.city)
+    }
+    if (addressData.district) {
+      userUpdateData.district = addressData.district
+      console.log('📝 Updating user profile with district:', addressData.district)
+    }
+    if (addressData.state) {
+      userUpdateData.state = addressData.state
+      console.log('📝 Updating user profile with state:', addressData.state)
+    }
+
     const { error: userError } = await supabase
       .from('users')
       .update(userUpdateData)
@@ -449,12 +466,9 @@ export async function POST(request: NextRequest) {
         console.log('🌏 Country defaulted to India based on Indian address data')
       }
 
-      console.log('📋 Final parsed address data for club:', addressData)
+      console.log('📋 Final parsed address data:', addressData)
       return addressData
     }
-
-    // Extract address components from Aadhaar data
-    const addressData = parseAadhaarAddress(aadhaarData)
 
     console.log('📍 Parsed address data from Aadhaar:', addressData)
 

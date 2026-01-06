@@ -903,6 +903,14 @@ export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat
         type: 'success',
         duration: 3000
       })
+
+      // Notify other pages that lineup was updated using localStorage
+      localStorage.setItem('lineupUpdated', JSON.stringify({
+        timestamp: Date.now(),
+        matchId,
+        teamId,
+        format: formatMap[selectedFormat]
+      }))
     } catch (error) {
       console.error('Error saving lineup:', error)
       addToast({

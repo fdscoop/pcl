@@ -5,6 +5,94 @@ import { getCashfreeVerificationHeaders } from '@/lib/cashfree-signature'
 
 const VERIFICATION_BASE_URL = 'https://api.cashfree.com'
 
+// Helper function to parse Aadhaar address data
+function parseAadhaarAddress(aadhaarData: any) {
+  const addressData: any = {}
+
+  console.log('🏠 Parsing Aadhaar address data:', JSON.stringify(aadhaarData, null, 2))
+
+  // PRIORITY 1: Use split_address if available (most reliable)
+  if (aadhaarData.split_address) {
+    const splitAddr = aadhaarData.split_address
+    console.log('✅ Using structured split_address from Cashfree:', splitAddr)
+
+    if (splitAddr.state) {
+      addressData.state = splitAddr.state
+      console.log('🏛️ State from split_address:', splitAddr.state)
+    }
+    if (splitAddr.dist || splitAddr.district) {
+      addressData.district = splitAddr.dist || splitAddr.district
+      console.log('🏘️ District from split_address:', splitAddr.dist || splitAddr.district)
+    }
+    if (splitAddr.pincode) {
+      addressData.pincode = splitAddr.pincode
+      console.log('📮 Pincode from split_address:', splitAddr.pincode)
+    }
+    if (splitAddr.vtc || splitAddr.city) {
+      addressData.city = splitAddr.vtc || splitAddr.city
+      console.log('🏙️ City from split_address:', splitAddr.vtc || splitAddr.city)
+    }
+    if (splitAddr.country) {
+      addressData.country = splitAddr.country
+      console.log('🌏 Country from split_address:', splitAddr.country)
+    }
+
+    // Store the provided full address or build from components
+    if (aadhaarData.address) {
+      addressData.full_address = aadhaarData.address
+    } else {
+      const addressComponents = [
+        splitAddr.house,
+        splitAddr.street,
+        splitAddr.landmark,
+        splitAddr.locality,
+        splitAddr.vtc,
+        splitAddr.dist || splitAddr.district,
+        splitAddr.state,
+        splitAddr.country,
+        splitAddr.pincode
+      ].filter(Boolean)
+      addressData.full_address = addressComponents.join(', ')
+    }
+  }
+
+  // PRIORITY 2: Use direct fields if available
+  if (!addressData.state && aadhaarData.state) {
+    addressData.state = aadhaarData.state
+    console.log('🏛️ State from direct field:', aadhaarData.state)
+  }
+  if (!addressData.district && aadhaarData.district) {
+    addressData.district = aadhaarData.district
+    console.log('🏘️ District from direct field:', aadhaarData.district)
+  }
+  if (!addressData.pincode && (aadhaarData.pincode || aadhaarData.zip)) {
+    addressData.pincode = aadhaarData.pincode || aadhaarData.zip
+    console.log('📮 Pincode from direct field:', aadhaarData.pincode || aadhaarData.zip)
+  }
+  if (!addressData.city && aadhaarData.city) {
+    addressData.city = aadhaarData.city
+    console.log('🏙️ City from direct field:', aadhaarData.city)
+  }
+  if (!addressData.country && aadhaarData.country) {
+    addressData.country = aadhaarData.country
+    console.log('🌏 Country from direct field:', aadhaarData.country)
+  }
+
+  // PRIORITY 3: Use full address string as fallback (least reliable)
+  if (!addressData.full_address) {
+    addressData.full_address = aadhaarData.address || aadhaarData.full_address || aadhaarData.care_of
+  }
+
+  // Default to India if country not found but we have Indian address data
+  if (!addressData.country && (addressData.state || addressData.district || addressData.pincode)) {
+    addressData.country = 'India'
+    console.log('🌏 Country defaulted to India based on Indian address data')
+  }
+
+  console.log('📋 Final parsed address data:', addressData)
+  return addressData
+}
+
 async function verifyAadhaarOTP(requestId: string, otp: string): Promise<any> {
   const keyId = process.env.NEXT_PUBLIC_CASHFREE_KEY_ID
   const secretKey = process.env.CASHFREE_SECRET_KEY
@@ -381,96 +469,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    // Parse Aadhaar address data
-    const parseAadhaarAddress = (aadhaarData: any) => {
-      const addressData: any = {}
-
-      console.log('🏠 Parsing Aadhaar address data for club:', JSON.stringify(aadhaarData, null, 2))
-
-      // PRIORITY 1: Use split_address if available (most reliable)
-      if (aadhaarData.split_address) {
-        const splitAddr = aadhaarData.split_address
-        console.log('✅ Using structured split_address from Cashfree:', splitAddr)
-
-        if (splitAddr.state) {
-          addressData.state = splitAddr.state
-          console.log('🏛️ State from split_address:', splitAddr.state)
-        }
-        if (splitAddr.dist || splitAddr.district) {
-          addressData.district = splitAddr.dist || splitAddr.district
-          console.log('🏘️ District from split_address:', splitAddr.dist || splitAddr.district)
-        }
-        if (splitAddr.pincode) {
-          addressData.pincode = splitAddr.pincode
-          console.log('📮 Pincode from split_address:', splitAddr.pincode)
-        }
-        if (splitAddr.vtc || splitAddr.city) {
-          addressData.city = splitAddr.vtc || splitAddr.city
-          console.log('🏙️ City from split_address:', splitAddr.vtc || splitAddr.city)
-        }
-        if (splitAddr.country) {
-          addressData.country = splitAddr.country
-          console.log('🌏 Country from split_address:', splitAddr.country)
-        }
-
-        // Store the provided full address or build from components
-        if (aadhaarData.address) {
-          addressData.full_address = aadhaarData.address
-        } else {
-          const addressComponents = [
-            splitAddr.house,
-            splitAddr.street,
-            splitAddr.landmark,
-            splitAddr.locality,
-            splitAddr.vtc,
-            splitAddr.dist || splitAddr.district,
-            splitAddr.state,
-            splitAddr.country,
-            splitAddr.pincode
-          ].filter(Boolean)
-          addressData.full_address = addressComponents.join(', ')
-        }
-      }
-
-      // PRIORITY 2: Use direct fields if available
-      if (!addressData.state && aadhaarData.state) {
-        addressData.state = aadhaarData.state
-        console.log('🏛️ State from direct field:', aadhaarData.state)
-      }
-      if (!addressData.district && aadhaarData.district) {
-        addressData.district = aadhaarData.district
-        console.log('🏘️ District from direct field:', aadhaarData.district)
-      }
-      if (!addressData.pincode && (aadhaarData.pincode || aadhaarData.zip)) {
-        addressData.pincode = aadhaarData.pincode || aadhaarData.zip
-        console.log('📮 Pincode from direct field:', aadhaarData.pincode || aadhaarData.zip)
-      }
-      if (!addressData.city && aadhaarData.city) {
-        addressData.city = aadhaarData.city
-        console.log('🏙️ City from direct field:', aadhaarData.city)
-      }
-      if (!addressData.country && aadhaarData.country) {
-        addressData.country = aadhaarData.country
-        console.log('🌏 Country from direct field:', aadhaarData.country)
-      }
-
-      // PRIORITY 3: Use full address string as fallback (least reliable)
-      if (!addressData.full_address) {
-        addressData.full_address = aadhaarData.address || aadhaarData.full_address || aadhaarData.care_of
-      }
-
-      // Default to India if country not found but we have Indian address data
-      if (!addressData.country && (addressData.state || addressData.district || addressData.pincode)) {
-        addressData.country = 'India'
-        console.log('🌏 Country defaulted to India based on Indian address data')
-      }
-
-      console.log('📋 Final parsed address data:', addressData)
-      return addressData
-    }
-
-    console.log('📍 Parsed address data from Aadhaar:', addressData)
 
     // Update club based on type
     let clubUpdateData: any = {

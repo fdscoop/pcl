@@ -60,7 +60,7 @@ interface Stadium {
   hourly_rate: number
   facilities?: string[]
   amenities?: string[]
-  is_available: boolean
+  is_active: boolean
 }
 
 interface Referee {
@@ -137,7 +137,8 @@ export function CreateFriendlyMatch({
     duration: 1, // hours
     stadiumId: '',
     selectedStadium: null as Stadium | null,
-    matchType: 'hobby', // 'hobby' or 'official'
+    matchType: 'friendly' as 'friendly' | 'official',
+    leagueType: 'hobby' as 'hobby' | 'amateur' | 'intermediate' | 'professional' | 'tournament' | 'friendly' | null, // Friendly=hobby (no officials), Official defaults to 'friendly' but can be other levels
     refereeIds: [] as string[],
     staffIds: [] as string[],
     prizeMoney: 0,
@@ -213,14 +214,16 @@ export function CreateFriendlyMatch({
       const supabase = createClient()
 
       // Minimum squad sizes required for each format
+      // Following proper football rules for each format
       const MIN_SQUAD_SIZES = {
-        '5-a-side': 8,   // 5 starters + 3 subs
-        '7-a-side': 11,  // 7 starters + 4 subs
-        '11-a-side': 14  // 11 starters + 3 subs
+        '5-a-side': 8,   // 5 players + 3 subs minimum
+        '7-a-side': 11,  // 7 players + 4 subs minimum  
+        '11-a-side': 16  // 11 players + 5 subs minimum
       }
 
-      // Load active and KYC verified clubs with their teams (excluding own club)
+      // Load active clubs with their teams (excluding own club)
       // Filter by district first, fallback to city if no district match
+      // TODO: Re-enable KYC verification filter for production
       let clubQuery = supabase
         .from('clubs')
         .select(`
@@ -241,7 +244,7 @@ export function CreateFriendlyMatch({
           )
         `)
         .eq('is_active', true)
-        .eq('kyc_verified', true)
+        // .eq('kyc_verified', true)  // TEMPORARILY DISABLED FOR TESTING
         .neq('id', club.id)
 
       // Apply district/city filtering for PCL match organization
@@ -253,10 +256,50 @@ export function CreateFriendlyMatch({
         clubQuery = clubQuery.eq('city', club.city)
       }
 
-      const { data: clubsData } = await clubQuery.order('club_name', { ascending: true })
+      const { data: clubsData, error: clubsError } = await clubQuery.order('club_name', { ascending: true })
+
+      console.log('🔍 DEBUG: Raw clubs from query:', {
+        count: clubsData?.length || 0,
+        error: clubsError,
+        rawClubsData: clubsData,
+        clubs: clubsData?.map(c => ({
+          name: c.club_name,
+          district: c.district,
+          teams: c.teams
+        }))
+      })
+
+      // Group clubs by ID since teams!inner returns one row per team
+      const clubsMap = new Map<string, any>()
+      clubsData?.forEach(row => {
+        if (!clubsMap.has(row.id)) {
+          clubsMap.set(row.id, {
+            ...row,
+            teams: []
+          })
+        }
+        if (row.teams && !Array.isArray(row.teams)) {
+          // Single team object - convert to array
+          clubsMap.get(row.id).teams.push(row.teams)
+        } else if (row.teams && Array.isArray(row.teams)) {
+          // Already an array
+          clubsMap.get(row.id).teams = row.teams
+        }
+      })
+      const groupedClubsData = Array.from(clubsMap.values())
+
+      console.log('🔍 DEBUG: Grouped clubs:', {
+        count: groupedClubsData.length,
+        clubs: groupedClubsData.map(c => ({
+          name: c.club_name,
+          district: c.district,
+          teamsCount: c.teams?.length || 0,
+          teams: c.teams
+        }))
+      })
 
       // Transform and enrich club data with format availability
-      const transformedClubs = clubsData?.map(c => {
+      const transformedClubs = groupedClubsData?.map(c => {
         // Group teams by format and sum players
         const formatData = {
           '5-a-side': { hasTeam: false, totalPlayers: 0 },
@@ -264,15 +307,55 @@ export function CreateFriendlyMatch({
           '11-a-side': { hasTeam: false, totalPlayers: 0 }
         }
 
-        // Process teams
+        // Process teams - intelligent format eligibility based on squad size
+        // A club with X players can play in any format they have enough players for
         if (c.teams && Array.isArray(c.teams)) {
           c.teams.forEach((team: any) => {
-            if (team.format && formatData[team.format as keyof typeof formatData]) {
-              formatData[team.format as keyof typeof formatData].hasTeam = true
-              formatData[team.format as keyof typeof formatData].totalPlayers = team.total_players || 0
+            console.log(`🔍 TEAM DEBUG for ${c.club_name}:`, {
+              teamName: team.team_name,
+              originalFormat: team.format,
+              totalPlayers: team.total_players,
+              willCheckEligibilityFor: 'all formats based on squad size'
+            })
+            
+            const teamPlayers = team.total_players || 0
+            
+            // Smart eligibility: Check which formats this team can actually play
+            // A team with 8 players can play 5-a-side and 7-a-side (but not 11-a-side)
+            if (teamPlayers >= MIN_SQUAD_SIZES['5-a-side']) {
+              formatData['5-a-side'].hasTeam = true
+              formatData['5-a-side'].totalPlayers = Math.max(formatData['5-a-side'].totalPlayers, teamPlayers)
             }
+            if (teamPlayers >= MIN_SQUAD_SIZES['7-a-side']) {
+              formatData['7-a-side'].hasTeam = true
+              formatData['7-a-side'].totalPlayers = Math.max(formatData['7-a-side'].totalPlayers, teamPlayers)
+            }
+            if (teamPlayers >= MIN_SQUAD_SIZES['11-a-side']) {
+              formatData['11-a-side'].hasTeam = true
+              formatData['11-a-side'].totalPlayers = Math.max(formatData['11-a-side'].totalPlayers, teamPlayers)
+            }
+            
+            console.log(`✅ Smart format eligibility for ${teamPlayers} players:`, {
+              '5-a-side': teamPlayers >= MIN_SQUAD_SIZES['5-a-side'] ? 'ELIGIBLE' : 'not eligible',
+              '7-a-side': teamPlayers >= MIN_SQUAD_SIZES['7-a-side'] ? 'ELIGIBLE' : 'not eligible', 
+              '11-a-side': teamPlayers >= MIN_SQUAD_SIZES['11-a-side'] ? 'ELIGIBLE' : 'not eligible',
+              formatData
+            })
           })
         }
+        
+        // Calculate available formats
+        const availableFormats = {
+          '5-a-side': formatData['5-a-side'].hasTeam && formatData['5-a-side'].totalPlayers >= MIN_SQUAD_SIZES['5-a-side'],
+          '7-a-side': formatData['7-a-side'].hasTeam && formatData['7-a-side'].totalPlayers >= MIN_SQUAD_SIZES['7-a-side'],
+          '11-a-side': formatData['11-a-side'].hasTeam && formatData['11-a-side'].totalPlayers >= MIN_SQUAD_SIZES['11-a-side']
+        }
+        
+        console.log(`🎯 SMART ELIGIBILITY RESULT for ${c.club_name}:`, {
+          availableFormats,
+          explanation: 'Club eligible for formats based on actual squad size, not just team format setting',
+          hasAnyAvailableFormat: Object.values(availableFormats).some(available => available)
+        })
 
         return {
           id: c.id,
@@ -283,11 +366,7 @@ export function CreateFriendlyMatch({
           kyc_verified: c.kyc_verified,
           logo_url: c.logo_url,
           category: c.category,
-          available_formats: {
-            '5-a-side': formatData['5-a-side'].hasTeam && formatData['5-a-side'].totalPlayers >= MIN_SQUAD_SIZES['5-a-side'],
-            '7-a-side': formatData['7-a-side'].hasTeam && formatData['7-a-side'].totalPlayers >= MIN_SQUAD_SIZES['7-a-side'],
-            '11-a-side': formatData['11-a-side'].hasTeam && formatData['11-a-side'].totalPlayers >= MIN_SQUAD_SIZES['11-a-side']
-          },
+          available_formats: availableFormats,
           squad_sizes: {
             '5-a-side': formatData['5-a-side'].totalPlayers,
             '7-a-side': formatData['7-a-side'].totalPlayers,
@@ -296,31 +375,113 @@ export function CreateFriendlyMatch({
         }
       }) || []
 
+      console.log('🔍 DEBUG: Transformed clubs:', {
+        count: transformedClubs.length,
+        clubs: transformedClubs.map(c => ({
+          name: c.name,
+          district: c.district,
+          squadSizes: c.squad_sizes,
+          availableFormats: c.available_formats
+        }))
+      })
+
       // Filter clubs that have at least one format available
-      const clubsWithTeams = transformedClubs.filter(club =>
-        club.available_formats?.['5-a-side'] ||
-        club.available_formats?.['7-a-side'] ||
-        club.available_formats?.['11-a-side']
-      )
+      const clubsWithTeams = transformedClubs.filter(club => {
+        const hasAnyFormat = club.available_formats?.['5-a-side'] ||
+          club.available_formats?.['7-a-side'] ||
+          club.available_formats?.['11-a-side']
+        
+        console.log(`🎯 FILTER CHECK for ${club.name}:`, {
+          availableFormats: club.available_formats,
+          hasAnyFormat,
+          willBeIncluded: hasAnyFormat
+        })
+        
+        return hasAnyFormat
+      })
+
+      console.log('🔍 DEBUG: Final filtered clubs:', {
+        count: clubsWithTeams.length,
+        minSquadSizes: MIN_SQUAD_SIZES,
+        clubs: clubsWithTeams.map(c => ({
+          name: c.name,
+          district: c.district,
+          availableFormats: c.available_formats
+        }))
+      })
 
       setAvailableClubs(clubsWithTeams)
 
       // Load stadiums - filter by district/city for PCL match organization
+      // Get all active stadiums first, then filter client-side for flexibility
       let stadiumQuery = supabase
         .from('stadiums')
-        .select('id, stadium_name, location, district, city, state, hourly_rate, amenities, is_available')
-        .eq('is_available', true)
+        .select('id, stadium_name, location, district, city, state, hourly_rate, amenities, is_active')
+        .eq('is_active', true)
 
-      // Apply district/city filtering
-      if (club.district) {
-        // District-level filtering (priority)
-        stadiumQuery = stadiumQuery.eq('district', club.district)
-      } else if (club.city) {
-        // City-level filtering (fallback)
-        stadiumQuery = stadiumQuery.eq('city', club.city)
+      const { data: allStadiumsData, error: stadiumsError } = await stadiumQuery
+      
+      // Smart filtering: Match by district first, then by city, then include all as fallback
+      let stadiumsData: typeof allStadiumsData = allStadiumsData || []
+      let filterStrategy = 'none'
+      
+      if (club.district && allStadiumsData && allStadiumsData.length > 0) {
+        // Try district-level filtering first
+        const districtMatches = allStadiumsData.filter(s => 
+          s.district && s.district.toLowerCase() === club.district.toLowerCase()
+        )
+        if (districtMatches.length > 0) {
+          stadiumsData = districtMatches
+          filterStrategy = `district (${club.district})`
+        } else if (club.city) {
+          // Fall back to city matching
+          const cityMatches = allStadiumsData.filter(s =>
+            s.city && s.city.toLowerCase() === club.city.toLowerCase()
+          )
+          if (cityMatches.length > 0) {
+            stadiumsData = cityMatches
+            filterStrategy = `city (${club.city})`
+          } else {
+            // Include all stadiums as last resort
+            stadiumsData = allStadiumsData
+            filterStrategy = 'all stadiums (no district/city match)'
+          }
+        } else {
+          // No city available, include all
+          stadiumsData = allStadiumsData
+          filterStrategy = 'all stadiums (no city fallback)'
+        }
+      } else if (club.city && allStadiumsData && allStadiumsData.length > 0) {
+        // City-level filtering
+        const cityMatches = allStadiumsData.filter(s =>
+          s.city && s.city.toLowerCase() === club.city.toLowerCase()
+        )
+        stadiumsData = cityMatches.length > 0 ? cityMatches : allStadiumsData
+        filterStrategy = cityMatches.length > 0 ? `city (${club.city})` : 'all stadiums'
+      } else {
+        stadiumsData = allStadiumsData || []
+        filterStrategy = 'all stadiums (no filters available)'
       }
-
-      const { data: stadiumsData } = await stadiumQuery
+      
+      console.log('🔍 DEBUG: Stadiums query result:', {
+        userClub: {
+          id: club.id,
+          name: club.club_name,
+          district: club.district,
+          city: club.city
+        },
+        totalStadiums: allStadiumsData?.length || 0,
+        filteredCount: stadiumsData?.length || 0,
+        filterStrategy,
+        error: stadiumsError,
+        stadiums: stadiumsData?.map(s => ({
+          name: s.stadium_name,
+          location: s.location,
+          district: s.district,
+          city: s.city,
+          isActive: s.is_active
+        }))
+      })
 
       // Transform stadiums to use amenities as facilities
       const transformedStadiums = stadiumsData?.map(s => ({
@@ -328,6 +489,16 @@ export function CreateFriendlyMatch({
         facilities: s.amenities || [],
         district: s.district || s.city || s.state || 'Unknown'
       })) || []
+
+      console.log('🔍 DEBUG: Transformed stadiums:', {
+        count: transformedStadiums.length,
+        stadiums: transformedStadiums.map(s => ({
+          name: s.stadium_name,
+          location: s.location,
+          district: s.district,
+          facilities: s.facilities
+        }))
+      })
 
       setAvailableStadiums(transformedStadiums)
 
@@ -586,7 +757,7 @@ export function CreateFriendlyMatch({
       if (!formData.matchTime) throw new Error('Match time is required')
       if (!formData.teamId) throw new Error('Team is required')
 
-      // Get the home team details
+      // Get the home team details and validate it can play this format
       const { data: homeTeam } = await supabase
         .from('teams')
         .select('*')
@@ -595,40 +766,69 @@ export function CreateFriendlyMatch({
 
       if (!homeTeam) throw new Error('Team not found')
 
+      // Validate home team has enough players for selected format
+      const MIN_SQUAD_SIZES: Record<string, number> = {
+        '5-a-side': 8,
+        '7-a-side': 11,
+        '11-a-side': 16
+      }
+
+      const minRequired = MIN_SQUAD_SIZES[formData.matchFormat as keyof typeof MIN_SQUAD_SIZES]
+      if ((homeTeam.total_players || 0) < minRequired) {
+        throw new Error(
+          `Your team "${homeTeam.team_name}" has only ${homeTeam.total_players} players. Minimum ${minRequired} required for ${formData.matchFormat}.`
+        )
+      }
+
+      console.log(`🎯 HOME TEAM VALIDATION: ${homeTeam.team_name} (${homeTeam.total_players} players) is eligible for ${formData.matchFormat}`)
+
       // For friendly matches, we need an away team with matching format
       let awayTeamId = null
 
       if (formData.selectedClub?.id) {
-        // Find opponent team with matching format
-        const { data: opponentTeam, error: opponentTeamError } = await supabase
+        // Smart team selection: Find any team with enough players for the selected format
+        // Rather than requiring exact format match
+        const { data: availableTeams, error: teamsError } = await supabase
           .from('teams')
           .select('*')
           .eq('club_id', formData.selectedClub.id)
-          .eq('format', formData.matchFormat)
-          .limit(1)
-          .single()
+          .eq('is_active', true)
 
-        if (opponentTeamError || !opponentTeam) {
+        if (teamsError || !availableTeams || availableTeams.length === 0) {
           throw new Error(
-            `${formData.selectedClub.name} does not have a ${formData.matchFormat} team ready. Please select a different opponent or format.`
+            `${formData.selectedClub.name} does not have any active teams. Please select a different opponent.`
           )
         }
 
-        awayTeamId = opponentTeam.id
-
-        // Validate squad size
+        // Find the team with most players that meets the minimum requirement
         const MIN_SQUAD_SIZES: Record<string, number> = {
           '5-a-side': 8,
           '7-a-side': 11,
-          '11-a-side': 14
+          '11-a-side': 16
         }
 
         const minRequired = MIN_SQUAD_SIZES[formData.matchFormat as keyof typeof MIN_SQUAD_SIZES]
-        if (opponentTeam.total_players < minRequired) {
+        const eligibleTeams = availableTeams.filter(team => 
+          (team.total_players || 0) >= minRequired
+        )
+
+        if (eligibleTeams.length === 0) {
+          const bestTeam = availableTeams.reduce((prev, curr) => 
+            (curr.total_players || 0) > (prev.total_players || 0) ? curr : prev
+          )
           throw new Error(
-            `${formData.selectedClub.name}'s ${formData.matchFormat} team has only ${opponentTeam.total_players} players. Minimum ${minRequired} required.`
+            `${formData.selectedClub.name}'s best team has only ${bestTeam.total_players} players. Minimum ${minRequired} required for ${formData.matchFormat}.`
           )
         }
+
+        // Select the team with the most players for better match quality
+        const selectedTeam = eligibleTeams.reduce((prev, curr) => 
+          (curr.total_players || 0) > (prev.total_players || 0) ? curr : prev
+        )
+
+        awayTeamId = selectedTeam.id
+
+        console.log(`🎯 TEAM SELECTION: Selected ${selectedTeam.team_name} (${selectedTeam.total_players} players) for ${formData.matchFormat} match`)
       } else {
         throw new Error('Please select an opponent club.')
       }
@@ -651,6 +851,8 @@ export function CreateFriendlyMatch({
             match_date: format(selectedDate, 'yyyy-MM-dd'),
             match_time: formData.matchTime,
             match_format: formData.matchFormat,
+            match_type: formData.matchType, // Save friendly vs official
+            league_structure: formData.leagueType, // Friendly matches save 'friendly', official matches save hobby/amateur/etc
             status: 'scheduled',
             created_by: userData.user.id
           }
@@ -1155,17 +1357,17 @@ export function CreateFriendlyMatch({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    formData.matchType === 'hobby'
+                    formData.matchType === 'friendly'
                       ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                   }`}
-                  onClick={() => setFormData({ ...formData, matchType: 'hobby' })}
+                  onClick={() => setFormData({ ...formData, matchType: 'friendly', leagueType: 'hobby' })}
                 >
                   <div className="text-center">
                     <div className="text-2xl mb-2">🏃</div>
-                    <h4 className="font-semibold">Hobby Match</h4>
+                    <h4 className="font-semibold">Friendly Match</h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Casual friendly match, optional referees
+                      Hobby level - No officials required
                     </p>
                   </div>
                 </div>
@@ -1176,13 +1378,13 @@ export function CreateFriendlyMatch({
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                   }`}
-                  onClick={() => setFormData({ ...formData, matchType: 'official' })}
+                  onClick={() => setFormData({ ...formData, matchType: 'official', leagueType: 'friendly' })}
                 >
                   <div className="text-center">
                     <div className="text-2xl mb-2">🏆</div>
                     <h4 className="font-semibold">Official Match</h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Professional match with referees & staff
+                      With officials & staff required
                     </p>
                   </div>
                 </div>

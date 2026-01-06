@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { FormationBuilder } from '@/components/FormationBuilder'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, MapPin, Clock } from 'lucide-react'
+import { Calendar, MapPin, Clock, CheckCircle2, Info } from 'lucide-react'
 
 interface Player {
   id: string
@@ -46,20 +46,51 @@ interface Match {
   away_club_name?: string
   home_club_logo?: string
   away_club_logo?: string
+  has_lineup?: boolean
 }
 
 export default function FormationsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [club, setClub] = useState<any>(null)
   const [team, setTeam] = useState<any>(null)
   const [players, setPlayers] = useState<Player[]>([])
   const [matches, setMatches] = useState<Match[]>([])
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [lastLineupUpdate, setLastLineupUpdate] = useState<number>(0)
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [searchParams])
+
+  useEffect(() => {
+    // Check for lineup updates from localStorage
+    const checkLineupUpdate = () => {
+      const lineupUpdateStr = localStorage.getItem('lineupUpdated')
+      if (lineupUpdateStr) {
+        try {
+          const update = JSON.parse(lineupUpdateStr)
+          if (update.timestamp > lastLineupUpdate) {
+            setLastLineupUpdate(update.timestamp)
+            refreshLineupStatus()
+          }
+        } catch (e) {
+          console.error('Error parsing lineup update:', e)
+        }
+      }
+    }
+
+    // Check immediately on mount
+    checkLineupUpdate()
+
+    // Set up interval to check periodically when page is active
+    const interval = setInterval(checkLineupUpdate, 1000)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [lastLineupUpdate, matches, team])
 
   const loadData = async () => {
     try {
@@ -213,7 +244,7 @@ export default function FormationsPage() {
             }
 
             // Enrich matches with club names and logos
-            const enrichedMatches = matchesData.map((match) => ({
+            let enrichedMatches = matchesData.map((match) => ({
               ...match,
               home_club_name: clubMap.get(teamToClubMap.get(match.home_team_id))?.name || 'Unknown',
               home_club_logo: clubMap.get(teamToClubMap.get(match.home_team_id))?.logo || null,
@@ -221,9 +252,66 @@ export default function FormationsPage() {
               away_club_logo: clubMap.get(teamToClubMap.get(match.away_team_id))?.logo || null
             }))
 
+            // Check lineup status for each match
+            if (enrichedMatches.length > 0) {
+              const lineupChecks = await Promise.all(
+                enrichedMatches.map(async (match) => {
+                  // First, check if lineup exists for this specific match
+                  const { data: matchSpecificLineup } = await supabase
+                    .from('team_lineups')
+                    .select('id')
+                    .eq('team_id', teamData.id)
+                    .eq('match_id', match.id)
+                    .eq('format', match.match_format)
+                    .limit(1)
+                    .maybeSingle()
+
+                  // If no match-specific lineup, check for template lineup (match_id = null)
+                  let hasLineup = !!matchSpecificLineup
+
+                  if (!matchSpecificLineup) {
+                    const { data: templateLineup } = await supabase
+                      .from('team_lineups')
+                      .select('id')
+                      .eq('team_id', teamData.id)
+                      .is('match_id', null)
+                      .eq('format', match.match_format)
+                      .limit(1)
+                      .maybeSingle()
+
+                    hasLineup = !!templateLineup
+                  }
+
+                  return {
+                    ...match,
+                    has_lineup: hasLineup
+                  }
+                })
+              )
+              enrichedMatches = lineupChecks
+            }
+
             setMatches(enrichedMatches)
+
+            // If match parameter is provided in URL, auto-select that match
+            const matchParam = searchParams.get('match')
+            if (matchParam) {
+              const matchToSelect = enrichedMatches.find(m => m.id === matchParam)
+              if (matchToSelect) {
+                setSelectedMatch(matchToSelect)
+              }
+            }
           } else {
             setMatches(matchesData)
+
+            // If match parameter is provided in URL, auto-select that match
+            const matchParam = searchParams.get('match')
+            if (matchParam) {
+              const matchToSelect = matchesData.find(m => m.id === matchParam)
+              if (matchToSelect) {
+                setSelectedMatch(matchToSelect)
+              }
+            }
           }
         }
       }
@@ -231,6 +319,54 @@ export default function FormationsPage() {
       console.error('Error:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const refreshLineupStatus = async () => {
+    // Only refresh lineup status if we have matches and team data
+    if (matches.length === 0 || !team) return
+
+    try {
+      const supabase = createClient()
+
+      const lineupChecks = await Promise.all(
+        matches.map(async (match) => {
+          // First, check if lineup exists for this specific match
+          const { data: matchSpecificLineup } = await supabase
+            .from('team_lineups')
+            .select('id')
+            .eq('team_id', team.id)
+            .eq('match_id', match.id)
+            .eq('format', match.match_format)
+            .limit(1)
+            .maybeSingle()
+
+          // If no match-specific lineup, check for template lineup (match_id = null)
+          let hasLineup = !!matchSpecificLineup
+
+          if (!matchSpecificLineup) {
+            const { data: templateLineup } = await supabase
+              .from('team_lineups')
+              .select('id')
+              .eq('team_id', team.id)
+              .is('match_id', null)
+              .eq('format', match.match_format)
+              .limit(1)
+              .maybeSingle()
+
+            hasLineup = !!templateLineup
+          }
+
+          return {
+            ...match,
+            has_lineup: hasLineup
+          }
+        })
+      )
+
+      setMatches(lineupChecks)
+    } catch (error) {
+      console.error('Error refreshing lineup status:', error)
     }
   }
 
@@ -302,7 +438,10 @@ export default function FormationsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-teal-600 font-medium mb-1">welcome back 👋</p>
-              <h1 className="text-4xl font-bold text-gray-900">Formation</h1>
+              <h1 className="text-4xl font-bold text-gray-900">Formation & Playing XI</h1>
+              <p className="text-gray-600 mt-2 text-sm">
+                Build your tactical formation and declare your starting lineup for each match
+              </p>
             </div>
             <button
               onClick={() => router.push('/dashboard/club-owner/team-management')}
@@ -315,9 +454,12 @@ export default function FormationsPage() {
 
         {/* Upcoming Matches Section */}
         {matches.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Upcoming Matches</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mb-8">
+            <div className="mb-5">
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">Your Upcoming Matches</h2>
+              <p className="text-sm text-gray-600">Click on a match card to build your formation and declare Playing XI</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {matches.map((match) => {
                 const isHomeTeam = match.home_team_id === team?.id
                 const opponentName = isHomeTeam ? match.away_club_name : match.home_club_name
@@ -328,102 +470,165 @@ export default function FormationsPage() {
                 return (
                   <Card
                     key={match.id}
-                    className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                    className={`group cursor-pointer transition-all duration-300 border-2 overflow-hidden ${
                       isSelected
-                        ? 'ring-2 ring-teal-500 shadow-lg bg-teal-50'
-                        : 'hover:ring-2 hover:ring-teal-200'
+                        ? 'border-teal-500 shadow-xl shadow-teal-100 scale-[1.02]'
+                        : 'border-transparent hover:border-teal-200 hover:shadow-lg'
                     }`}
                     onClick={() => setSelectedMatch(isSelected ? null : match)}
                   >
-                    <CardContent className="p-4">
-                      {/* Header with Format Badge and Selected Badge */}
+                    {/* Top Accent Bar */}
+                    <div className={`h-1.5 ${
+                      match.match_format === '5-a-side' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
+                      match.match_format === '7-a-side' ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' :
+                      'bg-gradient-to-r from-blue-400 to-blue-600'
+                    }`} />
+
+                    <CardContent className="p-5">
+                      {/* Status Badges */}
                       <div className="flex items-center justify-between mb-4">
-                        <Badge
-                          className={`${
-                            match.match_format === '5-a-side' ? 'bg-orange-500' :
-                            match.match_format === '7-a-side' ? 'bg-emerald-500' :
-                            'bg-blue-500'
-                          } text-white`}
-                        >
-                          {match.match_format}
-                        </Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className={`${
+                              match.match_format === '5-a-side' ? 'border-orange-300 bg-orange-50 text-orange-700' :
+                              match.match_format === '7-a-side' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
+                              'border-blue-300 bg-blue-50 text-blue-700'
+                            } font-semibold`}
+                          >
+                            {match.match_format}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`${
+                              isHomeTeam
+                                ? 'border-teal-300 bg-teal-50 text-teal-700'
+                                : 'border-gray-300 bg-gray-50 text-gray-700'
+                            } text-xs`}
+                          >
+                            {isHomeTeam ? 'HOME' : 'AWAY'}
+                          </Badge>
+                        </div>
                         {isSelected && (
-                          <Badge className="bg-teal-500 text-white">Selected</Badge>
+                          <div className="flex items-center gap-1.5 bg-teal-500 text-white px-2.5 py-1 rounded-full text-xs font-semibold animate-pulse">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                            Active
+                          </div>
                         )}
                       </div>
 
-                      {/* Match-up Display with Logos */}
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
-                          {isHomeTeam ? 'Home Match' : 'Away Match'}
-                        </p>
-                        <div className="flex items-center justify-between gap-2">
+                      {/* Match-up Display */}
+                      <div className="mb-5 bg-gradient-to-br from-gray-50 to-white p-4 rounded-xl border border-gray-100">
+                        <div className="flex items-center justify-between gap-3">
                           {/* Your Club */}
-                          <div className="flex flex-col items-center flex-1">
-                            {yourLogo ? (
-                              <img
-                                src={yourLogo}
-                                alt="Your Club"
-                                className="w-12 h-12 rounded-full object-cover border-2 border-teal-500 mb-1"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center border-2 border-teal-500 mb-1">
-                                <span className="text-teal-600 font-bold text-sm">YOU</span>
-                              </div>
-                            )}
-                            <span className="text-xs font-medium text-gray-700 text-center line-clamp-1">
+                          <div className="flex flex-col items-center flex-1 group-hover:scale-105 transition-transform">
+                            <div className="relative mb-2">
+                              {yourLogo ? (
+                                <img
+                                  src={yourLogo}
+                                  alt="Your Club"
+                                  className="w-14 h-14 rounded-full object-cover shadow-md ring-2 ring-teal-400"
+                                />
+                              ) : (
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-md ring-2 ring-teal-300">
+                                  <span className="text-white font-bold text-base">YOU</span>
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-bold text-gray-800 text-center line-clamp-2 px-1">
                               {club?.club_name}
                             </span>
                           </div>
 
-                          {/* VS Separator */}
-                          <div className="flex-shrink-0 px-2">
-                            <span className="text-gray-400 font-bold text-sm">VS</span>
+                          {/* VS Badge */}
+                          <div className="flex-shrink-0">
+                            <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white font-black text-xs px-3 py-1.5 rounded-lg shadow-md">
+                              VS
+                            </div>
                           </div>
 
                           {/* Opponent Club */}
-                          <div className="flex flex-col items-center flex-1">
-                            {opponentLogo ? (
-                              <img
-                                src={opponentLogo}
-                                alt={opponentName}
-                                className="w-12 h-12 rounded-full object-cover border-2 border-gray-300 mb-1"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-300 mb-1">
-                                <span className="text-gray-600 font-bold text-lg">
-                                  {opponentName?.charAt(0) || '?'}
-                                </span>
-                              </div>
-                            )}
-                            <span className="text-xs font-medium text-gray-700 text-center line-clamp-1">
+                          <div className="flex flex-col items-center flex-1 group-hover:scale-105 transition-transform">
+                            <div className="relative mb-2">
+                              {opponentLogo ? (
+                                <img
+                                  src={opponentLogo}
+                                  alt={opponentName}
+                                  className="w-14 h-14 rounded-full object-cover shadow-md ring-2 ring-gray-300"
+                                />
+                              ) : (
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center shadow-md ring-2 ring-gray-200">
+                                  <span className="text-gray-700 font-bold text-xl">
+                                    {opponentName?.charAt(0) || '?'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-bold text-gray-800 text-center line-clamp-2 px-1">
                               {opponentName}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Match Details */}
-                      <div className="space-y-1.5 text-sm text-gray-600 border-t pt-3">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span>{new Date(match.match_date).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric'
-                          })}</span>
+                      {/* Match Info */}
+                      <div className="space-y-2.5 mb-4">
+                        <div className="flex items-center gap-2.5 text-sm">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50">
+                            <Calendar className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-500 font-medium">Match Date</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {new Date(match.match_date).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span>{match.match_time}</span>
+                        <div className="flex items-center gap-2.5 text-sm">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-50">
+                            <Clock className="h-4 w-4 text-purple-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-500 font-medium">Kick-off Time</p>
+                            <p className="text-sm font-semibold text-gray-900">{match.match_time}</p>
+                          </div>
                         </div>
                         {match.stadium && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-gray-400" />
-                            <span className="line-clamp-1">{match.stadium.stadium_name}</span>
+                          <div className="flex items-center gap-2.5 text-sm">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-50">
+                              <MapPin className="h-4 w-4 text-green-600" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-xs text-gray-500 font-medium">Venue</p>
+                              <p className="text-sm font-semibold text-gray-900 line-clamp-1">{match.stadium.stadium_name}</p>
+                            </div>
                           </div>
                         )}
                       </div>
+
+                      {/* Lineup Status */}
+                      {typeof match.has_lineup !== 'undefined' && (
+                        <div className={`mt-4 pt-4 border-t ${
+                          match.has_lineup ? 'border-green-100' : 'border-red-100'
+                        }`}>
+                          {match.has_lineup ? (
+                            <div className="flex items-center gap-2 text-green-700 bg-green-50 px-3 py-2 rounded-lg">
+                              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                              <span className="text-xs font-semibold">Playing XI Ready</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-red-700 bg-red-50 px-3 py-2 rounded-lg">
+                              <Info className="h-4 w-4 flex-shrink-0" />
+                              <span className="text-xs font-semibold">Playing XI Not Declared</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )
@@ -431,13 +636,24 @@ export default function FormationsPage() {
             </div>
 
             {selectedMatch && (
-              <div className="mt-4 p-4 bg-teal-50 border border-teal-200 rounded-lg">
-                <p className="text-sm text-teal-800">
-                  <strong>Building formation for:</strong> {selectedMatch.match_format} match vs{' '}
-                  {selectedMatch.home_team_id === team?.id
-                    ? selectedMatch.away_club_name
-                    : selectedMatch.home_club_name}
-                </p>
+              <div className="mt-6 p-5 bg-gradient-to-r from-teal-50 via-teal-50 to-blue-50 border-2 border-teal-200 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 bg-teal-500 rounded-full shadow-md">
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-0.5">
+                      Building Formation For
+                    </p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {selectedMatch.match_format} match vs{' '}
+                      {selectedMatch.home_team_id === team?.id
+                        ? selectedMatch.away_club_name
+                        : selectedMatch.home_club_name}
+                    </p>
+                  </div>
+                  <Badge className="bg-teal-500 text-white">Selected</Badge>
+                </div>
               </div>
             )}
           </div>

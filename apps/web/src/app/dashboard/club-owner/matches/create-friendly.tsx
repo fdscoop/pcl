@@ -265,7 +265,7 @@ export function CreateFriendlyMatch({
     })
 
     const subtotal = stadiumCost + refereeCost + staffCost
-    const processingFee = subtotal * 0.05 // 5% processing fee
+    const processingFee = subtotal * 0.095 // 9.5% platform charges
     const totalCost = subtotal + processingFee
     const costPerPlayer = totalCost / formData.teamSize
 

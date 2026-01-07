@@ -834,7 +834,7 @@ export function CreateFriendlyMatch({
     })
 
     const subtotal = stadiumCost + refereeCost + staffCost
-    const processingFee = subtotal * 0.05 // 5% processing fee
+    const processingFee = subtotal * 0.095 // 9.5% platform charges
     const totalCost = subtotal + processingFee
     // Cost per player split between both teams (your team + opponent team)
     const totalPlayers = formData.teamSize * 2
@@ -2539,7 +2539,7 @@ export function CreateFriendlyMatch({
                   )}
                   
                   <div className="flex justify-between">
-                    <span>Processing Fee (5%):</span>
+                    <span>Platform Charges (9.5%):</span>
                     <span className="font-medium">₹{budget.processingFee.toFixed(2)}</span>
                   </div>
                   

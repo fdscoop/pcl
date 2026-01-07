@@ -259,6 +259,51 @@ export default function StadiumDocumentsVerification() {
 
       if (docError) throw docError
 
+      // Update stadium_documents_verification table
+      // Map document types to verification flags
+      const verificationFieldMap: Record<string, string> = {
+        'ownership_proof': 'ownership_proof_verified',
+        'safety_certificate': 'safety_certificate_verified',
+        'municipality_approval': 'municipality_approval_verified',
+        'insurance_certificate': 'insurance_certificate_verified'
+      }
+
+      const fieldToUpdate = verificationFieldMap[documentType]
+      
+      if (fieldToUpdate) {
+        // Get current verification record
+        const { data: verificationData } = await supabase
+          .from('stadium_documents_verification')
+          .select('*')
+          .eq('stadium_id', selectedVerification!.stadium_id)
+          .single()
+
+        if (verificationData) {
+          // Update the specific field
+          const updateData: any = {
+            [fieldToUpdate]: true,
+            verified_by: user.id,
+            verified_at: new Date().toISOString()
+          }
+
+          // Check if all required documents are verified (ownership_proof is required)
+          const allDocumentsVerified = verificationData.ownership_proof_verified && fieldToUpdate === 'ownership_proof_verified'
+            ? true
+            : verificationData[fieldToUpdate as keyof typeof verificationData] ? true : false
+
+          if (allDocumentsVerified) {
+            updateData.verification_status = 'verified'
+          }
+
+          const { error: verError } = await supabase
+            .from('stadium_documents_verification')
+            .update(updateData)
+            .eq('stadium_id', selectedVerification!.stadium_id)
+
+          if (verError) console.error('Warning: Failed to update verification record:', verError)
+        }
+      }
+
       addToast({
         title: 'Success',
         description: 'Document approved successfully',
@@ -309,6 +354,19 @@ export default function StadiumDocumentsVerification() {
         .eq('id', documentId)
 
       if (docError) throw docError
+
+      // Update stadium_documents_verification table
+      const { error: verError } = await supabase
+        .from('stadium_documents_verification')
+        .update({
+          verification_status: 'rejected',
+          rejection_reason: verificationComments,
+          verified_by: user.id,
+          verified_at: new Date().toISOString()
+        })
+        .eq('stadium_id', selectedVerification!.stadium_id)
+
+      if (verError) console.error('Warning: Failed to update verification record:', verError)
 
       addToast({
         title: 'Success',

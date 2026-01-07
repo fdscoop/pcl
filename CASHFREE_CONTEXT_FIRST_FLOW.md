@@ -38,9 +38,9 @@ Step 2: POST /verification/reverse-penny-drop
 ```bash
 curl --request GET \
   --url https://api.cashfree.com/verification/remitter/status \
-  --header 'X-Client-Id: CF1159838D58OK743AJJC738HCFQ0' \
+  --header 'X-Client-Id: YOUR_CASHFREE_CLIENT_ID' \
   --header 'X-Cf-Signature: aBcDefGhIjKlMn...' \
-  --header 'x-client-secret: cfsk_ma_prod_...'
+  --header 'x-client-secret: YOUR_CASHFREE_SECRET_KEY'
 ```
 
 **Response:**
@@ -57,9 +57,9 @@ curl --request GET \
 ```bash
 curl --request POST \
   --url https://api.cashfree.com/verification/reverse-penny-drop \
-  --header 'X-Client-Id: CF1159838D58OK743AJJC738HCFQ0' \
+  --header 'X-Client-Id: YOUR_CASHFREE_CLIENT_ID' \
   --header 'X-Cf-Signature: xyz789Abc...' \
-  --header 'x-client-secret: cfsk_ma_prod_...' \
+  --header 'x-client-secret: YOUR_CASHFREE_SECRET_KEY' \
   --data '{
     "verification_id": "3890AAB000",
     "name": "Binesh Balan",

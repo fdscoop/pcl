@@ -295,8 +295,8 @@ verification_details -- JSON with full response
 curl --request POST \
   --url https://api.cashfree.com/verification/bank-account/sync \
   --header 'Content-Type: application/json' \
-  --header 'x-client-id: CF1159838D58OK743AJJC738HCFQ0' \
-  --header 'x-client-secret: cfsk_ma_prod_2c0ce22d9072b71b7f40140c65636bf6_0af7d5a5' \
+  --header 'x-client-id: YOUR_CASHFREE_CLIENT_ID' \
+  --header 'x-client-secret: YOUR_CASHFREE_SECRET_KEY' \
   --data '{
     "bank_account": "26291800001191",
     "ifsc": "YESB0000001",

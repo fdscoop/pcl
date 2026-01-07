@@ -62,7 +62,7 @@ Headers: {
 
 1. **Create timestamp token**: `clientId + "." + epochTimestamp`
    ```
-   "CF1159838D58OK743AJJC738HCFQ0.1736260847"
+   "YOUR_CASHFREE_CLIENT_ID.1736260847"
    ```
 
 2. **RSA encrypt with public key** using `RSA/ECB/OAEPWithSHA-1AndMGF1Padding`
@@ -158,9 +158,9 @@ POST https://api.cashfree.com/verification/reverse-penny-drop
 
 Headers:
   Content-Type: application/json
-  X-Client-Id: CF1159838D58OK743AJJC738HCFQ0
+  X-Client-Id: YOUR_CASHFREE_CLIENT_ID
   X-Cf-Signature: aBcDefGhIjKlMnOpQrStUvWxYz0123456789+/==...
-  x-client-secret: cfsk_ma_prod_2c0ce22d9072b71b7f40140c65636bf6_0af7d5a5
+  x-client-secret: YOUR_CASHFREE_SECRET_KEY
   x-api-version: 2022-09-01
 
 Body:
@@ -177,8 +177,8 @@ Body:
 
 ```bash
 # From .env.local
-NEXT_PUBLIC_CASHFREE_KEY_ID=CF1159838D58OK743AJJC738HCFQ0
-CASHFREE_SECRET_KEY=cfsk_ma_prod_2c0ce22d9072b71b7f40140c65636bf6_0af7d5a5
+NEXT_PUBLIC_CASHFREE_KEY_ID=YOUR_CASHFREE_CLIENT_ID
+CASHFREE_SECRET_KEY=YOUR_CASHFREE_SECRET_KEY
 CASHFREE_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BA...\n-----END PUBLIC KEY-----"
 ```
 

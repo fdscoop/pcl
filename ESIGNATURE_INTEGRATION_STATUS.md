@@ -124,7 +124,7 @@ The system automatically selects the best authentication method:
 **Expected Headers:**
 ```json
 {
-  "x-client-id": "CF1159838D58OK743AJJC738HCFQ0",
+  "x-client-id": "YOUR_CASHFREE_CLIENT_ID",
   "x-cf-signature": "dGVzdC1lbmNyeXB0ZWQtc2lnbmF0dXJl...",
   "x-api-version": "2022-09-01"
 }

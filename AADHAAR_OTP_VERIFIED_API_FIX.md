@@ -20,8 +20,8 @@ POST https://api.cashfree.com/verification/aadhaar/otp/verify
 ### ✅ Correct Authentication (No Token Needed!)
 ```typescript
 headers: {
-  'X-Client-Id': 'CF1159838D58OK743AJJC738HCFQ0',      // Your key ID
-  'X-Client-Secret': 'cfsk_ma_prod_2c0ce22d...',       // Your secret
+  'X-Client-Id': 'YOUR_CASHFREE_CLIENT_ID',      // Your key ID
+  'X-Client-Secret': 'YOUR_CASHFREE_SECRET_KEY',       // Your secret
   'Content-Type': 'application/json'
 }
 ```

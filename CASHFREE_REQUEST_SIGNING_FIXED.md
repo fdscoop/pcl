@@ -144,8 +144,8 @@ const statusResponse = await fetch(
 POST https://api.cashfree.com/verification/reverse-penny-drop
 
 Headers:
-  x-client-id: CF1159838D58OK743AJJC738HCFQ0
-  x-client-secret: cfsk_ma_prod_2c0ce22d9072b71b7f40140c65636bf6_0af7d5a5
+  x-client-id: YOUR_CASHFREE_CLIENT_ID
+  x-client-secret: YOUR_CASHFREE_SECRET_KEY
   x-cf-signature: BASE64(HMAC-SHA256(payload, secret))
   Content-Type: application/json
 
@@ -162,8 +162,8 @@ Body:
 POST https://api.cashfree.com/verification/reverse-penny-drop
 
 Headers:
-  x-client-id: CF1159838D58OK743AJJC738HCFQ0
-  x-client-secret: cfsk_ma_prod_2c0ce22d9072b71b7f40140c65636bf6_0af7d5a5
+  x-client-id: YOUR_CASHFREE_CLIENT_ID
+  x-client-secret: YOUR_CASHFREE_SECRET_KEY
   x-cf-signature: BASE64(HMAC-SHA256(payload, secret))
   Content-Type: application/json
 
@@ -179,8 +179,8 @@ Body:
 GET https://api.cashfree.com/verification/remitter/status
 
 Headers:
-  x-client-id: CF1159838D58OK743AJJC738HCFQ0
-  x-client-secret: cfsk_ma_prod_2c0ce22d9072b71b7f40140c65636bf6_0af7d5a5
+  x-client-id: YOUR_CASHFREE_CLIENT_ID
+  x-client-secret: YOUR_CASHFREE_SECRET_KEY
   x-cf-signature: BASE64(HMAC-SHA256('', secret))
   Content-Type: application/json
 ```
@@ -215,7 +215,7 @@ Headers:
 ### Example:
 ```javascript
 const payload = '{"bank_account":"1234567890","ifsc":"HDFC0000001","name":"John Doe"}'
-const secret = 'cfsk_ma_prod_2c0ce22d9072b71b7f40140c65636bf6_0af7d5a5'
+const secret = 'YOUR_CASHFREE_SECRET_KEY'
 
 const signature = crypto
   .createHmac('sha256', secret)

@@ -54,7 +54,9 @@ interface Match {
   home_club_logo?: string
   away_club_logo?: string
   stadium?: {
+    id?: string
     stadium_name: string
+    photos?: string[]
   }
   has_lineup?: boolean
 }
@@ -177,7 +179,10 @@ export default function MatchesPage() {
             *,
             home_team:teams!matches_home_team_id_fkey(id, team_name),
             away_team:teams!matches_away_team_id_fkey(id, team_name),
-            stadium:stadiums(stadium_name)
+            stadium:stadiums(
+              id,
+              stadium_name
+            )
           `)
           .or(`home_team_id.in.(${teamIds}),away_team_id.in.(${teamIds})`)
           .gte('match_date', new Date().toISOString().split('T')[0])
@@ -329,6 +334,42 @@ export default function MatchesPage() {
               })
             )
             matchesData = lineupChecks
+          }
+        }
+
+        // Fetch stadium photos for all matches
+        if (matchesData.length > 0) {
+          const stadiumIds = matchesData
+            .filter(m => m.stadium?.id)
+            .map(m => m.stadium.id)
+            .filter((id, idx, arr) => arr.indexOf(id) === idx) // Remove duplicates
+
+          if (stadiumIds.length > 0) {
+            const { data: stadiumPhotos } = await supabase
+              .from('stadium_photos')
+              .select('stadium_id, photo_url')
+              .in('stadium_id', stadiumIds)
+              .limit(100)
+
+            // Create a map of stadium_id to photos array
+            const photosMap = new Map<string, string[]>()
+            if (stadiumPhotos) {
+              stadiumPhotos.forEach(photo => {
+                if (!photosMap.has(photo.stadium_id)) {
+                  photosMap.set(photo.stadium_id, [])
+                }
+                photosMap.get(photo.stadium_id)!.push(photo.photo_url)
+              })
+            }
+
+            // Attach photos to matches
+            matchesData = matchesData.map(match => ({
+              ...match,
+              stadium: match.stadium ? {
+                ...match.stadium,
+                photos: photosMap.get(match.stadium.id) || []
+              } : match.stadium
+            }))
           }
         }
       }
@@ -903,14 +944,42 @@ export default function MatchesPage() {
                         </div>
                       </div>
                       {match.stadium && (
-                        <div className="flex items-center gap-2.5 text-sm">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-50">
-                            <MapPin className="h-4 w-4 text-green-600" />
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2.5 text-sm">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-50">
+                              <MapPin className="h-4 w-4 text-green-600" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-xs text-gray-500 font-medium">Venue</p>
+                              <p className="text-sm font-semibold text-gray-900 line-clamp-1">{match.stadium.stadium_name}</p>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 font-medium">Venue</p>
-                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">{match.stadium.stadium_name}</p>
-                          </div>
+                          
+                          {/* Stadium Photos */}
+                          {match.stadium.photos && match.stadium.photos.length > 0 && (
+                            <div className="mt-2 pl-10">
+                              <div className="grid grid-cols-2 gap-2">
+                                {match.stadium.photos.slice(0, 2).map((photo, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="h-20 rounded-lg overflow-hidden bg-gray-200 border border-gray-300 shadow-sm hover:shadow-md transition-shadow"
+                                  >
+                                    <img
+                                      src={photo}
+                                      alt={`${match.stadium?.stadium_name || 'Stadium'} - Photo ${idx + 1}`}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none'
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                              {match.stadium.photos.length > 2 && (
+                                <p className="text-xs text-gray-500 mt-1">+{match.stadium.photos.length - 2} more photos</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

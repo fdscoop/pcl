@@ -1,0 +1,265 @@
+# Payout Account Display on Payout Page
+
+## Component: `PayoutAccountsDisplay`
+
+Shows active payout account with edit/switch options on any payout page.
+
+---
+
+## Usage
+
+### Simple Usage (Just Show Account)
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { PayoutAccountsDisplay } from '@/components/PayoutAccountsDisplay'
+
+export default function PayoutsPage() {
+  const supabase = createClient()
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id || null)
+    }
+    getUser()
+  }, [])
+
+  if (!userId) return <div>Loading...</div>
+
+  return (
+    <div className="space-y-6 p-6">
+      <h1 className="text-3xl font-bold">Payouts</h1>
+      
+      <PayoutAccountsDisplay 
+        userId={userId}
+        onEditClick={() => {
+          // Open edit modal or navigate to KYC page
+          window.location.href = '/dashboard/stadium-owner/kyc'
+        }}
+      />
+    </div>
+  )
+}
+```
+
+### With Modal (Edit in place)
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { PayoutAccountsDisplay } from '@/components/PayoutAccountsDisplay'
+import { BankAccountVerification } from '@/components/BankAccountVerification'
+
+export default function PayoutsPage() {
+  const supabase = createClient()
+  const [userId, setUserId] = useState<string | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id || null)
+    }
+    getUser()
+  }, [])
+
+  if (!userId) return <div>Loading...</div>
+
+  return (
+    <div className="space-y-6 p-6">
+      <h1 className="text-3xl font-bold">Payouts</h1>
+      
+      <PayoutAccountsDisplay 
+        userId={userId}
+        onEditClick={() => setShowEditModal(true)}
+      />
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Edit Payout Account</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <BankAccountVerification 
+                userId={userId}
+                userData={{}}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+## Features
+
+### 1. Active Account Display
+- Shows current active payout account
+- Displays: Account Holder, Bank Name, Account Number (masked), IFSC Code
+- Status badge: "Verified & Active"
+- Verification date
+- Edit button
+
+### 2. Other Verified Accounts
+- Shows list of other verified accounts (if any)
+- "Use This Account" button to switch
+- Collapsible section to save space
+
+### 3. Pending Accounts Notice
+- Shows count of pending/verifying accounts
+- Info message: "Awaiting admin approval"
+- User knows they can't use pending accounts yet
+
+### 4. No Account State
+- Shows warning if no active account
+- "Add Bank Account" button
+- Guides user to complete KYC
+
+---
+
+## Props
+
+```typescript
+interface PayoutAccountsDisplayProps {
+  userId: string           // Required: User's UUID
+  onEditClick?: () => void // Optional: Callback when Edit button clicked
+}
+```
+
+---
+
+## Styling
+
+The component uses:
+- **Active Account**: Green gradient with green borders
+- **Other Accounts**: Gray borders in collapsible section
+- **Pending**: Blue info box
+- **No Account**: Yellow warning box
+
+All uses shadcn/ui `Button` component for consistency.
+
+---
+
+## What Gets Displayed
+
+```
+✅ ACTIVE PAYOUT ACCOUNT
+├── Account Holder
+├── Bank Name  
+├── Account Number (XXXX...1234)
+├── IFSC Code
+├── Status: Verified & Active
+├── Verified Date
+└── [Edit] Button
+
+📋 OTHER VERIFIED ACCOUNTS (if any)
+├── Account 2 → [Use This Account]
+├── Account 3 → [Use This Account]
+└── ...
+
+⏳ PENDING ACCOUNTS (info only)
+└── {N} accounts waiting for verification
+
+❌ NO ACTIVE ACCOUNT
+└── [Add Bank Account] Button
+```
+
+---
+
+## Data Flow
+
+### Load Accounts
+1. Component mounts
+2. Fetches `payout_accounts` table
+3. Filters: `deleted_at IS NULL` (active only)
+4. Separates: `is_active = TRUE` vs `is_active = FALSE`
+5. Displays active + other verified + pending info
+
+### Switch Account
+1. User clicks "Use This Account"
+2. API: Deactivate all accounts
+3. API: Activate selected account
+4. Reload accounts list
+5. Display updates automatically
+
+### Edit Account
+1. User clicks Edit button
+2. `onEditClick` callback fires
+3. Parent component handles opening modal/navigation
+4. After saving, display auto-refreshes
+
+---
+
+## Integration Steps
+
+1. **Copy component** to `/apps/web/src/components/PayoutAccountsDisplay.tsx`
+2. **Import in payout page**:
+   ```tsx
+   import { PayoutAccountsDisplay } from '@/components/PayoutAccountsDisplay'
+   ```
+3. **Add to JSX**:
+   ```tsx
+   <PayoutAccountsDisplay 
+     userId={userId}
+     onEditClick={() => { /* handle edit */ }}
+   />
+   ```
+4. **Test**:
+   - Add bank account
+   - Verify in database manually (set `verification_status = 'verified'`)
+   - View on payout page
+   - Try switching to other account
+   - Try Edit button
+
+---
+
+## Database Queries Used
+
+### Get all accounts (non-deleted)
+```sql
+SELECT * FROM payout_accounts
+WHERE user_id = 'user-id'
+  AND deleted_at IS NULL
+ORDER BY created_at DESC
+```
+
+### Switch account
+```sql
+-- Deactivate all
+UPDATE payout_accounts
+SET is_active = FALSE
+WHERE user_id = 'user-id'
+
+-- Activate selected
+UPDATE payout_accounts  
+SET is_active = TRUE
+WHERE id = 'account-id'
+```
+
+---
+
+## Notes
+
+- Component is read-only + switch only (no create/edit in component)
+- Edit handled by parent component via `onEditClick` callback
+- Perfect for dashboard + standalone payout page
+- Responsive: Works on mobile, tablet, desktop
+- RLS policies ensure users only see their own accounts

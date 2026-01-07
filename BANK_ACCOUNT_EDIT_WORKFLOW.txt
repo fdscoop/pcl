@@ -1,0 +1,214 @@
+# Bank Account Edit/Update Workflow
+
+## Key Changes
+
+### ✅ Edit Feature Added
+When a user edits a bank account:
+1. **Form loads** with existing account details
+2. **User modifies** account number, IFSC, or holder name
+3. **API resets verification** status to `pending`
+4. **Account deactivated** (`is_active = FALSE`)
+5. **Admin must re-verify** before account can be used again
+
+### ❌ Cannot Edit Verified Accounts
+**Security measure:** Once an account is verified by admin:
+- User **cannot edit** the verified account
+- User must **delete** and create a **new account**
+- This prevents fraudulent modifications after verification
+
+---
+
+## Files Updated
+
+### 1. API Endpoint: `update-bank-account/route.ts`
+**Location:** `/apps/web/src/app/api/kyc/update-bank-account/route.ts`
+
+**What it does:**
+- Accepts account ID and new details
+- Verifies user owns the account (ownership check)
+- Prevents editing verified accounts
+- **Resets** verification status to `pending`
+- **Deactivates** the account (`is_active = FALSE`)
+- Returns updated account
+
+**Flow:**
+```typescript
+// 1. User edits form → handleUpdateAccount()
+// 2. Component calls /api/kyc/update-bank-account
+// 3. API validates ownership
+// 4. API resets verification_status = 'pending'
+// 5. API sets is_active = FALSE
+// 6. Component shows "Status reset to pending for re-verification"
+```
+
+---
+
+### 2. Component: `UPDATED_BankAccountVerification_COMPONENT.tsx`
+**Location:** Use this to replace old component
+
+**New Features:**
+- **Edit mode** - Can edit pending/verifying accounts
+- **Edit button** - Shows on pending accounts only
+- **Update handler** - `handleUpdateAccount()` 
+- **Edit state** - `editingAccountId` tracks which account is being edited
+- **Cancel button** - Exit edit mode without saving
+- **Dynamic submit button** - Shows "Update" or "Save" based on mode
+
+**Button Logic:**
+```
+Pending Account    → Shows "Edit" button
+Verifying Account  → Shows "Edit" button
+Verified Account   → Shows "Make Active" button (if not active)
+Active Account     → Shows nothing
+Deleted Account    → Shows nothing
+```
+
+---
+
+## User Flow: Editing an Account
+
+### Before: Account Pending Verification
+```
+Account Status: ⏳ Pending Verification
+                ├── Edit button    ← Click to edit
+                └── Delete button  ← Click to delete
+```
+
+### During: Edit Mode
+```
+Form shows existing data:
+- Account Holder: John Doe
+- Account Number: 1234567890
+- IFSC Code: HDFC0000001
+
+User can modify any field
+↓
+Click "Update Bank Account"
+```
+
+### After: Account Updated
+```
+Account Status: ⏳ Pending Verification (RESET!)
+Message: "Bank account updated! Status reset to pending for re-verification."
+
+Account is DEACTIVATED:
+- is_active = FALSE
+- Admin must verify again before use
+```
+
+---
+
+## Database Changes: None Required
+The `payout_accounts` table already supports updates!
+
+Just needed:
+1. ✅ API endpoint to handle the update logic
+2. ✅ Component buttons to trigger edit
+3. ✅ Reset verification status on update
+
+---
+
+## Security Measures
+
+### 1. Ownership Verification
+```typescript
+if (existingAccount.user_id !== user.id) {
+  throw error 'Cannot edit another user\'s account'
+}
+```
+Only the account owner can edit their own account.
+
+### 2. Prevent Editing Verified Accounts
+```typescript
+if (existingAccount.verification_status === 'verified') {
+  throw error 'Cannot edit verified accounts. Please delete and create a new one.'
+}
+```
+Once verified by admin, account is locked from user edits.
+
+### 3. Automatic Deactivation on Update
+```typescript
+is_active: false  // Account deactivated when updated
+```
+Even if account was active, it gets deactivated until re-verified.
+
+---
+
+## API Response Format
+
+### Success (200)
+```json
+{
+  "success": true,
+  "message": "Bank account updated. Status reset to pending for re-verification.",
+  "account": {
+    "id": "account-uuid",
+    "user_id": "user-uuid",
+    "account_number": "9876543210",
+    "ifsc_code": "ICIC0000001",
+    "account_holder": "John Doe",
+    "verification_status": "pending",
+    "verified_at": null,
+    "verification_method": null,
+    "is_active": false,
+    "updated_at": "2026-01-07T10:30:00Z"
+  }
+}
+```
+
+### Error - Cannot Edit (400)
+```json
+{
+  "error": "Cannot edit verified accounts. Please delete and create a new one."
+}
+```
+
+### Error - Account Not Found (404)
+```json
+{
+  "error": "Account not found"
+}
+```
+
+### Error - Not Owner (403)
+```json
+{
+  "error": "Cannot edit another user's account"
+}
+```
+
+---
+
+## Testing Checklist
+
+- [ ] Create bank account (status: pending)
+- [ ] Click Edit button
+- [ ] Modify account number
+- [ ] Click "Update Bank Account"
+- [ ] Verify status shows "Pending Verification" again
+- [ ] Verify account is deactivated (not active anymore)
+- [ ] Create verified account (admin verifies manually)
+- [ ] Try to edit verified account
+- [ ] Verify error message: "Cannot edit verified accounts..."
+- [ ] Verify delete button still works for pending accounts
+- [ ] Verify all old buttons still work (Make Active, Delete, etc.)
+
+---
+
+## Summary
+
+**What changed:**
+1. ✅ API endpoint `/api/kyc/update-bank-account` - Handles updates with verification reset
+2. ✅ Component UI - Added Edit button and edit mode
+3. ✅ Edit form - Loads existing data and allows modification
+
+**How it works:**
+- User edits pending account → API resets status to "pending" → Admin must verify again
+- User cannot edit verified accounts → Must delete and create new
+
+**Security:**
+- Ownership verification (can't edit other users' accounts)
+- No direct updates after verification (admin integrity)
+- Automatic deactivation on update
+
+Done! 🚀

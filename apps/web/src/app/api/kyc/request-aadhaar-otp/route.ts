@@ -64,14 +64,15 @@ async function requestAadhaarOTP(aadhaarNumber: string): Promise<any> {
 
 export async function POST(request: NextRequest) {
   try {
-    const { aadhaar_number, club_id } = await request.json()
+    const { aadhaar_number, club_id, stadium_id } = await request.json()
 
     console.log('\n=== AADHAAR OTP REQUEST ===')
     console.log('Received Aadhaar:', aadhaar_number?.substring(0, 6) + '****')
     console.log('Club ID:', club_id)
+    console.log('Stadium ID:', stadium_id)
 
-    // Validate inputs
-    if (!aadhaar_number || !club_id) {
+    // Validate inputs - at least aadhaar_number is required
+    if (!aadhaar_number) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -97,50 +98,77 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get user's role
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const userRole = userProfile?.role || 'player'
+
     // Duplicate Prevention Logic (Per PCL Rules):
     //
     // ALLOW: Same person with different roles
     //   - Player account (email1) + Club owner account (email2) = Same Aadhaar ✅
+    //   - Player account + Stadium owner account = Same Aadhaar ✅
     //   - This is the same physical person with dual roles
     //
     // BLOCK: Different people with same role
     //   - Player A + Player B = Cannot share Aadhaar ❌
     //   - Club A + Club B = Cannot share Aadhaar ❌
+    //   - Stadium A + Stadium B = Cannot share Aadhaar ❌
     //   - This would be fraud (different people using same identity)
     //
-    // Implementation: Check if this Aadhaar is already used by another CLUB OWNER
-    const { data: existingClubOwner } = await supabase
+    // Implementation: Check if this Aadhaar is already used by another user with the SAME ROLE
+    const { data: existingUserWithSameRole } = await supabase
       .from('users')
       .select('id, role, kyc_status')
       .eq('aadhaar_number', aadhaar_number)
-      .eq('role', 'club_owner')  // Only check for other CLUB OWNERS
+      .eq('role', userRole)  // Only check for users with SAME ROLE
       .eq('kyc_status', 'verified')
       .neq('id', user.id)
       .single()
 
-    if (existingClubOwner) {
+    if (existingUserWithSameRole) {
       return NextResponse.json(
         {
           error: 'Aadhaar Already Registered',
-          message: 'This Aadhaar number is already verified with another club owner account. Each Aadhaar can only be used by one club owner. If you believe this is an error, please contact support@professionalclubleague.com'
+          message: `This Aadhaar number is already verified with another ${userRole} account. Each Aadhaar can only be used by one ${userRole}. If you believe this is an error, please contact support@professionalclubleague.com`
         },
         { status: 400 }
       )
     }
 
-    // Verify user owns the club
-    const { data: club } = await supabase
-      .from('clubs')
-      .select('id, owner_id')
-      .eq('id', club_id)
-      .single()
+    // Verify ownership based on role
+    if (userRole === 'club_owner' && club_id) {
+      const { data: club } = await supabase
+        .from('clubs')
+        .select('id, owner_id')
+        .eq('id', club_id)
+        .single()
 
-    if (!club || club.owner_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized to verify for this club' },
-        { status: 403 }
-      )
+      if (!club || club.owner_id !== user.id) {
+        return NextResponse.json(
+          { error: 'Unauthorized to verify for this club' },
+          { status: 403 }
+        )
+      }
+    } else if (userRole === 'stadium_owner' && stadium_id) {
+      const { data: stadium } = await supabase
+        .from('stadiums')
+        .select('id, owner_id')
+        .eq('id', stadium_id)
+        .single()
+
+      if (!stadium || stadium.owner_id !== user.id) {
+        return NextResponse.json(
+          { error: 'Unauthorized to verify for this stadium' },
+          { status: 403 }
+        )
+      }
     }
+    // For other roles (like player), we just verify the user directly without checking ownership
 
     // Call Cashfree Verification API
     const result = await requestAadhaarOTP(aadhaar_number)
@@ -150,16 +178,25 @@ export async function POST(request: NextRequest) {
     console.log('🔍 request_id field:', result.request_id)
 
     // Store request in database
+    const insertData: any = {
+      user_id: user.id,
+      aadhaar_number: aadhaar_number,
+      request_id: result.ref_id || result.request_id || 'unknown',
+      status: 'pending',
+      created_at: new Date().toISOString()
+    }
+
+    // Add club_id or stadium_id if provided
+    if (club_id) {
+      insertData.club_id = club_id
+    }
+    if (stadium_id) {
+      insertData.stadium_id = stadium_id
+    }
+
     const { data: storedRequest, error: dbError } = await supabase
       .from('kyc_aadhaar_requests')
-      .insert({
-        user_id: user.id,
-        club_id: club_id,
-        aadhaar_number: aadhaar_number,
-        request_id: result.ref_id || result.request_id || 'unknown',
-        status: 'pending',
-        created_at: new Date().toISOString()
-      })
+      .insert(insertData)
       .select()
       .single()
 

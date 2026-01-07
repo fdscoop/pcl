@@ -1,0 +1,293 @@
+# KYC Form Updated - Now Uses Payout_Accounts Table
+
+## Changes Made
+
+The KYC form (stadium-owner/kyc/page.tsx) has been updated to read and verify bank accounts from the `payout_accounts` table instead of the `users` table.
+
+---
+
+## What Changed
+
+### 1. **Removed bank account fields from UserData interface**
+```typescript
+// REMOVED these fields:
+bank_account_number?: string
+bank_ifsc_code?: string
+bank_account_holder?: string
+```
+
+### 2. **Updated bank verification status check**
+```typescript
+// OLD: Checked users table for bank details
+const bankVerified = !!(data.bank_account_number && data.bank_ifsc_code && data.bank_account_holder)
+
+// NEW: Checks payout_accounts table for verified status
+const { data: payoutAccounts } = await supabase
+  .from('payout_accounts')
+  .select('*')
+  .eq('user_id', user.id)
+  .is('deleted_at', null)
+  .single()
+
+const bankVerified = payoutAccounts && 
+  payoutAccounts.verification_status === 'verified' && 
+  payoutAccounts.is_active
+```
+
+### 3. **Removed old inline BankAccountVerification component**
+- Deleted lines 724-848 containing the old hardcoded component
+- This old component was directly updating users table
+
+### 4. **Added import for proper BankAccountVerification component**
+```typescript
+import { BankAccountVerification } from '@/components/BankAccountVerification'
+```
+
+### 5. **Updated component usage**
+```typescript
+// OLD:
+<BankAccountVerification
+  userId={userData.id}
+  userData={userData}
+  isVerified={kycStatus.bank_verified}
+  onVerificationComplete={loadUserData}
+/>
+
+// NEW:
+<BankAccountVerification
+  userId={userData.id}
+  userData={userData}
+/>
+```
+
+---
+
+## Files Changed
+
+### 1. `/apps/web/src/app/dashboard/stadium-owner/kyc/page.tsx`
+- Removed bank account fields from UserData interface
+- Updated bank verification check to query payout_accounts table
+- Removed old inline BankAccountVerification component
+- Added import for proper component from components folder
+- Updated component props (removed isVerified and onVerificationComplete)
+
+### 2. Created `/apps/web/src/components/BankAccountVerification.tsx` (NEW)
+- Proper component that uses payout_accounts table
+- Handles:
+  - Saving new accounts to payout_accounts (status = 'pending')
+  - Loading accounts from payout_accounts
+  - Editing pending accounts
+  - Deleting accounts (soft delete)
+  - Activating verified accounts
+  - Full UI with tabs and status badges
+
+---
+
+## Data Flow
+
+### Before (❌ Old Way)
+```
+User fills KYC form → Check users.bank_account_number → Assume verified
+(No proper workflow, auto-verified)
+```
+
+### After (✅ New Way)
+```
+User fills form → Save to payout_accounts (status = 'pending')
+                ↓
+Admin verifies manually → Set status = 'verified'
+                ↓
+User activates account → Set is_active = TRUE
+                ↓
+Account ready for payouts
+                ↓
+KYC Page shows: bankVerified = (status === 'verified' && is_active = TRUE)
+```
+
+---
+
+## Verification Logic
+
+The KYC page now correctly determines bank account verification:
+
+```typescript
+// Bank is verified ONLY if:
+// 1. Account exists in payout_accounts
+// 2. verification_status === 'verified'
+// 3. is_active === TRUE
+// 4. deleted_at IS NULL (not soft-deleted)
+
+const bankVerified = payoutAccounts && 
+  payoutAccounts.verification_status === 'verified' && 
+  payoutAccounts.is_active
+```
+
+---
+
+## Overall KYC Status
+
+The KYC page calculates overall status based on all three verifications:
+
+```typescript
+setKycStatus({
+  aadhaar_verified: aadhaarVerified,      // From users.kyc_status = 'verified'
+  bank_verified: bankVerified,             // From payout_accounts (verified + active)
+  pan_verified: panVerified,               // From users.pan_verified = true
+  overall_status: (aadhaarVerified && bankVerified && panVerified) 
+    ? 'verified' 
+    : data.kyc_status || 'pending'
+})
+```
+
+---
+
+## Component Structure
+
+### BankAccountVerification Component (`/components/BankAccountVerification.tsx`)
+- **Props:**
+  - `userId: string` - User's UUID
+  - `userData: any` - User data object
+
+- **Features:**
+  1. Tab 1: "Add Bank Account" - Form to submit new account
+  2. Tab 2: "My Accounts" - History of all accounts
+  
+- **Account States:**
+  - ⏳ Pending - Awaiting admin verification
+  - 🔄 Verifying - Under review
+  - ✅ Verified - Verified by admin
+  - ❌ Rejected/Failed - Not valid
+
+- **User Actions:**
+  - Add new account (saves as pending)
+  - Edit pending account
+  - Delete account (soft delete)
+  - Activate verified account (make primary)
+  - View account history
+
+---
+
+## Database Operations
+
+### Save New Account
+```sql
+INSERT INTO payout_accounts (
+  user_id, account_number, ifsc_code, account_holder,
+  bank_name, verification_status, is_active, is_primary
+) VALUES (...)
+```
+Status starts as `pending`, not verified!
+
+### Check Verification Status
+```sql
+SELECT * FROM payout_accounts
+WHERE user_id = 'user-id'
+AND deleted_at IS NULL
+AND is_active = TRUE
+AND verification_status = 'verified'
+```
+
+### Soft Delete
+```sql
+UPDATE payout_accounts 
+SET deleted_at = NOW() 
+WHERE id = 'account-id'
+```
+Account preserved in database for audit trail!
+
+---
+
+## Benefits
+
+✅ **Proper Workflow:**
+- Accounts saved as pending (not auto-verified)
+- Admin must verify before use
+- Clear status tracking
+
+✅ **Full History:**
+- Soft deletes preserve audit trail
+- Users can see all past accounts
+- Compliance-ready
+
+✅ **Multiple Accounts:**
+- Users can have multiple accounts
+- Only 1 can be active at a time
+- Easy to switch between accounts
+
+✅ **Edit Support:**
+- Can edit pending accounts
+- Verified accounts are locked (can't edit)
+- Must delete and create new to change verified account
+
+---
+
+## Testing
+
+Test the complete flow:
+
+1. Go to Stadium Owner > KYC > Bank Account tab
+2. Add a new bank account
+3. Verify it shows "⏳ Pending Verification"
+4. Check the database:
+   ```sql
+   SELECT * FROM payout_accounts 
+   WHERE user_id = 'user-id' 
+   AND deleted_at IS NULL
+   ```
+5. You should see the account with `verification_status = 'pending'`
+6. Manually verify in database:
+   ```sql
+   UPDATE payout_accounts 
+   SET verification_status = 'verified', verified_at = NOW()
+   WHERE id = 'account-id'
+   ```
+7. Refresh the KYC page
+8. Verify the account now shows as verified
+9. Check KYC completion percentage increased
+10. Try to edit the verified account (should not show Edit button)
+
+---
+
+## Migration Notes
+
+### User's Bank Account Data
+If users had bank account data in the `users` table:
+- It's still there but no longer used
+- Can keep for backward compatibility
+- Or migrate to payout_accounts table if needed
+
+### Deprecation Path
+```sql
+-- Optional: Migrate existing bank accounts to payout_accounts
+INSERT INTO payout_accounts (
+  user_id, account_number, ifsc_code, account_holder,
+  verification_status, is_active, is_primary, created_at
+)
+SELECT 
+  id, 
+  bank_account_number,
+  bank_ifsc_code,
+  bank_account_holder,
+  'verified', -- Assume existing accounts are verified
+  TRUE,
+  TRUE,
+  NOW()
+FROM users
+WHERE bank_account_number IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM payout_accounts 
+    WHERE payout_accounts.user_id = users.id
+  )
+```
+
+---
+
+## Summary
+
+✅ KYC form now properly uses `payout_accounts` table  
+✅ Bank verification requires admin approval  
+✅ Full account history preserved  
+✅ Multiple accounts supported  
+✅ Proper verification workflow implemented  
+
+All bank account operations now go through the professional `payout_accounts` table! 🚀

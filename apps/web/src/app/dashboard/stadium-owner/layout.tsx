@@ -49,7 +49,7 @@ export default function StadiumOwnerLayout({
 
       if (userError || !userData) {
         console.error('Error fetching user data:', userError)
-        router.push('/dashboard')
+        router.push('/auth/login')
         return
       }
 
@@ -85,7 +85,7 @@ export default function StadiumOwnerLayout({
       setStadium(stadiumData)
     } catch (error) {
       console.error('Error checking stadium owner:', error)
-      router.push('/dashboard')
+      router.push('/auth/login')
     } finally {
       setLoading(false)
     }

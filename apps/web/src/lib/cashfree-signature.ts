@@ -93,6 +93,14 @@ export function getCashfreeVerificationHeaders(
   clientSecret?: string,
   publicKey?: string
 ): Record<string, string> {
+  console.log('🔑 Generating Cashfree Verification Headers...')
+  console.log('📝 Inputs:', {
+    clientId: clientId?.substring(0, 10) + '...',
+    hasClientSecret: !!clientSecret,
+    hasPublicKey: !!publicKey,
+    publicKeyLength: publicKey?.length || 0
+  })
+  
   const baseHeaders = {
     'Content-Type': 'application/json',
     'x-client-id': clientId,
@@ -137,7 +145,7 @@ export function getCashfreeVerificationHeaders(
       }
     } catch (error) {
       console.error('⚠️ E-signature generation failed, falling back to client-secret only:', error)
-      console.error('⚠️ Error details:', error)
+      console.error('⚠️ Error details:', error instanceof Error ? error.message : error)
       // Fall through to client-secret method
     }
   } else {
@@ -146,11 +154,13 @@ export function getCashfreeVerificationHeaders(
 
   // Method 2: IP Whitelisting Authentication (requires whitelisted IP)
   if (clientSecret) {
+    console.log('✅ Using client-secret authentication (IP whitelisting required)')
     return {
       ...baseHeaders,
       'x-client-secret': clientSecret
     }
   }
 
+  console.error('❌ Neither valid public key nor client secret available')
   throw new Error('Either a valid CASHFREE_PUBLIC_KEY or CASHFREE_SECRET_KEY must be configured')
 }

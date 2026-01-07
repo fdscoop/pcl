@@ -1,0 +1,299 @@
+# Bank Account Verification - Updated to Use Payout_Accounts Table
+
+## Changes Made
+
+All bank account verification operations now use the `payout_accounts` table instead of the users table.
+
+### Updated Component: `UPDATED_BankAccountVerification_COMPONENT.tsx`
+
+#### 1. Save New Account
+```typescript
+// OLD: Updated users table directly
+await supabase.from('users').update({
+  bank_account_number,
+  bank_ifsc_code,
+  bank_account_holder
+})
+
+// NEW: Insert into payout_accounts table
+await supabase.from('payout_accounts').insert({
+  user_id,
+  account_number,
+  ifsc_code,
+  account_holder,
+  bank_name,
+  verification_status: 'pending',  // ← Status tracked here
+  is_active: false,
+  is_primary: payoutAccounts.length === 0
+})
+```
+
+#### 2. Load Accounts
+```typescript
+// Fetches from payout_accounts table
+const { data } = await supabase
+  .from('payout_accounts')
+  .select('*')
+  .eq('user_id', userId)
+  .order('created_at', { ascending: false })
+```
+
+#### 3. Activate Account
+```typescript
+// Deactivates all, then activates selected account
+await supabase
+  .from('payout_accounts')
+  .update({ is_active: false })
+  .eq('user_id', userId)
+
+await supabase
+  .from('payout_accounts')
+  .update({ is_active: true, is_primary: true })
+  .eq('id', accountId)
+```
+
+#### 4. Delete Account (Soft Delete)
+```typescript
+// Marks with deleted_at timestamp instead of removing
+await supabase
+  .from('payout_accounts')
+  .update({ deleted_at: new Date().toISOString() })
+  .eq('id', accountId)
+```
+
+---
+
+## Database Flow
+
+```
+User submits bank account form
+           ↓
+INSERT into payout_accounts (verification_status = 'pending')
+           ↓
+Account shows in "My Accounts" tab
+           ↓
+Status: "⏳ Pending Verification"
+           ↓
+Admin verifies manually (sets verification_status = 'verified')
+           ↓
+User can click "Make Active"
+           ↓
+Account becomes primary payout account (is_active = TRUE)
+           ↓
+Account is ready for payouts!
+```
+
+---
+
+## Payout_Accounts Table Structure
+
+```sql
+payout_accounts {
+  id: UUID
+  user_id: UUID                        -- Who owns the account
+  
+  account_number: VARCHAR(20)          -- Bank account
+  ifsc_code: VARCHAR(11)               -- Bank IFSC code
+  account_holder: VARCHAR(255)         -- Account holder name
+  bank_name: TEXT                      -- Extracted from IFSC
+  
+  verification_status: VARCHAR(50)     -- pending, verified, rejected, etc.
+  verified_at: TIMESTAMP               -- When admin verified
+  verification_method: VARCHAR(50)     -- How it was verified
+  
+  is_active: BOOLEAN                   -- Current payout account?
+  is_primary: BOOLEAN                  -- Primary account
+  
+  created_at: TIMESTAMP                -- When submitted
+  updated_at: TIMESTAMP                -- Last changed
+  deleted_at: TIMESTAMP                -- When deleted (NULL = active)
+}
+```
+
+---
+
+## What Changed in Component
+
+### Before (❌ Old Way)
+```typescript
+// Saved directly to users table
+// Auto-verified
+// No verification tracking
+// Only 1 account per user
+// No history
+await supabase.from('users').update({
+  bank_account_number,
+  bank_ifsc_code,
+  bank_account_holder
+})
+```
+
+### After (✅ New Way)
+```typescript
+// Saved to payout_accounts table
+// Status = 'pending' (NOT auto-verified)
+// Verification tracked with status field
+// Multiple accounts per user
+// Full history preserved (soft delete)
+await supabase.from('payout_accounts').insert({
+  user_id,
+  account_number,
+  ifsc_code,
+  account_holder,
+  bank_name,
+  verification_status: 'pending',
+  is_active: false,
+  is_primary: payoutAccounts.length === 0
+})
+```
+
+---
+
+## Component Features
+
+### Tab 1: "Add Bank Account"
+- Form to submit new bank account
+- Saves to payout_accounts table with status = 'pending'
+- Shows "Current Active Account" info (if exists)
+- Validation: account number (9-20 digits), IFSC format
+
+### Tab 2: "My Accounts"
+- Lists all non-deleted accounts
+- Shows status badges:
+  - ✅ Verified (green)
+  - ⏳ Pending (yellow)
+  - ❌ Rejected (red)
+- Actions:
+  - Edit button (for pending accounts)
+  - Make Active button (for verified accounts)
+  - Delete button (soft delete)
+- Collapsible "Other Verified Accounts" section
+- Info box for pending/verifying accounts
+
+---
+
+## Verification Workflow
+
+### Step 1: User Submits
+```
+User fills form and clicks "Save Bank Account"
+           ↓
+INSERT into payout_accounts
+  verification_status = 'pending'
+  is_active = FALSE
+           ↓
+Component shows message: "Status reset to pending for re-verification"
+           ↓
+Account appears in history with "⏳ Pending Verification" badge
+```
+
+### Step 2: Admin Verifies (Manual)
+```
+Admin reviews account details
+Admin runs SQL: 
+  UPDATE payout_accounts 
+  SET verification_status = 'verified',
+      verified_at = NOW(),
+      verification_method = 'manual'
+  WHERE id = 'account-id'
+           ↓
+User sees "✅ Verified" badge in my accounts
+```
+
+### Step 3: User Activates
+```
+User clicks "Make Active" on verified account
+           ↓
+API: Deactivate all accounts
+API: Activate this account (is_active = TRUE)
+           ↓
+Account becomes primary for payouts
+           ↓
+Shows in green card: "Active Payout Account"
+```
+
+---
+
+## Data Integrity
+
+### Only One Active Account Per User
+```sql
+CREATE UNIQUE INDEX idx_payout_accounts_active 
+  ON payout_accounts(user_id) 
+  WHERE is_active = TRUE AND deleted_at IS NULL;
+```
+This ensures only 1 account per user can be active at a time.
+
+### Full History Preserved
+```
+Soft delete with deleted_at timestamp
+All accounts (deleted or not) are queryable
+Perfect for audit trail and compliance
+```
+
+---
+
+## Component Integration
+
+### Usage in Stadium Owner KYC Page
+```tsx
+import { BankAccountVerification } from '@/components/BankAccountVerification'
+
+<BankAccountVerification 
+  userId={userId}
+  userData={userData}
+/>
+```
+
+### Usage in Payout Page
+```tsx
+import { PayoutAccountsDisplay } from '@/components/PayoutAccountsDisplay'
+
+<PayoutAccountsDisplay 
+  userId={userId}
+  onEditClick={() => setShowEditModal(true)}
+/>
+```
+
+---
+
+## Key Improvements
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| **Storage** | users table | payout_accounts table |
+| **Verification Status** | No tracking | verification_status field |
+| **Auto-Verify** | Yes ❌ | No, requires admin ✅ |
+| **Multiple Accounts** | No | Yes ✅ |
+| **History** | Lost | Preserved (soft delete) ✅ |
+| **Audit Trail** | None | created_at, verified_at, deleted_at ✅ |
+| **Active Account** | Not tracked | is_active flag ✅ |
+| **Edit Support** | Not supported | Supported with verification reset ✅ |
+
+---
+
+## Next Steps
+
+1. ✅ Component updated to use payout_accounts table
+2. ✅ API endpoint for edit/update (already created)
+3. ⏳ **Admin Verification Dashboard** - Need to create admin panel to verify pending accounts
+4. ⏳ **Optional: Email Notifications** - Notify user when account is verified
+5. ⏳ **Optional: IFSC Validation** - Validate IFSC codes via external API
+
+---
+
+## Testing
+
+Test the complete flow:
+1. Go to Stadium Owner > KYC > Bank Account tab
+2. Add a new bank account
+3. Verify it shows "⏳ Pending Verification"
+4. Manually verify in database: `UPDATE payout_accounts SET verification_status = 'verified', verified_at = NOW() WHERE id = 'account-id'`
+5. Refresh page
+6. Verify account now shows "✅ Verified" badge
+7. Click "Make Active"
+8. Account should move to "Active Payout Account" section
+9. Test edit (only works for non-verified accounts)
+10. Test delete (soft delete, history preserved)
+
+All set! 🚀

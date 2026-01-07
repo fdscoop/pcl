@@ -149,17 +149,48 @@ async function verifyAadhaarOTP(requestId: string, otp: string): Promise<any> {
   }
 }
 
+// Helper function to normalize date format to YYYY-MM-DD (PostgreSQL standard)
+function normalizeDateForDatabase(dateString: string): string {
+  if (!dateString) return dateString
+
+  // If already in YYYY-MM-DD format, return as-is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString
+  }
+
+  // Handle DD-MM-YYYY format (common in Aadhaar: "27-11-1991")
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+    const [day, month, year] = dateString.split('-')
+    const normalized = `${year}-${month}-${day}`
+    console.log(`📅 Normalized date: ${dateString} → ${normalized}`)
+    return normalized
+  }
+
+  // Handle DD/MM/YYYY format
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+    const [day, month, year] = dateString.split('/')
+    const normalized = `${year}-${month}-${day}`
+    console.log(`📅 Normalized date: ${dateString} → ${normalized}`)
+    return normalized
+  }
+
+  // Otherwise try to parse and return as-is (hope it's valid)
+  console.warn(`⚠️ Could not normalize date format: ${dateString}`)
+  return dateString
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { request_id, otp, club_id } = await request.json()
+    const { request_id, otp, club_id, stadium_id } = await request.json()
 
     console.log('\n=== AADHAAR OTP VERIFICATION ===')
     console.log('Request ID:', request_id)
     console.log('OTP:', otp?.substring(0, 3) + '***')
     console.log('Club ID:', club_id)
+    console.log('Stadium ID:', stadium_id)
 
-    // Validate inputs
-    if (!request_id || !otp || !club_id) {
+    // Validate inputs - request_id and otp are required, but club_id/stadium_id are optional
+    if (!request_id || !otp) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -377,18 +408,53 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Aadhaar data validated successfully against user profile')
 
-    // Get club details to determine verification flow
-    const { data: club } = await supabase
-      .from('clubs')
-      .select('id, club_type, kyc_verified')
-      .eq('id', club_id)
+    // Get user role to determine what to update
+    const { data: userRole } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
       .single()
 
-    if (!club) {
-      return NextResponse.json(
-        { error: 'Club not found' },
-        { status: 404 }
-      )
+    const role = userRole?.role || 'player'
+    console.log('👤 User role:', role)
+
+    // For club owners, get club details; for stadium owners, get stadium details
+    let club: any = null
+    let stadium: any = null
+
+    if (role === 'club_owner' && club_id) {
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('id, club_type, kyc_verified')
+        .eq('id', club_id)
+        .single()
+
+      if (!clubData) {
+        return NextResponse.json(
+          { error: 'Club not found' },
+          { status: 404 }
+        )
+      }
+      club = clubData
+      console.log('🏢 Club found:', club.id)
+    } else if (role === 'stadium_owner' && stadium_id) {
+      const { data: stadiumData } = await supabase
+        .from('stadiums')
+        .select('id, owner_id')
+        .eq('id', stadium_id)
+        .single()
+
+      if (!stadiumData) {
+        return NextResponse.json(
+          { error: 'Stadium not found' },
+          { status: 404 }
+        )
+      }
+      stadium = stadiumData
+      console.log('🏟️ Stadium found:', stadium.id)
+    } else {
+      // For players or other roles, just proceed with user update
+      console.log('👤 Player or other role - no club/stadium update needed')
     }
 
     // Update user with verified Aadhaar and fill in missing profile data
@@ -420,7 +486,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!userProfileDOB && aadhaarDOB) {
-      userUpdateData.date_of_birth = aadhaarDOB
+      // Normalize the date format to YYYY-MM-DD before saving
+      const normalizedDOB = normalizeDateForDatabase(aadhaarDOB)
+      userUpdateData.date_of_birth = normalizedDOB
       console.log('📝 Updating user profile with Aadhaar DOB:', userUpdateData.date_of_birth)
     }
 
@@ -449,71 +517,142 @@ export async function POST(request: NextRequest) {
     if (userError) {
       console.error('❌ User update error:', userError)
       console.error('❌ Error details:', JSON.stringify(userError, null, 2))
+      console.error('❌ Error code:', userError.code)
+      console.error('❌ Error message:', userError.message)
       console.error('❌ Tried to update with:', userUpdateData)
 
-      // Check if it's a column not found error
+      // Check for specific error types
+      if (userError.code === '23505' || userError.message?.includes('duplicate key')) {
+        console.error('⚠️ Duplicate key error - likely Aadhaar already verified')
+        return NextResponse.json(
+          {
+            error: 'Aadhaar Already Registered',
+            message: 'This Aadhaar number is already verified with another account. Each Aadhaar can only be used once.',
+            details: userError.message
+          },
+          { status: 409 }
+        )
+      }
+
+      if (userError.code === '42501' || userError.message?.includes('permission denied')) {
+        console.error('⚠️ RLS policy blocking update')
+        return NextResponse.json(
+          {
+            error: 'Permission Denied',
+            message: 'Unable to update your profile. This may be a session issue.',
+            details: 'Please try logging in again.'
+          },
+          { status: 403 }
+        )
+      }
+
       if (userError.message?.includes('column') || userError.message?.includes('does not exist')) {
-        console.error('⚠️ Database schema issue - please run ADD_KYC_FIELDS_TO_USERS.sql migration')
+        console.error('⚠️ Database schema issue - missing column')
         return NextResponse.json(
           {
             error: 'Database schema outdated',
             message: 'Please contact support. Database migration required.',
-            details: 'Run ADD_KYC_FIELDS_TO_USERS.sql in Supabase SQL Editor'
+            details: userError.message
           },
           { status: 500 }
         )
       }
 
       return NextResponse.json(
-        { error: 'Failed to update user', details: userError.message },
-        { status: 500 }
-      )
-    }
-
-    // Update club based on type
-    let clubUpdateData: any = {
-      kyc_verified: true,
-      kyc_verified_at: new Date().toISOString()
-    }
-
-    // Add verified address data to club update
-    if (addressData.state) clubUpdateData.state = addressData.state
-    if (addressData.district) clubUpdateData.district = addressData.district
-    if (addressData.pincode) clubUpdateData.pincode = addressData.pincode
-    if (addressData.full_address) clubUpdateData.full_address = addressData.full_address
-    if (addressData.city) clubUpdateData.city = addressData.city
-    if (addressData.country) clubUpdateData.country = addressData.country
-
-    // Registered clubs need admin review
-    if (club.club_type === 'registered') {
-      clubUpdateData.status = 'pending_review'
-    } else {
-      // Unregistered clubs auto-verified
-      clubUpdateData.status = 'active'
-    }
-
-    console.log('Updating club with data:', clubUpdateData)
-
-    const { error: clubError } = await supabase
-      .from('clubs')
-      .update(clubUpdateData)
-      .eq('id', club_id)
-
-    if (clubError) {
-      console.error('❌ Club update error:', clubError)
-      console.error('❌ Club update error details:', JSON.stringify(clubError, null, 2))
-      console.error('❌ Tried to update with:', clubUpdateData)
-      return NextResponse.json(
-        {
-          error: 'Failed to update club',
-          details: clubError.message,
-          dbError: clubError
+        { 
+          error: 'Failed to update user', 
+          message: userError.message,
+          code: userError.code,
+          details: JSON.stringify(userError, null, 2)
         },
         { status: 500 }
       )
     }
 
-    console.log('✅ Club updated successfully')
+    // Update club (if club owner) or stadium (if stadium owner)
+    if (club && role === 'club_owner' && club_id) {
+      let clubUpdateData: any = {
+        kyc_verified: true,
+        kyc_verified_at: new Date().toISOString()
+      }
+
+      // Add verified address data to club update
+      if (addressData.state) clubUpdateData.state = addressData.state
+      if (addressData.district) clubUpdateData.district = addressData.district
+      if (addressData.pincode) clubUpdateData.pincode = addressData.pincode
+      if (addressData.full_address) clubUpdateData.full_address = addressData.full_address
+      if (addressData.city) clubUpdateData.city = addressData.city
+      if (addressData.country) clubUpdateData.country = addressData.country
+
+      // Registered clubs need admin review
+      if (club.club_type === 'registered') {
+        clubUpdateData.status = 'pending_review'
+      } else {
+        // Unregistered clubs auto-verified
+        clubUpdateData.status = 'active'
+      }
+
+      console.log('Updating club with data:', clubUpdateData)
+
+      const { error: clubError } = await supabase
+        .from('clubs')
+        .update(clubUpdateData)
+        .eq('id', club_id)
+
+      if (clubError) {
+        console.error('❌ Club update error:', clubError)
+        console.error('❌ Club update error details:', JSON.stringify(clubError, null, 2))
+        console.error('❌ Tried to update with:', clubUpdateData)
+        return NextResponse.json(
+          {
+            error: 'Failed to update club',
+            details: clubError.message,
+            dbError: clubError
+          },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Club updated successfully')
+    } else if (stadium && role === 'stadium_owner' && stadium_id) {
+      let stadiumUpdateData: any = {
+        kyc_verified: true,
+        kyc_verified_at: new Date().toISOString()
+      }
+
+      // Add verified address data to stadium update
+      if (addressData.state) stadiumUpdateData.state = addressData.state
+      if (addressData.district) stadiumUpdateData.district = addressData.district
+      if (addressData.pincode) stadiumUpdateData.pincode = addressData.pincode
+      if (addressData.full_address) stadiumUpdateData.full_address = addressData.full_address
+      if (addressData.city) stadiumUpdateData.city = addressData.city
+      if (addressData.country) stadiumUpdateData.country = addressData.country
+
+      console.log('Updating stadium with data:', stadiumUpdateData)
+
+      const { error: stadiumError } = await supabase
+        .from('stadiums')
+        .update(stadiumUpdateData)
+        .eq('id', stadium_id)
+
+      if (stadiumError) {
+        console.error('❌ Stadium update error:', stadiumError)
+        console.error('❌ Stadium update error details:', JSON.stringify(stadiumError, null, 2))
+        console.error('❌ Tried to update with:', stadiumUpdateData)
+        return NextResponse.json(
+          {
+            error: 'Failed to update stadium',
+            details: stadiumError.message,
+            dbError: stadiumError
+          },
+          { status: 500 }
+        )
+      }
+
+      console.log('✅ Stadium updated successfully')
+    } else {
+      console.log('ℹ️ No club/stadium to update for this user role')
+    }
 
     // Store in KYC documents
     const { error: docError } = await supabase
@@ -561,19 +700,43 @@ export async function POST(request: NextRequest) {
         name: aadhaarData.name || aadhaarData.full_name,
         dob: aadhaarData.dob || aadhaarData.date_of_birth,
         address: aadhaarData.address,
-        status: clubUpdateData.status
+        status: club ? 'verified' : 'verified'
       }
     })
   } catch (error: any) {
     console.error('❌ Error in OTP verification:', error.message)
+    console.error('❌ Error details:', JSON.stringify(error, null, 2))
+    
+    // Extract meaningful error message
+    let errorMessage = 'OTP verification failed'
+    let statusCode = 500
+    
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+      statusCode = error.response.status || 500
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error
+      statusCode = error.response.status || 500
+    } else if (error.message) {
+      errorMessage = error.message
+      if (error.message.includes('IP not whitelisted')) {
+        statusCode = 400
+      }
+    }
+    
+    // Handle Cashfree API specific errors
+    if (errorMessage.includes('temporarily unavailable') || errorMessage.includes('timeout')) {
+      errorMessage = 'Cashfree service is temporarily unavailable. Please try again shortly.'
+      statusCode = 503
+    }
     
     return NextResponse.json(
       {
-        error: error.response?.data?.message || error.message || 'Verification failed',
-        status: error.response?.status,
-        details: error.response?.data
+        error: errorMessage,
+        status: statusCode,
+        details: error.response?.data || null
       },
-      { status: error.response?.status || 500 }
+      { status: statusCode }
     )
   }
 }

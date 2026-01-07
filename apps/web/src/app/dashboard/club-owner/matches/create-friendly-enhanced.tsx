@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,7 +27,12 @@ import {
   Building,
   UserCheck,
   Trophy,
-  X
+  X,
+  Camera,
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react'
 
 interface Club {
@@ -61,6 +66,7 @@ interface Stadium {
   facilities?: string[]
   amenities?: string[]
   is_active: boolean
+  photos?: string[]
 }
 
 interface Referee {
@@ -122,7 +128,32 @@ export function CreateFriendlyMatch({
   const [blockedTimeSlots, setBlockedTimeSlots] = useState<string[]>([])
   const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([])
   const [scheduledMatches, setScheduledMatches] = useState<any[]>([])
+  const [isLoadingMatches, setIsLoadingMatches] = useState(false) // ✅ Track loading state
   
+  // ✅ Use ref to track the current stadium being loaded to prevent race conditions
+  const currentLoadingStadiumRef = useRef<string | null>(null)
+  
+  // Stadium photo navigation state
+  const [selectedStadiumPhotos, setSelectedStadiumPhotos] = useState<{[key: string]: number}>({})
+
+  // Navigation functions for stadium photos
+  const nextStadiumPhoto = (stadiumId: string, totalPhotos: number, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedStadiumPhotos(prev => ({
+      ...prev,
+      [stadiumId]: ((prev[stadiumId] || 0) + 1) % totalPhotos
+    }))
+  }
+
+  const prevStadiumPhoto = (stadiumId: string, totalPhotos: number, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedStadiumPhotos(prev => ({
+      ...prev,
+      [stadiumId]: ((prev[stadiumId] || 0) - 1 + totalPhotos) % totalPhotos
+    }))
+  }
   // Search states
   const [clubSearchTerm, setClubSearchTerm] = useState('')
   const [showClubDropdown, setShowClubDropdown] = useState(false)
@@ -133,7 +164,7 @@ export function CreateFriendlyMatch({
     teamId: teams[0]?.id || '',
     selectedClub: null as Club | null,
     matchDate: new Date(),
-    matchTime: '09:00', // HH:mm format
+    matchTime: '', // ✅ No default - user must select
     duration: 1, // hours
     stadiumId: '',
     selectedStadium: null as Stadium | null,
@@ -484,10 +515,11 @@ export function CreateFriendlyMatch({
       })
 
       // Transform stadiums to use amenities as facilities
-      const transformedStadiums = stadiumsData?.map(s => ({
+      const transformedStadiums: Stadium[] = stadiumsData?.map(s => ({
         ...s,
         facilities: s.amenities || [],
-        district: s.district || s.city || s.state || 'Unknown'
+        district: s.district || s.city || s.state || 'Unknown',
+        photos: [] // Initialize empty photos array
       })) || []
 
       console.log('🔍 DEBUG: Transformed stadiums:', {
@@ -500,7 +532,43 @@ export function CreateFriendlyMatch({
         }))
       })
 
-      setAvailableStadiums(transformedStadiums)
+      // Fetch stadium photos for display
+      let stadiumsWithPhotos = transformedStadiums
+      if (transformedStadiums.length > 0) {
+        const stadiumIds = transformedStadiums.map(s => s.id)
+        const { data: stadiumPhotos } = await supabase
+          .from('stadium_photos')
+          .select('stadium_id, photo_data')
+          .in('stadium_id', stadiumIds)
+          .order('display_order', { ascending: true })
+
+        // Create a map of stadium_id to photos array
+        const photosMap = new Map<string, string[]>()
+        if (stadiumPhotos) {
+          stadiumPhotos.forEach(photo => {
+            if (!photosMap.has(photo.stadium_id)) {
+              photosMap.set(photo.stadium_id, [])
+            }
+            photosMap.get(photo.stadium_id)!.push(photo.photo_data)
+          })
+        }
+
+        // Attach photos to stadiums
+        stadiumsWithPhotos = transformedStadiums.map(stadium => ({
+          ...stadium,
+          photos: photosMap.get(stadium.id) || []
+        }))
+
+        console.log('📸 DEBUG: Stadium photos loaded:', {
+          totalPhotos: stadiumPhotos?.length || 0,
+          stadiumsWithPhotos: stadiumsWithPhotos.map(s => ({
+            name: s.stadium_name,
+            photoCount: s.photos?.length || 0
+          }))
+        })
+      }
+
+      setAvailableStadiums(stadiumsWithPhotos)
 
       // Load referees - filter by district/city through users table
       // Note: Try to select city/district but fall back gracefully if migration not applied yet
@@ -613,6 +681,9 @@ export function CreateFriendlyMatch({
 
   const loadScheduledMatches = async () => {
     try {
+      // ✅ Set loading state at the start
+      setIsLoadingMatches(true)
+
       // Generate all available time slots first (6 AM - 10 PM)
       const allSlots: string[] = []
       for (let i = 6; i < 22; i++) {
@@ -624,22 +695,35 @@ export function CreateFriendlyMatch({
         setAvailableTimeSlots([])
         setBlockedTimeSlots([])
         setScheduledMatches([])
+        setIsLoadingMatches(false) // ✅ Clear loading state
+        currentLoadingStadiumRef.current = null
         return
       }
+
+      // ✅ Capture current stadium ID to prevent race conditions
+      const currentStadiumId = formData.stadiumId
+      currentLoadingStadiumRef.current = currentStadiumId
+      
+      console.log('🔄 Loading matches for stadium:', currentStadiumId)
 
       const supabase = createClient()
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
-      // Fetch matches scheduled on this stadium for the selected date
-      const { data: matches } = await supabase
+      // ✅ Fetch matches scheduled on this stadium for the selected date
+      const { data: matches, error: matchesError } = await supabase
         .from('matches')
-        .select('id, scheduled_date, start_time, duration, format')
+        .select('id, match_date, match_time, match_format')
         .eq('stadium_id', formData.stadiumId)
-        .eq('scheduled_date', dateStr)
+        .eq('match_date', dateStr)
         .eq('status', 'scheduled')
 
+      if (matchesError) {
+        console.error('❌ Error fetching scheduled matches:', matchesError)
+        // Continue with empty matches to show all slots as available
+      }
+
       // Calculate match duration based on format
-      const getMatchDuration = (matchFormat: string) => {
+      const getMatchDuration = (matchFormat: string): number => {
         switch (matchFormat) {
           case '5-a-side':
             return 1 // 20min/half + 20min buffer = 1 hour
@@ -653,32 +737,53 @@ export function CreateFriendlyMatch({
       }
 
       if (matches && matches.length > 0) {
+        // ✅ Check if stadium hasn't changed during async operation (using both state and ref)
+        if (currentStadiumId !== formData.stadiumId || currentLoadingStadiumRef.current !== currentStadiumId) {
+          console.log('⚠️ Stadium changed during async load - ignoring stale data for:', currentStadiumId)
+          return
+        }
+
         setScheduledMatches(matches)
         const blockedSlots: string[] = []
 
+        console.log('🔍 Found existing matches:', matches.length)
+
         // Calculate blocked time slots based on scheduled matches
         matches.forEach((match: any) => {
-          const [hours, minutes] = match.start_time.split(':').map(Number)
-          const matchDuration = getMatchDuration(match.format) || match.duration || getMatchDuration(formData.matchFormat)
+          const [hours, minutes] = match.match_time.split(':').map(Number)
+          const matchDuration = getMatchDuration(match.match_format)
 
-          // Block time slots with proper duration (no extra buffer needed as duration includes setup time)
-          for (let i = 0; i < 24; i++) {
-            const slotStart = i
-            const slotEnd = i + 1
+          console.log(`⏰ Blocking slots for ${match.match_format} match at ${hours}:00 (${matchDuration} hours)`)
 
-            // Check if this slot overlaps with the match
-            if (slotStart < hours + matchDuration && slotEnd > hours) {
-              blockedSlots.push(`${String(i).padStart(2, '0')}:00`)
+          // Block all hours covered by this match
+          for (let i = 0; i < matchDuration; i++) {
+            const blockedHour = hours + i
+            if (blockedHour < 24) {
+              const timeSlot = `${String(blockedHour).padStart(2, '0')}:00`
+              blockedSlots.push(timeSlot)
+              console.log(`  🚫 Blocking: ${timeSlot}`)
             }
           }
         })
 
-        setBlockedTimeSlots([...new Set(blockedSlots)])
+        const uniqueBlockedSlots = [...new Set(blockedSlots)]
+        setBlockedTimeSlots(uniqueBlockedSlots)
+
+        console.log('🚫 Total blocked slots:', uniqueBlockedSlots)
 
         // Generate available time slots
-        const availableSlots = allSlots.filter(slot => !blockedSlots.includes(slot))
+        const availableSlots = allSlots.filter(slot => !uniqueBlockedSlots.includes(slot))
         setAvailableTimeSlots(availableSlots)
+        
+        console.log('✅ Available slots:', availableSlots.length)
       } else {
+        // ✅ Check if stadium hasn't changed during async operation (using both state and ref)
+        if (currentStadiumId !== formData.stadiumId || currentLoadingStadiumRef.current !== currentStadiumId) {
+          console.log('⚠️ Stadium changed during async load - ignoring stale data for:', currentStadiumId)
+          return
+        }
+
+        console.log('✅ No existing matches - all slots available for:', currentStadiumId)
         setScheduledMatches([])
         setBlockedTimeSlots([])
         setAvailableTimeSlots(allSlots)
@@ -691,6 +796,9 @@ export function CreateFriendlyMatch({
         allSlots.push(`${String(i).padStart(2, '0')}:00`)
       }
       setAvailableTimeSlots(allSlots)
+    } finally {
+      // ✅ Always clear loading state when done (success or error)
+      setIsLoadingMatches(false)
     }
   }
 
@@ -744,6 +852,13 @@ export function CreateFriendlyMatch({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Prevent double submission
+    if (loading) {
+      console.log('⏸️ Submission already in progress, ignoring duplicate click')
+      return
+    }
+    
     setLoading(true)
 
     try {
@@ -756,6 +871,66 @@ export function CreateFriendlyMatch({
       if (!selectedDate) throw new Error('Match date is required')
       if (!formData.matchTime) throw new Error('Match time is required')
       if (!formData.teamId) throw new Error('Team is required')
+
+      // Validate official match requirements
+      if (formData.matchType === 'official') {
+        if (!formData.refereeIds || formData.refereeIds.length === 0) {
+          throw new Error('Official matches require at least one referee. Please select a referee in Step 4.')
+        }
+        if (!formData.staffIds || formData.staffIds.length === 0) {
+          throw new Error('Official matches require at least one staff member. Please select staff in Step 4.')
+        }
+      }
+
+      // ✅ SERVER-SIDE VALIDATION: Check for stadium conflicts
+      const matchDate = format(selectedDate, 'yyyy-MM-dd')
+      const matchTimeHour = parseInt(formData.matchTime.split(':')[0])
+      
+      // Calculate match duration based on format
+      const MATCH_DURATIONS: Record<string, number> = {
+        '5-a-side': 1,  // 1 hour
+        '7-a-side': 2,  // 2 hours
+        '11-a-side': 3  // 3 hours
+      }
+      const matchDuration = MATCH_DURATIONS[formData.matchFormat as keyof typeof MATCH_DURATIONS] || 1
+
+      // Fetch existing matches for this stadium on this date
+      const { data: existingMatches, error: conflictCheckError } = await supabase
+        .from('matches')
+        .select('id, match_time, match_format')
+        .eq('stadium_id', formData.stadiumId)
+        .eq('match_date', matchDate)
+        .eq('status', 'scheduled')
+
+      if (conflictCheckError) {
+        console.error('Error checking stadium conflicts:', conflictCheckError)
+        throw new Error('Unable to verify stadium availability. Please try again.')
+      }
+
+      // Check for time slot conflicts
+      if (existingMatches && existingMatches.length > 0) {
+        for (const existingMatch of existingMatches) {
+          const existingStartHour = parseInt(existingMatch.match_time.split(':')[0])
+          const existingDuration = MATCH_DURATIONS[existingMatch.match_format as keyof typeof MATCH_DURATIONS] || 1
+
+          // Check if time slots overlap
+          const newMatchEnd = matchTimeHour + matchDuration
+          const existingMatchEnd = existingStartHour + existingDuration
+
+          if (
+            (matchTimeHour >= existingStartHour && matchTimeHour < existingMatchEnd) ||
+            (newMatchEnd > existingStartHour && newMatchEnd <= existingMatchEnd) ||
+            (matchTimeHour <= existingStartHour && newMatchEnd >= existingMatchEnd)
+          ) {
+            const conflictTimeRange = `${String(existingStartHour).padStart(2, '0')}:00 - ${String(existingMatchEnd).padStart(2, '0')}:00`
+            throw new Error(
+              `Stadium already booked from ${conflictTimeRange} on this date. Please select a different time slot or stadium.`
+            )
+          }
+        }
+      }
+
+      console.log(`✅ STADIUM VALIDATION: No conflicts found for ${formData.matchTime} on ${matchDate}`)
 
       // Get the home team details and validate it can play this format
       const { data: homeTeam } = await supabase
@@ -955,11 +1130,24 @@ export function CreateFriendlyMatch({
   }
 
   const selectStadium = (stadium: Stadium) => {
+    console.log('🏟️ Selecting stadium:', stadium.stadium_name, stadium.id)
+    
+    // ✅ Clear ref immediately to invalidate any pending loads
+    currentLoadingStadiumRef.current = null
+    
     setFormData(prev => ({
       ...prev,
       stadiumId: stadium.id,
-      selectedStadium: stadium
+      selectedStadium: stadium,
+      // ✅ Clear matchTime when switching stadiums because each stadium has different booked times
+      matchTime: ''
     }))
+    // ✅ IMPORTANT: Clear blocked/available time slots immediately when switching stadiums
+    // This prevents old stadium's booked slots from showing on new stadium
+    setBlockedTimeSlots([])
+    setAvailableTimeSlots([])
+    setScheduledMatches([])
+    
     // Load scheduled matches for this stadium
     if (selectedDate) {
       loadScheduledMatches()
@@ -1005,11 +1193,31 @@ export function CreateFriendlyMatch({
   }
 
   const validateStep2 = (): boolean => {
-    return !!(formData.stadiumId)
+    // ✅ Check if stadium is selected AND matches are finished loading
+    if (!formData.stadiumId) {
+      return false
+    }
+    
+    // ✅ Prevent proceeding if matches are still being loaded
+    if (isLoadingMatches) {
+      return false
+    }
+    
+    return true
   }
 
   const validateStep3 = (): boolean => {
-    return !!(selectedDate && formData.matchTime)
+    // Check if date and time are selected
+    if (!selectedDate || !formData.matchTime) {
+      return false
+    }
+    
+    // ✅ NEW: Check if selected time slot is blocked (already booked)
+    if (blockedTimeSlots.includes(formData.matchTime)) {
+      return false
+    }
+    
+    return true
   }
 
   const validateStep4 = (): boolean => {
@@ -1077,54 +1285,80 @@ export function CreateFriendlyMatch({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Create Enhanced Friendly Match
-          </CardTitle>
-          <CardDescription>
-            Step {currentStep} of {totalSteps}:{' '}
-            {currentStep === 1 ? 'Match Setup' :
-             currentStep === 2 ? 'Select Stadium' :
-             currentStep === 3 ? 'Date & Time' :
-             currentStep === 4 ? 'Officials & Resources' :
-             'Review & Confirm'}
-          </CardDescription>
+    <div className="max-w-5xl mx-auto space-y-8">
+      <Card className="border-0 shadow-lg bg-gradient-to-r from-white via-gray-50 to-white">
+        <CardHeader className="pb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Target className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  Create Match
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  {currentStep === 1 ? '⚙️ Match Setup' :
+                   currentStep === 2 ? '🏟️ Select Stadium' :
+                   currentStep === 3 ? '📅 Date & Time' :
+                   currentStep === 4 ? '👨‍⚖️ Officials & Resources' :
+                   '✅ Review & Confirm'}
+                </CardDescription>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500">Step</div>
+              <div className="text-2xl font-bold text-blue-600">{currentStep}</div>
+              <div className="text-xs text-gray-400">of {totalSteps}</div>
+            </div>
+          </div>
 
-          {/* Progress Bar */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              {[1, 2, 3, 4, 5].map((step) => (
-                <div key={step} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center flex-1">
+          {/* Enhanced Progress Bar */}
+          <div className="mt-8">
+            <div className="relative">
+              {/* Progress background line */}
+              <div className="absolute top-5 left-5 right-5 h-1 bg-gray-200 rounded-full"></div>
+              {/* Progress active line */}
+              <div 
+                className="absolute top-5 left-5 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500 ease-in-out"
+                style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+              ></div>
+              
+              {/* Step indicators */}
+              <div className="relative flex justify-between">
+                {[1, 2, 3, 4, 5].map((step) => (
+                  <div key={step} className="flex flex-col items-center">
                     <div className={`
-                      w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all
+                      w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 transform border-4
                       ${currentStep >= step
-                        ? 'bg-blue-600 text-white shadow-lg'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white border-white shadow-lg scale-110'
+                        : currentStep === step - 1
+                        ? 'bg-white text-blue-500 border-blue-300 shadow-md animate-pulse'
+                        : 'bg-gray-100 text-gray-400 border-gray-200'
                       }
                     `}>
-                      {step}
+                      {currentStep > step ? '✓' : step}
                     </div>
-                    <span className={`text-xs mt-1 text-center ${currentStep >= step ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
-                      {step === 1 && 'Setup'}
-                      {step === 2 && 'Stadium'}
-                      {step === 3 && 'Schedule'}
-                      {step === 4 && 'Officials'}
-                      {step === 5 && 'Review'}
-                    </span>
+                    <div className={`mt-2 text-center transition-all duration-300 ${currentStep >= step ? 'transform translate-y-0' : 'transform translate-y-1'}`}>
+                      <span className={`text-xs font-medium block ${
+                        currentStep >= step 
+                          ? 'text-blue-600' 
+                          : 'text-gray-400'
+                      }`}>
+                        {step === 1 && 'Setup'}
+                        {step === 2 && 'Stadium'}
+                        {step === 3 && 'Schedule'}
+                        {step === 4 && 'Officials'}
+                        {step === 5 && 'Review'}
+                      </span>
+                    </div>
                   </div>
-                  {step < 5 && (
-                    <div className={`h-1 flex-1 mx-2 rounded ${currentStep > step ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`} />
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">{/* Remove the duplicate lines */}
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* District/City Level Info Banner */}
             {(club.district || club.city) && currentStep === 1 && (
@@ -1433,84 +1667,293 @@ export function CreateFriendlyMatch({
                     </div>
                   ) : (
                     <>
-                      {/* Selected Stadium Display */}
+                      {/* Enhanced Selected Stadium Display */}
                       {formData.stadiumId && formData.selectedStadium && (
-                        <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-300 rounded-lg shadow-sm">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Building className="h-6 w-6 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <h4 className="font-semibold text-purple-900 text-lg">{formData.selectedStadium.stadium_name}</h4>
-                                  <p className="text-sm text-purple-700">{formData.selectedStadium.location}</p>
-                                  <p className="text-xs text-purple-600">District: {formData.selectedStadium.district}</p>
-                                </div>
-                                <div className="text-right">
-                                  <Badge className="bg-purple-600 text-white">₹{formData.selectedStadium.hourly_rate}/hr</Badge>
-                                  <p className="text-xs text-purple-600 mt-1">
-                                    Total: ₹{formData.selectedStadium.hourly_rate * formData.duration}
-                                  </p>
-                                </div>
+                        <div className="relative overflow-hidden bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 border-2 border-purple-300 rounded-xl shadow-lg mb-6">
+                          {/* Background Pattern */}
+                          <div className="absolute inset-0 opacity-10">
+                            <div className="absolute inset-0" style={{
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C5CF2' fill-opacity='0.2'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                            }}></div>
+                          </div>
+                          
+                          <div className="relative p-6">
+                            <div className="flex items-start gap-6">
+                              {/* Stadium Icon/Image with Navigation */}
+                              <div className="flex-shrink-0">
+                                {formData.selectedStadium.photos && formData.selectedStadium.photos.length > 0 ? (
+                                  <div className="relative w-20 h-20 rounded-xl overflow-hidden border-4 border-white shadow-lg group">
+                                    <img
+                                      src={formData.selectedStadium.photos[selectedStadiumPhotos[formData.selectedStadium.id] || 0]}
+                                      alt={`${formData.selectedStadium?.stadium_name || 'Stadium'} - Photo ${(selectedStadiumPhotos[formData.selectedStadium.id] || 0) + 1}`}
+                                      className="w-full h-full object-cover transition-transform duration-200"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none'
+                                      }}
+                                    />
+                                    
+                                    {/* Navigation arrows for selected stadium photo */}
+                                    {formData.selectedStadium && formData.selectedStadium.photos && formData.selectedStadium.photos.length > 1 && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-all duration-200 opacity-0 group-hover:opacity-100 z-10"
+                                          onClick={(e) => prevStadiumPhoto(formData.selectedStadium!.id, formData.selectedStadium!.photos!.length, e)}
+                                        >
+                                          <ChevronLeft className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-all duration-200 opacity-0 group-hover:opacity-100 z-10"
+                                          onClick={(e) => nextStadiumPhoto(formData.selectedStadium!.id, formData.selectedStadium!.photos!.length, e)}
+                                        >
+                                          <ChevronRight className="h-3 w-3" />
+                                        </button>
+                                      </>
+                                    )}
+
+                                    {/* Photo indicator dots */}
+                                    {formData.selectedStadium && formData.selectedStadium.photos && formData.selectedStadium.photos.length > 1 && (
+                                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+                                        {formData.selectedStadium.photos.map((_, idx) => (
+                                          <div
+                                            key={idx}
+                                            className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                                              idx === (selectedStadiumPhotos[formData.selectedStadium!.id] || 0)
+                                                ? 'bg-white shadow-lg'
+                                                : 'bg-white/60'
+                                            }`}
+                                          />
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center border-4 border-white shadow-lg">
+                                    <Building className="h-10 w-10 text-white" />
+                                  </div>
+                                )}
                               </div>
-                              {formData.selectedStadium.facilities && formData.selectedStadium.facilities.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {formData.selectedStadium.facilities.map((facility, index) => (
-                                    <Badge key={index} variant="secondary" className="text-xs bg-white">
-                                      {facility}
+
+                              {/* Stadium Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                      <h4 className="font-bold text-purple-900 text-xl">{formData.selectedStadium.stadium_name}</h4>
+                                      <Badge className="bg-green-100 text-green-800 border border-green-300">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        Selected
+                                      </Badge>
+                                    </div>
+                                    <p className="text-purple-700 flex items-center gap-1 mb-1">
+                                      <MapPin className="h-4 w-4" />
+                                      {formData.selectedStadium.location}
+                                    </p>
+                                    <p className="text-sm text-purple-600">District: {formData.selectedStadium.district}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <Badge className="bg-purple-600 text-white text-lg px-3 py-1">
+                                      ₹{formData.selectedStadium.hourly_rate}/hr
                                     </Badge>
-                                  ))}
+                                    <p className="text-sm text-purple-600 mt-1 font-semibold">
+                                      Total: ₹{formData.selectedStadium.hourly_rate * formData.duration}
+                                    </p>
+                                  </div>
                                 </div>
-                              )}
+                                
+                                {/* Facilities */}
+                                {formData.selectedStadium.facilities && formData.selectedStadium.facilities.length > 0 && (
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-1 text-sm font-medium text-purple-800">
+                                      <Zap className="h-4 w-4" />
+                                      Available Facilities
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {formData.selectedStadium.facilities.map((facility, index) => (
+                                        <Badge key={index} className="bg-white text-purple-700 border border-purple-300 shadow-sm">
+                                          {facility}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Clear Selection Button */}
+                              <div className="flex-shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setFormData(prev => ({ ...prev, stadiumId: '', selectedStadium: null }))}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  Change
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
                       )}
 
-                      {/* Stadium Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Enhanced Stadium Grid */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                         {filteredStadiums.map((stadium) => (
                           <div
                             key={stadium.id}
-                            className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                            className={`group relative overflow-hidden border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
                               formData.stadiumId === stadium.id
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                                ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-blue-50 shadow-xl ring-4 ring-purple-200'
+                                : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-lg'
                             }`}
                             onClick={() => selectStadium(stadium)}
                           >
-                            <div className="space-y-2">
-                              <div className="flex items-start justify-between">
-                                <h4 className="font-semibold text-gray-900 dark:text-white">{stadium.stadium_name}</h4>
-                                <div className="text-right">
-                                  <Badge variant="outline" className="whitespace-nowrap">₹{stadium.hourly_rate}/hr</Badge>
-                                  {formData.stadiumId === stadium.id && (
-                                    <CheckCircle2 className="h-5 w-5 text-purple-600 mt-1 ml-auto" />
-                                  )}
-                                </div>
+                            {/* Stadium Photos Header with Navigation */}
+                            {stadium.photos && stadium.photos.length > 0 ? (
+                              <div className="relative h-48 overflow-hidden">
+                                {/* Current Photo */}
+                                <img
+                                  src={stadium.photos[selectedStadiumPhotos[stadium.id] || 0]}
+                                  alt={`${stadium.stadium_name} - Photo ${(selectedStadiumPhotos[stadium.id] || 0) + 1}`}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'
+                                  }}
+                                />
+                                
+                                {/* Navigation arrows (only show if more than 1 photo) */}
+                                {stadium.photos.length > 1 && (
+                                  <>
+                                    {/* Previous Photo Button */}
+                                    <button
+                                      type="button"
+                                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100 z-10"
+                                      onClick={(e) => prevStadiumPhoto(stadium.id, stadium.photos!.length, e)}
+                                    >
+                                      <ChevronLeft className="h-4 w-4" />
+                                    </button>
+                                    
+                                    {/* Next Photo Button */}
+                                    <button
+                                      type="button"
+                                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 opacity-0 group-hover:opacity-100 z-10"
+                                      onClick={(e) => nextStadiumPhoto(stadium.id, stadium.photos!.length, e)}
+                                    >
+                                      <ChevronRight className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Photo indicators (dots) */}
+                                {stadium.photos.length > 1 && (
+                                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                                    {stadium.photos.map((_, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                                          idx === (selectedStadiumPhotos[stadium.id] || 0)
+                                            ? 'bg-white shadow-lg'
+                                            : 'bg-white/50'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Selected indicator */}
+                                {formData.stadiumId === stadium.id && (
+                                  <div className="absolute top-4 right-4 z-10">
+                                    <div className="bg-purple-600 text-white rounded-full p-2 shadow-lg">
+                                      <CheckCircle2 className="h-5 w-5" />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Photo count indicator */}
+                                {stadium.photos.length > 1 && (
+                                  <div className="absolute top-4 left-4 z-10">
+                                    <div className="bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                                      <Camera className="h-3 w-3" />
+                                      {(selectedStadiumPhotos[stadium.id] || 0) + 1}/{stadium.photos.length}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                              <div className="space-y-1">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
+                            ) : (
+                              <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
+                                <Building className="h-16 w-16 text-gray-400" />
+                                {formData.stadiumId === stadium.id && (
+                                  <div className="absolute top-4 right-4">
+                                    <div className="bg-purple-600 text-white rounded-full p-2 shadow-lg">
+                                      <CheckCircle2 className="h-5 w-5" />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Stadium Details */}
+                            <div className="p-5">
+                              {/* Stadium Title */}
+                              <div className="mb-3">
+                                <h4 className="font-bold text-gray-900 text-lg mb-1">{stadium.stadium_name}</h4>
+                                <p className="text-gray-600 text-sm flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
                                   {stadium.location}
                                 </p>
-                                <p className="text-xs text-gray-500">District: {stadium.district}</p>
                               </div>
+
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                  {stadium.district}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge 
+                                    className={`font-bold ${formData.stadiumId === stadium.id ? 'bg-purple-600' : 'bg-green-600'} text-white`}
+                                  >
+                                    ₹{stadium.hourly_rate}/hr
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {/* Facilities */}
                               {stadium.facilities && stadium.facilities.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {stadium.facilities.slice(0, 3).map((facility, index) => (
-                                    <Badge key={index} variant="secondary" className="text-xs">
-                                      {facility}
-                                    </Badge>
-                                  ))}
-                                  {stadium.facilities.length > 3 && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      +{stadium.facilities.length - 3} more
-                                    </Badge>
-                                  )}
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                                    <Zap className="h-4 w-4" />
+                                    Facilities
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {stadium.facilities.slice(0, 3).map((facility, index) => (
+                                      <Badge key={index} variant="secondary" className="text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                                        {facility}
+                                      </Badge>
+                                    ))}
+                                    {stadium.facilities.length > 3 && (
+                                      <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
+                                        +{stadium.facilities.length - 3}
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
                               )}
+
+                              {/* Selection Call to Action */}
+                              <div className="mt-4 pt-3 border-t border-gray-200">
+                                <div className="text-center">
+                                  {formData.stadiumId === stadium.id ? (
+                                    <div className="flex items-center justify-center gap-2 text-purple-600 font-semibold">
+                                      <CheckCircle2 className="h-5 w-5" />
+                                      Selected
+                                    </div>
+                                  ) : (
+                                    <div className="text-gray-600 text-sm group-hover:text-purple-600 transition-colors">
+                                      Click to select this stadium
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -1798,6 +2241,21 @@ export function CreateFriendlyMatch({
                                   </div>
                                 </div>
                               )}
+                            </div>
+                          )}
+
+                          {/* Error Message for Blocked Time Slot */}
+                          {formData.matchTime && blockedTimeSlots.includes(formData.matchTime) && (
+                            <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+                              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                              <div>
+                                <h4 className="font-semibold text-red-800 dark:text-red-300 mb-1">
+                                  Time Slot Not Available
+                                </h4>
+                                <p className="text-sm text-red-700 dark:text-red-400">
+                                  This time slot is already booked on the selected date. Please choose a different time slot or select another stadium.
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2149,53 +2607,92 @@ export function CreateFriendlyMatch({
           </div>
             )}
 
-            {/* Navigation Buttons */}
-            <div className="flex items-center justify-between pt-6 border-t dark:border-gray-700">
+            {/* Enhanced Navigation */}
+            <div className="flex items-center justify-between pt-8 mt-8 border-t border-gray-200 bg-gray-50 -mx-6 px-6 py-6 rounded-b-lg">
               {currentStep > 1 ? (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handlePreviousStep}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 px-6 py-3 border-2 border-gray-300 hover:border-gray-400 transition-all"
                 >
-                  ← Previous
+                  <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs">
+                    ←
+                  </div>
+                  Previous
                 </Button>
               ) : (
                 <div></div>
               )}
 
-              {currentStep < totalSteps ? (
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  disabled={!canProceedToNextStep()}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                >
-                  Next →
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleSubmit(e as any)
-                  }}
-                  disabled={loading || !formData.selectedClub || !formData.stadiumId}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Creating Match Request...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Send className="h-5 w-5" />
-                      Create Match Request
-                    </div>
-                  )}
-                </Button>
-              )}
+              <div className="flex items-center gap-3">
+                {/* Step counter */}
+                <div className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border">
+                  Step {currentStep} of {totalSteps}
+                </div>
+                
+                {currentStep < totalSteps ? (
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      onClick={handleNextStep}
+                      disabled={!canProceedToNextStep()}
+                      className={`flex items-center gap-2 px-6 py-3 transition-all transform hover:scale-105 ${
+                        canProceedToNextStep() 
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg' 
+                          : 'bg-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {isLoadingMatches && currentStep === 2 ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Loading matches...
+                        </>
+                      ) : (
+                        <>
+                          Continue
+                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
+                            →
+                          </div>
+                        </>
+                      )}
+                    </Button>
+                    
+                    {/* ✅ Show loading message when matches are being fetched */}
+                    {isLoadingMatches && currentStep === 2 && (
+                      <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                        <div className="animate-pulse">⏳</div>
+                        Loading scheduled matches to check availability...
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleSubmit(e as any)
+                    }}
+                    disabled={loading || !formData.selectedClub || !formData.stadiumId}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-8 py-3 shadow-lg transform hover:scale-105 transition-all"
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>Creating Match Request...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Send className="h-5 w-5" />
+                        <span className="font-semibold">Create Match Request</span>
+                        <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
+                          ✓
+                        </div>
+                      </div>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </form>
         </CardContent>

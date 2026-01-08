@@ -71,30 +71,37 @@ export default function StatisticsPage() {
         return
       }
 
-      // Get bookings
+      // Get bookings (matches)
       const { data: bookings } = await supabase
-        .from('stadium_slots')
+        .from('matches')
         .select('*, stadium:stadiums(stadium_name, hourly_rate)')
         .in('stadium_id', stadiumIds)
-        .eq('is_available', false)
 
       const totalBookings = bookings?.length || 0
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
       const upcomingBookings = bookings?.filter(
-        b => new Date(b.slot_date) >= today
+        b => new Date(b.match_date) >= today
       ).length || 0
 
       const completedBookings = bookings?.filter(
-        b => new Date(b.slot_date) < today
+        b => new Date(b.match_date) < today || b.status === 'completed'
       ).length || 0
 
-      // Calculate revenue
+      // Calculate revenue (estimate based on match format duration)
+      const getMatchDuration = (format: string) => {
+        switch (format?.toLowerCase()) {
+          case '5-a-side': return 1 // 1 hour
+          case '7-a-side': return 1.5 // 1.5 hours
+          case '9-a-side': return 2 // 2 hours
+          case '11-a-side': return 3 // 3 hours
+          default: return 2 // Default 2 hours
+        }
+      }
+
       const totalRevenue = bookings?.reduce((sum, booking) => {
-        const startTime = new Date(`2000-01-01T${booking.start_time}`)
-        const endTime = new Date(`2000-01-01T${booking.end_time}`)
-        const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+        const hours = getMatchDuration(booking.match_format)
         const rate = booking.stadium?.hourly_rate || 0
         return sum + (hours * rate)
       }, 0) || 0
@@ -103,29 +110,23 @@ export default function StatisticsPage() {
       const currentMonth = today.getMonth()
       const currentYear = today.getFullYear()
       const monthlyRevenue = bookings?.reduce((sum, booking) => {
-        const bookingDate = new Date(booking.slot_date)
+        const bookingDate = new Date(booking.match_date)
         if (
           bookingDate.getMonth() === currentMonth &&
           bookingDate.getFullYear() === currentYear
         ) {
-          const startTime = new Date(`2000-01-01T${booking.start_time}`)
-          const endTime = new Date(`2000-01-01T${booking.end_time}`)
-          const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+          const hours = getMatchDuration(booking.match_format)
           const rate = booking.stadium?.hourly_rate || 0
           return sum + (hours * rate)
         }
         return sum
       }, 0) || 0
 
-      // Get all slots to calculate occupancy
-      const { data: allSlots } = await supabase
-        .from('stadium_slots')
-        .select('is_available')
-        .in('stadium_id', stadiumIds)
-
-      const totalSlots = allSlots?.length || 0
-      const occupiedSlots = allSlots?.filter(s => !s.is_available).length || 0
-      const occupancyRate = totalSlots > 0 ? (occupiedSlots / totalSlots) * 100 : 0
+      // Calculate occupancy rate (simplified - based on booked vs total possible slots per day)
+      // Assuming stadiums can have up to 12 slots per day (8am-8pm)
+      const stadiumCount = stadiums?.length || 0
+      const totalPossibleSlots = stadiumCount * 30 * 12 // stadiums * days in month * slots per day
+      const occupancyRate = totalPossibleSlots > 0 ? (totalBookings / totalPossibleSlots) * 100 : 0
 
       // Find most popular stadium
       const stadiumBookingCounts: { [key: string]: number } = {}
@@ -162,11 +163,9 @@ export default function StatisticsPage() {
         const year = targetMonth.getFullYear()
 
         const monthRevenue = bookings?.reduce((sum, booking) => {
-          const bookingDate = new Date(booking.slot_date)
+          const bookingDate = new Date(booking.match_date)
           if (bookingDate.getMonth() === monthIndex && bookingDate.getFullYear() === year) {
-            const startTime = new Date(`2000-01-01T${booking.start_time}`)
-            const endTime = new Date(`2000-01-01T${booking.end_time}`)
-            const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+            const hours = getMatchDuration(booking.match_format)
             const rate = booking.stadium?.hourly_rate || 0
             return sum + (hours * rate)
           }

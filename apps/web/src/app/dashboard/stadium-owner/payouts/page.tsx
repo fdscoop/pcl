@@ -102,24 +102,36 @@ export default function PayoutsPage() {
 
       const stadiumIds = stadiums.map(s => s.id)
 
-      // Get all completed bookings
+      // Get all completed bookings (matches)
       const { data: bookings } = await supabase
-        .from('stadium_slots')
+        .from('matches')
         .select(`
           *,
           stadium:stadiums(stadium_name, hourly_rate),
-          club:clubs(club_name)
+          home_team:teams!matches_home_team_id_fkey(
+            team_name,
+            club:clubs(club_name)
+          )
         `)
         .in('stadium_id', stadiumIds)
-        .eq('is_available', false)
-        .order('slot_date', { ascending: false })
+        .eq('status', 'completed')
+        .order('match_date', { ascending: false })
 
       if (bookings) {
+        // Helper function to get match duration
+        const getMatchDuration = (format: string) => {
+          switch (format?.toLowerCase()) {
+            case '5-a-side': return 1 // 1 hour
+            case '7-a-side': return 1.5 // 1.5 hours
+            case '9-a-side': return 2 // 2 hours
+            case '11-a-side': return 3 // 3 hours
+            default: return 2 // Default 2 hours
+          }
+        }
+
         // Calculate earnings
         const totalEarnings = bookings.reduce((sum, booking) => {
-          const startTime = new Date(`2000-01-01T${booking.start_time}`)
-          const endTime = new Date(`2000-01-01T${booking.end_time}`)
-          const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+          const hours = getMatchDuration(booking.match_format)
           const rate = booking.stadium?.hourly_rate || 0
           return sum + (hours * rate)
         }, 0)

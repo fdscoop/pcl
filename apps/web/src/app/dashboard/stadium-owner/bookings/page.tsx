@@ -10,22 +10,36 @@ import { useToast } from '@/context/ToastContext'
 
 interface Booking {
   id: string
+  match_format: string
+  match_date: string
+  match_time: string
+  status: string
+  created_at: string
   stadium_id: string
-  slot_date: string
-  start_time: string
-  end_time: string
-  is_available: boolean
-  booked_by: string | null
-  booking_date: string | null
   stadium: {
     stadium_name: string
     location: string
     city: string
+    hourly_rate: number
   }
-  club: {
-    club_name: string
-    logo_url: string
-  } | null
+  home_team: {
+    id: string
+    team_name: string
+    club: {
+      id: string
+      club_name: string
+      logo_url: string | null
+    }
+  }
+  away_team: {
+    id: string
+    team_name: string
+    club: {
+      id: string
+      club_name: string
+      logo_url: string | null
+    }
+  }
 }
 
 export default function BookingsPage() {
@@ -58,17 +72,26 @@ export default function BookingsPage() {
 
       const stadiumIds = stadiums.map(s => s.id)
 
-      // Get all bookings for these stadiums
+      // Get all matches (bookings) for these stadiums
       const { data, error } = await supabase
-        .from('stadium_slots')
+        .from('matches')
         .select(`
           *,
-          stadium:stadiums(stadium_name, location, city),
-          club:clubs(club_name, logo_url)
+          stadium:stadiums(stadium_name, location, city, hourly_rate),
+          home_team:teams!matches_home_team_id_fkey(
+            id, 
+            team_name,
+            club:clubs(id, club_name, logo_url)
+          ),
+          away_team:teams!matches_away_team_id_fkey(
+            id, 
+            team_name,
+            club:clubs(id, club_name, logo_url)
+          )
         `)
         .in('stadium_id', stadiumIds)
-        .order('slot_date', { ascending: true })
-        .order('start_time', { ascending: true })
+        .order('match_date', { ascending: true })
+        .order('match_time', { ascending: true })
 
       if (error) throw error
 
@@ -100,7 +123,7 @@ export default function BookingsPage() {
 
       const stadiumIds = stadiums.map(s => s.id)
 
-      // Subscribe to changes in stadium_slots table
+      // Subscribe to changes in matches table
       const channel = supabase
         .channel('stadium-bookings')
         .on(
@@ -108,32 +131,24 @@ export default function BookingsPage() {
           {
             event: '*',
             schema: 'public',
-            table: 'stadium_slots',
+            table: 'matches',
             filter: `stadium_id=in.(${stadiumIds.join(',')})`
           },
           (payload) => {
-            console.log('Booking change detected:', payload)
+            console.log('Match booking change detected:', payload)
 
-            if (payload.eventType === 'UPDATE' && payload.new) {
-              const newBooking = payload.new as any
+            if (payload.eventType === 'INSERT' && payload.new) {
+              const newMatch = payload.new as any
               
-              // If a slot was just booked (is_available changed to false)
-              if (!newBooking.is_available && payload.old && (payload.old as any).is_available) {
-                addToast({
-                  title: 'New Booking!',
-                  description: `A new booking has been made for ${new Date(newBooking.slot_date).toLocaleDateString()}`,
-                  type: 'success'
-                })
-                
-                // Reload bookings to show the new one
-                loadBookings()
-              }
+              addToast({
+                title: 'New Match Booking!',
+                description: `A new match has been scheduled for ${new Date(newMatch.match_date).toLocaleDateString()}`,
+                type: 'success'
+              })
             }
 
             // Reload bookings for any change
-            if (payload.eventType === 'INSERT' || payload.eventType === 'DELETE') {
-              loadBookings()
-            }
+            loadBookings()
           }
         )
         .subscribe()
@@ -148,16 +163,16 @@ export default function BookingsPage() {
   }
 
   const filteredBookings = bookings.filter(booking => {
-    const bookingDate = new Date(booking.slot_date)
+    const bookingDate = new Date(booking.match_date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
     if (filter === 'upcoming') {
-      return bookingDate >= today && !booking.is_available
+      return bookingDate >= today && (booking.status === 'scheduled' || booking.status === 'confirmed')
     } else if (filter === 'completed') {
-      return bookingDate < today && !booking.is_available
+      return bookingDate < today || booking.status === 'completed'
     }
-    return !booking.is_available // Show only booked slots
+    return true // Show all matches for 'all' filter
   })
 
   const formatDate = (dateString: string) => {
@@ -245,71 +260,95 @@ export default function BookingsPage() {
                     </CardTitle>
                     <CardDescription className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
-                      {booking.stadium.city}
+                      {booking.stadium.location}, {booking.stadium.city}
                     </CardDescription>
                   </div>
-                  <Badge
-                    variant={
-                      new Date(booking.slot_date) >= new Date()
-                        ? 'default'
-                        : 'secondary'
-                    }
-                  >
-                    {new Date(booking.slot_date) >= new Date()
-                      ? 'Upcoming'
-                      : 'Completed'}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge
+                      variant={
+                        new Date(booking.match_date) >= new Date()
+                          ? 'default'
+                          : 'secondary'
+                      }
+                    >
+                      {new Date(booking.match_date) >= new Date()
+                        ? 'Upcoming'
+                        : 'Completed'}
+                    </Badge>
+                    <Badge variant="outline">{booking.match_format}</Badge>
+                  </div>
                 </div>
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {booking.club && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    {booking.club.logo_url ? (
+                {/* Teams Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Home Team */}
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    {booking.home_team.club.logo_url ? (
                       <img
-                        src={booking.club.logo_url}
-                        alt={booking.club.club_name}
+                        src={booking.home_team.club.logo_url}
+                        alt={booking.home_team.club.club_name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                         <span className="text-blue-600 font-semibold">
-                          {booking.club.club_name.charAt(0)}
+                          {booking.home_team.club.club_name.charAt(0)}
                         </span>
                       </div>
                     )}
                     <div>
-                      <p className="font-medium">{booking.club.club_name}</p>
-                      <p className="text-sm text-gray-500">Club Name</p>
+                      <p className="font-medium">{booking.home_team.club.club_name}</p>
+                      <p className="text-sm text-gray-500">{booking.home_team.team_name} (Home)</p>
                     </div>
                   </div>
-                )}
+
+                  {/* Away Team */}
+                  <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    {booking.away_team.club.logo_url ? (
+                      <img
+                        src={booking.away_team.club.logo_url}
+                        alt={booking.away_team.club.club_name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <span className="text-green-600 font-semibold">
+                          {booking.away_team.club.club_name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium">{booking.away_team.club.club_name}</p>
+                      <p className="text-sm text-gray-500">{booking.away_team.team_name} (Away)</p>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-500">Date</p>
-                      <p className="font-medium">{formatDate(booking.slot_date)}</p>
+                      <p className="text-sm text-gray-500">Match Date</p>
+                      <p className="font-medium">{formatDate(booking.match_date)}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-400" />
                     <div>
-                      <p className="text-sm text-gray-500">Time</p>
-                      <p className="font-medium">
-                        {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                      </p>
+                      <p className="text-sm text-gray-500">Match Time</p>
+                      <p className="font-medium">{formatTime(booking.match_time)}</p>
                     </div>
                   </div>
                 </div>
 
-                {booking.booking_date && (
-                  <div className="text-xs text-gray-500 pt-2 border-t">
-                    Booked on {new Date(booking.booking_date).toLocaleDateString()}
-                  </div>
-                )}
+                <div className="flex items-center justify-between pt-2 border-t text-xs text-gray-500">
+                  <span>Match ID: {booking.id.slice(0, 8)}...</span>
+                  <span>Status: {booking.status}</span>
+                  <span>Booked: {new Date(booking.created_at).toLocaleDateString()}</span>
+                </div>
               </CardContent>
             </Card>
           ))}

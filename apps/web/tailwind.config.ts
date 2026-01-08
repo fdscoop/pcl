@@ -8,11 +8,32 @@ const config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    // Enhanced responsive screens
+    screens: {
+      'xs': '360px',    // Extra small devices
+      'sm': '640px',    // Small devices
+      'md': '768px',    // Medium devices (tablets)
+      'lg': '1024px',   // Large devices (laptops)
+      'xl': '1280px',   // Extra large devices
+      '2xl': '1536px',  // 2X large devices
+    },
     container: {
       center: true,
-      padding: "2rem",
+      padding: {
+        'DEFAULT': '1rem',
+        'xs': '0.5rem',
+        'sm': '1rem',
+        'md': '1.5rem',
+        'lg': '2rem',
+        'xl': '2.5rem',
+        '2xl': '3rem',
+      },
       screens: {
-        "2xl": "1400px",
+        'sm': '100%',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1400px',
       },
     },
     extend: {
@@ -76,10 +97,34 @@ const config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      spacing: {
+        'responsive-2xs': 'clamp(0.25rem, 0.5vw, 0.5rem)',
+        'responsive-xs': 'clamp(0.5rem, 1vw, 1rem)',
+        'responsive-sm': 'clamp(1rem, 2vw, 1.5rem)',
+        'responsive-md': 'clamp(1.5rem, 3vw, 2rem)',
+        'responsive-lg': 'clamp(2rem, 4vw, 2.5rem)',
+        'responsive-xl': 'clamp(2.5rem, 5vw, 3rem)',
+        'responsive-2xl': 'clamp(3rem, 6vw, 4rem)',
+      },
+      fontSize: {
+        'responsive-xs': 'clamp(0.75rem, 2vw, 0.875rem)',
+        'responsive-sm': 'clamp(0.875rem, 2.5vw, 1rem)',
+        'responsive-base': 'clamp(1rem, 2.5vw, 1.125rem)',
+        'responsive-lg': 'clamp(1.125rem, 3vw, 1.25rem)',
+        'responsive-xl': 'clamp(1.25rem, 3.5vw, 1.5rem)',
+        'responsive-2xl': 'clamp(1.5rem, 4vw, 1.875rem)',
+        'responsive-3xl': 'clamp(1.875rem, 5vw, 2.25rem)',
+        'responsive-4xl': 'clamp(2.25rem, 6vw, 3rem)',
+        'responsive-5xl': 'clamp(3rem, 7vw, 3.75rem)',
+      },
       maxWidth: {
         "5xl": "64rem",
         "7xl": "80rem",
         "8xl": "88rem",
+        "responsive": "clamp(100%, 90vw, 1280px)",
+      },
+      minHeight: {
+        "screen-responsive": "clamp(100vh, 100dvh, 100vh)",
       },
       keyframes: {
         "accordion-down": {

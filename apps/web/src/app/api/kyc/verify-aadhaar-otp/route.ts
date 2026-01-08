@@ -457,6 +457,32 @@ export async function POST(request: NextRequest) {
       console.log('👤 Player or other role - no club/stadium update needed')
     }
 
+    // 🚫 FRAUD PREVENTION: Check if this Aadhaar is already used by ANOTHER user
+    // Allow same user to re-verify (player + same aadhaar = not fraud)
+    // Block different user using same Aadhaar (player + same aadhaar + different profile = fraud)
+    const { data: existingAadhaarUser } = await supabase
+      .from('users')
+      .select('id, role, email, full_name')
+      .eq('aadhaar_number', otpRequest.aadhaar_number)
+      .neq('id', user.id) // Exclude current user
+      .single()
+
+    if (existingAadhaarUser) {
+      console.error('🚨 FRAUD ATTEMPT: Aadhaar already verified with different user')
+      console.error('Current user:', user.id, user.email)
+      console.error('Existing user:', existingAadhaarUser.id, existingAadhaarUser.email)
+      
+      return NextResponse.json(
+        {
+          error: 'Aadhaar Already Registered',
+          message: `This Aadhaar number is already verified with another ${existingAadhaarUser.role} account (${existingAadhaarUser.email}). Each Aadhaar can only be used by one person. If you believe this is an error, please contact support@professionalclubleague.com`
+        },
+        { status: 400 }
+      )
+    }
+
+    console.log('✅ Fraud check passed - Aadhaar can be used by this user')
+
     // Update user with verified Aadhaar and fill in missing profile data
     const userUpdateData: any = {
       kyc_status: 'verified',
@@ -523,15 +549,46 @@ export async function POST(request: NextRequest) {
 
       // Check for specific error types
       if (userError.code === '23505' || userError.message?.includes('duplicate key')) {
-        console.error('⚠️ Duplicate key error - likely Aadhaar already verified')
-        return NextResponse.json(
-          {
-            error: 'Aadhaar Already Registered',
-            message: 'This Aadhaar number is already verified with another account. Each Aadhaar can only be used once.',
-            details: userError.message
-          },
-          { status: 409 }
-        )
+        // Check if this is the same user re-verifying vs fraud attempt
+        const { data: existingUserWithAadhaar } = await supabase
+          .from('users')
+          .select('id, email, role')
+          .eq('aadhaar_number', otpRequest.aadhaar_number)
+          .single()
+        
+        if (existingUserWithAadhaar && existingUserWithAadhaar.id === user.id) {
+          // Same user re-verifying - this is OK, just update KYC status
+          console.log('✅ Same user re-verification detected - updating KYC status only')
+          const { error: statusUpdateError } = await supabase
+            .from('users')
+            .update({ 
+              kyc_status: 'verified',
+              kyc_verified_at: new Date().toISOString()
+            })
+            .eq('id', user.id)
+          
+          if (statusUpdateError) {
+            console.error('❌ Status update error:', statusUpdateError)
+            return NextResponse.json(
+              { error: 'Failed to update verification status' },
+              { status: 500 }
+            )
+          }
+          
+          // Continue with the rest of the verification process
+          console.log('✅ Re-verification successful for same user')
+        } else {
+          // Different user trying to use same Aadhaar - fraud attempt
+          console.error('🚨 FRAUD: Different user attempting to use same Aadhaar')
+          return NextResponse.json(
+            {
+              error: 'Aadhaar Already Registered',
+              message: 'This Aadhaar number is already verified with another account. Each Aadhaar can only be used once.',
+              details: userError.message
+            },
+            { status: 409 }
+          )
+        }
       }
 
       if (userError.code === '42501' || userError.message?.includes('permission denied')) {

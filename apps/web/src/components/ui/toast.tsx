@@ -8,6 +8,14 @@ export interface Toast {
   title: string
   description?: string
   duration?: number
+  action?: {
+    label: string
+    onClick: () => void
+  }
+  secondaryAction?: {
+    label: string
+    onClick: () => void
+  }
 }
 
 interface ToastProps {
@@ -53,29 +61,71 @@ export function Toast({ toast, onDismiss }: ToastProps) {
 
   return (
     <div
-      className={`animate-in slide-in-from-right-full duration-300 ${bgColor} border rounded-lg p-4 shadow-lg flex gap-3 items-start min-w-[320px] max-w-[500px]`}
+      className={`animate-in slide-in-from-top-full duration-300 ${bgColor} border rounded-lg p-4 shadow-lg flex flex-col gap-3 min-w-[320px] max-w-[500px]`}
       role="alert"
     >
-      <div className={`text-lg font-bold flex-shrink-0 ${textColor}`}>
-        {icon}
+      <div className="flex gap-3 items-start">
+        <div className={`text-lg font-bold flex-shrink-0 ${textColor}`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-semibold ${titleColor} text-sm`}>
+            {toast.title}
+          </h3>
+          {toast.description && (
+            <p className={`${textColor} text-xs mt-1`}>
+              {toast.description}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={() => onDismiss(toast.id)}
+          className={`flex-shrink-0 ${textColor} hover:opacity-70 transition-opacity text-lg font-bold`}
+          aria-label="Close notification"
+        >
+          ✕
+        </button>
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className={`font-semibold ${titleColor} text-sm`}>
-          {toast.title}
-        </h3>
-        {toast.description && (
-          <p className={`${textColor} text-xs mt-1`}>
-            {toast.description}
-          </p>
-        )}
-      </div>
-      <button
-        onClick={() => onDismiss(toast.id)}
-        className={`flex-shrink-0 ${textColor} hover:opacity-70 transition-opacity text-lg font-bold`}
-        aria-label="Close notification"
-      >
-        ✕
-      </button>
+      
+      {/* Action Buttons */}
+      {(toast.action || toast.secondaryAction) && (
+        <div className="flex gap-2 justify-end">
+          {toast.secondaryAction && (
+            <button
+              onClick={() => {
+                toast.secondaryAction!.onClick()
+                onDismiss(toast.id)
+              }}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                toast.type === 'info' 
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {toast.secondaryAction.label}
+            </button>
+          )}
+          {toast.action && (
+            <button
+              onClick={() => {
+                toast.action!.onClick()
+                onDismiss(toast.id)
+              }}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                toast.type === 'info' 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : toast.type === 'success'
+                  ? 'bg-green-600 text-white hover:bg-green-700' 
+                  : toast.type === 'warning'
+                  ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              }`}
+            >
+              {toast.action.label}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -87,7 +137,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
       {toasts.map(toast => (
         <div key={toast.id} className="pointer-events-auto">
           <Toast toast={toast} onDismiss={onDismiss} />

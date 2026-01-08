@@ -136,15 +136,18 @@ export default function KYCPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-3 border-orange-500 border-t-transparent"></div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Loading...</p>
+        </div>
       </div>
     )
   }
 
   if (!userData) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground">Failed to load user data</p>
+      <div className="text-center py-12">
+        <p className="text-slate-500 dark:text-slate-400">Failed to load user data</p>
       </div>
     )
   }
@@ -156,54 +159,54 @@ export default function KYCPage() {
   )
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+    <div className="space-y-5">
+      <div className="flex items-center gap-3 mb-5">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-8 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+          <ArrowLeft className="w-4 h-4 mr-1.5" />
           Back
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">KYC Verification</h1>
-          <p className="text-muted-foreground mt-1">
-            Complete all verification steps to enable payouts and advanced features
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">KYC Verification</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-xs sm:text-sm">
+            Complete all verification steps to enable payouts
           </p>
         </div>
       </div>
 
       {/* Progress Overview */}
-      <Card className="border-2 shadow-xl">
-        <CardHeader className="bg-gradient-to-r from-primary/5 via-accent/10 to-primary/5">
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-accent" />
-            Verification Progress
+      <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20 pb-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ShieldCheck className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+            <span className="text-slate-800 dark:text-slate-100">Verification Progress</span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
             Complete all three steps for full account verification
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <CardContent className="pt-5">
+          <div className="grid md:grid-cols-3 gap-3 mb-5">
             {/* Aadhaar */}
-            <div className={`p-5 rounded-xl border-2 transition-all ${
+            <div className={`p-4 rounded-xl border-2 transition-all ${
               kycStatus.aadhaar_verified
-                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-400 dark:from-emerald-950/30 dark:to-teal-950/30'
-                : 'bg-gradient-to-br from-orange-50 to-amber-50 border-accent/50 dark:from-orange-950/20 dark:to-amber-950/20'
+                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-300 dark:from-emerald-950/30 dark:to-teal-950/20 dark:border-emerald-800'
+                : 'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 dark:from-orange-950/20 dark:to-amber-950/10 dark:border-orange-900/50'
             }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-3 rounded-xl ${
+              <div className="flex items-start gap-2.5">
+                <div className={`p-2 rounded-lg ${
                   kycStatus.aadhaar_verified
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
-                    : 'bg-gradient-to-br from-orange-500 to-accent'
+                    ? 'bg-gradient-to-br from-emerald-500 to-teal-500'
+                    : 'bg-gradient-to-br from-orange-500 to-amber-500'
                 }`}>
                   {kycStatus.aadhaar_verified ? (
-                    <Check className="w-5 h-5 text-white" />
+                    <Check className="w-4 h-4 text-white" />
                   ) : (
-                    <User className="w-5 h-5 text-white" />
+                    <User className="w-4 h-4 text-white" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-sm mb-1">Aadhaar Verification</h3>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                  <h3 className="font-bold text-xs mb-0.5 text-slate-800 dark:text-slate-100">Aadhaar Verification</h3>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                     kycStatus.aadhaar_verified
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
@@ -215,26 +218,26 @@ export default function KYCPage() {
             </div>
 
             {/* Bank Account */}
-            <div className={`p-5 rounded-xl border-2 transition-all ${
+            <div className={`p-4 rounded-xl border-2 transition-all ${
               kycStatus.bank_verified
-                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-400 dark:from-emerald-950/30 dark:to-teal-950/30'
-                : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-400/50 dark:from-blue-950/20 dark:to-indigo-950/20'
+                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-300 dark:from-emerald-950/30 dark:to-teal-950/20 dark:border-emerald-800'
+                : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 dark:from-blue-950/20 dark:to-indigo-950/10 dark:border-blue-900/50'
             }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-3 rounded-xl ${
+              <div className="flex items-start gap-2.5">
+                <div className={`p-2 rounded-lg ${
                   kycStatus.bank_verified
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
-                    : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                    ? 'bg-gradient-to-br from-emerald-500 to-teal-500'
+                    : 'bg-gradient-to-br from-blue-500 to-indigo-500'
                 }`}>
                   {kycStatus.bank_verified ? (
-                    <Check className="w-5 h-5 text-white" />
+                    <Check className="w-4 h-4 text-white" />
                   ) : (
-                    <Building2 className="w-5 h-5 text-white" />
+                    <Building2 className="w-4 h-4 text-white" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-sm mb-1">Bank Account</h3>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                  <h3 className="font-bold text-xs mb-0.5 text-slate-800 dark:text-slate-100">Bank Account</h3>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                     kycStatus.bank_verified
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
                       : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
@@ -246,26 +249,26 @@ export default function KYCPage() {
             </div>
 
             {/* Documents */}
-            <div className={`p-5 rounded-xl border-2 transition-all ${
+            <div className={`p-4 rounded-xl border-2 transition-all ${
               kycStatus.documents_verified
-                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-400 dark:from-emerald-950/30 dark:to-teal-950/30'
-                : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-400/50 dark:from-purple-950/20 dark:to-pink-950/20'
+                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-300 dark:from-emerald-950/30 dark:to-teal-950/20 dark:border-emerald-800'
+                : 'bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 dark:from-purple-950/20 dark:to-pink-950/10 dark:border-purple-900/50'
             }`}>
-              <div className="flex items-start gap-3">
-                <div className={`p-3 rounded-xl ${
+              <div className="flex items-start gap-2.5">
+                <div className={`p-2 rounded-lg ${
                   kycStatus.documents_verified
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600'
-                    : 'bg-gradient-to-br from-purple-500 to-pink-600'
+                    ? 'bg-gradient-to-br from-emerald-500 to-teal-500'
+                    : 'bg-gradient-to-br from-purple-500 to-pink-500'
                 }`}>
                   {kycStatus.documents_verified ? (
-                    <Check className="w-5 h-5 text-white" />
+                    <Check className="w-4 h-4 text-white" />
                   ) : (
-                    <FileCheck className="w-5 h-5 text-white" />
+                    <FileCheck className="w-4 h-4 text-white" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-sm mb-1">Documents Verification</h3>
-                  <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                  <h3 className="font-bold text-xs mb-0.5 text-slate-800 dark:text-slate-100">Documents</h3>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                     kycStatus.documents_verified
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
                       : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
@@ -278,14 +281,14 @@ export default function KYCPage() {
           </div>
 
           {/* Progress Bar */}
-          <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-amber-950/30 border-2 border-amber-400/60 rounded-xl p-5">
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/10 border-2 border-orange-200 dark:border-orange-900/50 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-foreground">Overall Completion</p>
-              <span className="text-lg font-bold text-foreground">{completionPercentage}%</span>
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Overall Completion</p>
+              <span className="text-base font-bold text-slate-800 dark:text-slate-100">{completionPercentage}%</span>
             </div>
-            <div className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-orange-400 via-amber-500 to-emerald-500 transition-all duration-700"
+                className="h-full bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500 transition-all duration-700"
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>
@@ -298,28 +301,28 @@ export default function KYCPage() {
         <TabsList className="grid w-full grid-cols-3 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 h-auto gap-1">
           <TabsTrigger 
             value="aadhaar" 
-            className="flex items-center justify-center gap-2 rounded-lg py-3 px-4 font-semibold transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+            className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 px-3 text-xs font-semibold transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
           >
-            <User className="w-4 h-4" />
+            <User className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Aadhaar</span>
           </TabsTrigger>
           <TabsTrigger 
             value="bank" 
-            className="flex items-center justify-center gap-2 rounded-lg py-3 px-4 font-semibold transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+            className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 px-3 text-xs font-semibold transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
           >
-            <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Bank Account</span>
+            <Building2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Bank</span>
           </TabsTrigger>
           <TabsTrigger 
             value="documents" 
-            className="flex items-center justify-center gap-2 rounded-lg py-3 px-4 font-semibold transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+            className="flex items-center justify-center gap-1.5 rounded-lg py-2.5 px-3 text-xs font-semibold transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
           >
-            <FileCheck className="w-4 h-4" />
-            <span className="hidden sm:inline">Documents</span>
+            <FileCheck className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Docs</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="aadhaar" className="mt-6">
+        <TabsContent value="aadhaar" className="mt-5">
           <AadhaarVerification
             userId={userData.id}
             isVerified={kycStatus.aadhaar_verified}
@@ -327,14 +330,14 @@ export default function KYCPage() {
           />
         </TabsContent>
 
-        <TabsContent value="bank" className="mt-6">
+        <TabsContent value="bank" className="mt-5">
           <BankAccountVerification
             userId={userData.id}
             userData={userData}
           />
         </TabsContent>
 
-        <TabsContent value="documents" className="mt-6">
+        <TabsContent value="documents" className="mt-5">
           <StadiumDocumentsVerification
             userId={userData.id}
             userData={userData}

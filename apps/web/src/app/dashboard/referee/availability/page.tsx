@@ -73,12 +73,17 @@ export default function RefereeAvailability() {
 
       setIsAvailable(newStatus)
       addToast({ 
-        message: newStatus ? 'You are now available for matches!' : 'You are now unavailable for matches',
+        title: 'Availability Updated',
+        description: newStatus ? 'You are now available for matches!' : 'You are now unavailable for matches',
         type: 'success'
       })
     } catch (error: any) {
       console.error('Update error:', error)
-      addToast({ title: error.message || 'Failed to update availability', type: 'error' })
+      addToast({ 
+        title: 'Error',
+        description: error.message || 'Failed to update availability', 
+        type: 'error' 
+      })
     } finally {
       setSaving(false)
     }

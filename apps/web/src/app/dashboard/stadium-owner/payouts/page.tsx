@@ -178,129 +178,163 @@ export default function PayoutsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full border-3 border-emerald-200 dark:border-emerald-900"></div>
+            <div className="w-12 h-12 rounded-full border-3 border-emerald-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Loading...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Payouts</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Manage your earnings and payout history
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              ₹{summary.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/30">
+              <DollarSign className="h-5 w-5 text-white" />
             </div>
-            <p className="text-xs text-gray-500">Ready to withdraw</p>
+            Payouts
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-xs sm:text-sm">
+            Manage your earnings and payout history
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg hover:shadow-emerald-100/50 dark:hover:shadow-emerald-900/20 transition-all group overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+            <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400">Available Balance</CardTitle>
+            <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/60 transition-colors">
+              <DollarSign className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              ₹{summary.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Ready to withdraw</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-600" />
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all group overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+            <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Earnings</CardTitle>
+            <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/60 transition-colors">
+              <TrendingUp className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{summary.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <p className="text-xs text-gray-500">All time</p>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">₹{summary.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">All time</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Payout</CardTitle>
-            <Calendar className="h-4 w-4 text-orange-600" />
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all group overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-amber-500"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
+            <CardTitle className="text-xs font-semibold text-slate-500 dark:text-slate-400">Pending Payout</CardTitle>
+            <div className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/40 group-hover:bg-orange-200 dark:group-hover:bg-orange-900/60 transition-colors">
+              <Calendar className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{summary.pendingPayout.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <p className="text-xs text-gray-500">Processing</p>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">₹{summary.pendingPayout.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Processing</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      {/* Payout Account Card */}
+      <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900 px-4 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <CardTitle>Payout Account</CardTitle>
-              <CardDescription>Setup your bank account for payouts</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-base text-slate-800 dark:text-slate-100">
+                <CreditCard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                Payout Account
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Setup your bank account for payouts</CardDescription>
             </div>
             <Link href="/dashboard/stadium-owner/kyc?tab=bank">
-              <Button variant="outline" size="sm">
-                <Edit2 className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" className="h-8 text-xs border-slate-200 dark:border-slate-700 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-200 dark:hover:border-orange-900/50 hover:text-orange-600 dark:hover:text-orange-400 transition-all">
+                <Edit2 className="h-3 w-3 mr-1.5" />
                 {payoutAccount ? 'Edit' : 'Setup'} Account
               </Button>
             </Link>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4 px-4 pb-4">
           {!payoutAccount ? (
-            <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-2.5 p-3 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/20 rounded-xl border border-red-200 dark:border-red-900/50">
+              <div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/50">
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </div>
               <div className="flex-1">
-                <p className="font-medium text-red-900 dark:text-red-200">
+                <p className="font-semibold text-xs text-red-800 dark:text-red-200">
                   Bank account not connected
                 </p>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                  You need to add and verify a bank account to receive payouts. Direct bank transfers to verified accounts only.
+                <p className="text-[11px] text-red-600 dark:text-red-300 mt-0.5">
+                  Add and verify a bank account to receive payouts
                 </p>
               </div>
             </div>
           ) : payoutAccount.verification_status === 'verified' ? (
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
+                  <CheckCircle className="h-4 w-4 text-white" />
+                </div>
                 <div className="flex-1">
-                  <p className="font-medium text-green-900 dark:text-green-200">
+                  <p className="font-semibold text-xs text-emerald-800 dark:text-emerald-200">
                     Bank account verified
                   </p>
-                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-300 mt-0.5">
                     Your account is ready to receive payouts
                   </p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-lg border border-gray-200 dark:border-gray-800">
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div>
-                  <p className="text-xs text-gray-500">Account Holder</p>
-                  <p className="font-medium mt-1">{payoutAccount.account_holder}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Account Holder</p>
+                  <p className="font-semibold text-xs mt-0.5 text-slate-800 dark:text-slate-100">{payoutAccount.account_holder}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Bank Name</p>
-                  <p className="font-medium mt-1">{payoutAccount.bank_name}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Bank Name</p>
+                  <p className="font-semibold text-xs mt-0.5 text-slate-800 dark:text-slate-100">{payoutAccount.bank_name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Account Number</p>
-                  <p className="font-medium mt-1">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">Account Number</p>
+                  <p className="font-semibold text-xs mt-0.5 text-slate-800 dark:text-slate-100 font-mono">
                     •••• {payoutAccount.account_number.slice(-4)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">IFSC Code</p>
-                  <p className="font-medium mt-1">{payoutAccount.ifsc_code}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">IFSC Code</p>
+                  <p className="font-semibold text-xs mt-0.5 text-slate-800 dark:text-slate-100 font-mono">{payoutAccount.ifsc_code}</p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-2.5 p-3 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 rounded-xl border border-amber-200 dark:border-amber-900/50">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-500">
+                <AlertCircle className="h-4 w-4 text-white" />
+              </div>
               <div className="flex-1">
-                <p className="font-medium text-yellow-900 dark:text-yellow-200">
+                <p className="font-semibold text-xs text-amber-800 dark:text-amber-200">
                   Bank account pending verification
                 </p>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                  Your account ({payoutAccount.account_holder}) is under {payoutAccount.verification_status}. Please wait for verification to complete.
+                <p className="text-[11px] text-amber-600 dark:text-amber-300 mt-0.5">
+                  Your account ({payoutAccount.account_holder}) is under {payoutAccount.verification_status}
                 </p>
               </div>
             </div>
@@ -308,57 +342,66 @@ export default function PayoutsPage() {
         </CardContent>
       </Card>
 
+      {/* Request Payout Card */}
       {summary.availableBalance > 0 && (
-        <Card className={payoutAccount?.verification_status === 'verified' ? 'border-green-200 dark:border-green-800' : 'border-gray-200 dark:border-gray-800'}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className={`overflow-hidden transition-all ${payoutAccount?.verification_status === 'verified' ? 'border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 hover:shadow-lg' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'}`}>
+          <div className={`h-1 w-full ${payoutAccount?.verification_status === 'verified' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+          <CardHeader className="px-4 py-3.5">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
               {payoutAccount?.verification_status === 'verified' ? (
                 <>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500">
+                    <CheckCircle className="h-4 w-4 text-white" />
+                  </div>
                   Request Payout
                 </>
               ) : (
                 <>
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                    <Lock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                  </div>
                   Request Payout
                 </>
               )}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
               Withdraw your available balance
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 px-4 pb-4">
             {payoutAccount?.verification_status === 'verified' ? (
               <>
-                <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
                   <div>
-                    <p className="text-sm text-gray-500">Available to withdraw</p>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Available to withdraw</p>
+                    <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                       ₹{summary.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <Button className="bg-green-600 hover:bg-green-700">
+                  <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 text-xs h-8">
+                    <DollarSign className="h-3.5 w-3.5 mr-1.5" />
                     Request Payout
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
                   Payouts are typically processed within 2-3 business days. Processing fees may apply.
                 </p>
               </>
             ) : (
-              <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
-                <Lock className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700">
+                  <Lock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                </div>
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                  <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">
                     Payouts Disabled
                   </p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     You need to verify your bank account before you can request payouts.
                   </p>
-                  <Link href="/dashboard/stadium-owner/kyc?tab=bank" className="mt-3 inline-block">
-                    <Button size="sm" variant="outline">
-                      <Edit2 className="h-4 w-4 mr-2" />
+                  <Link href="/dashboard/stadium-owner/kyc?tab=bank" className="mt-2.5 inline-block">
+                    <Button size="sm" variant="outline" className="text-xs h-7 border-slate-200 dark:border-slate-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all">
+                      <Edit2 className="h-3 w-3 mr-1.5" />
                       Verify Bank Account
                     </Button>
                   </Link>
@@ -369,50 +412,56 @@ export default function PayoutsPage() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      {/* Recent Earnings Card */}
+      <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-emerald-50 dark:from-orange-900/20 dark:to-emerald-900/20 px-4 py-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
-              <CardTitle>Recent Earnings</CardTitle>
-              <CardDescription>
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <TrendingUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                Recent Earnings
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
                 Revenue from your recent bookings
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" className="text-xs h-7 border-slate-200 dark:border-slate-700 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all">
+              <Download className="h-3 w-3 mr-1.5" />
               Export
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4 px-4 pb-4">
           {recentBookings.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <DollarSign className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-              <p>No earnings yet</p>
-              <p className="text-sm mt-1">
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center mb-3">
+                <DollarSign className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+              </div>
+              <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">No earnings yet</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Earnings from completed bookings will appear here
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentBookings.map((booking) => {
                 const revenue = calculateBookingRevenue(booking)
                 return (
                   <div
                     key={booking.id}
-                    className="flex items-center justify-between p-3 rounded-lg border"
+                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all"
                   >
-                    <div className="flex-1">
-                      <p className="font-medium">{booking.stadium.stadium_name}</p>
-                      <p className="text-sm text-gray-500">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate">{booking.stadium.stadium_name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                         {booking.club.club_name} • {formatDate(booking.slot_date)}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">
+                    <div className="text-right ml-3">
+                      <p className="font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                         +₹{revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 text-[10px] px-1.5 py-0.5">
                         Completed
                       </Badge>
                     </div>
@@ -424,24 +473,28 @@ export default function PayoutsPage() {
         </CardContent>
       </Card>
 
+      {/* Payout History */}
       {summary.lastPayoutDate && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Payout History</CardTitle>
-            <CardDescription>Your previous withdrawals</CardDescription>
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 px-4 py-3.5">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              Payout History
+            </CardTitle>
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Your previous withdrawals</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg border">
+          <CardContent className="pt-4 px-4 pb-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10">
                 <div>
-                  <p className="font-medium">Last Payout</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-semibold text-sm text-slate-800 dark:text-slate-100">Last Payout</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDate(summary.lastPayoutDate)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold">₹{summary.lastPayoutAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                  <Badge className="bg-green-600">Completed</Badge>
+                  <p className="font-bold text-sm text-slate-800 dark:text-slate-100">₹{summary.lastPayoutAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 text-[10px] px-1.5 py-0.5">Completed</Badge>
                 </div>
               </div>
             </div>

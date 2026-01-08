@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/context/ToastContext'
 import { ArrowLeft, Save, User, MapPin, Briefcase, DollarSign, Award, Info } from 'lucide-react'
+import { KERALA_DISTRICTS, INDIAN_STATES, COUNTRIES, getDistrictsForState } from '@/lib/constants/locations'
 
 export default function StaffProfile() {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function StaffProfile() {
   const [formData, setFormData] = useState({
     bio: '',
     city: '',
-    state: '',
+    state: 'Kerala', // Default to Kerala for Phase 1
     district: '',
     country: 'India',
     experience_years: 0,
@@ -33,6 +34,9 @@ export default function StaffProfile() {
     license_number: '',
     license_expiry_date: ''
   })
+
+  // Get available districts based on selected state
+  const availableDistricts = getDistrictsForState(formData.state)
 
   useEffect(() => {
     loadProfile()
@@ -189,43 +193,79 @@ export default function StaffProfile() {
               <Label htmlFor="city" className="text-gray-700 font-medium">City *</Label>
               <Input
                 id="city"
-                placeholder="e.g., Mumbai"
+                placeholder="e.g., Kochi"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="mt-2 rounded-xl border-gray-200"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="district" className="text-gray-700 font-medium">District</Label>
-              <Input
-                id="district"
-                placeholder="e.g., Mumbai Suburban"
-                value={formData.district}
-                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                className="mt-2 rounded-xl border-gray-200"
+                className="mt-2 rounded-xl border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
               />
             </div>
 
             <div>
               <Label htmlFor="state" className="text-gray-700 font-medium">State *</Label>
-              <Input
+              <select
                 id="state"
-                placeholder="e.g., Maharashtra"
                 value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                className="mt-2 rounded-xl border-gray-200"
-              />
+                onChange={(e) => {
+                  const newState = e.target.value;
+                  setFormData({ 
+                    ...formData, 
+                    state: newState,
+                    district: '' // Reset district when state changes
+                  });
+                }}
+                className="mt-2 w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+              >
+                <option value="">Select State</option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+              {formData.state === 'Kerala' && (
+                <p className="text-xs text-orange-600 mt-1">🏏 Kerala - Phase 1 focus region</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="district" className="text-gray-700 font-medium">District</Label>
+              <select
+                id="district"
+                value={formData.district}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                disabled={!formData.state}
+                className="mt-2 w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20 disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                <option value="">
+                  {!formData.state 
+                    ? "Select State First" 
+                    : availableDistricts.length === 0 
+                      ? "No districts available" 
+                      : "Select District"
+                  }
+                </option>
+                {availableDistricts.map((district) => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.state === 'Kerala' 
+                  ? "Kerala districts available in Phase 1" 
+                  : "Select your district for local opportunities"
+                }
+              </p>
             </div>
 
             <div>
               <Label htmlFor="country" className="text-gray-700 font-medium">Country</Label>
-              <Input
+              <select
                 id="country"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                className="mt-2 rounded-xl border-gray-200"
-              />
+                className="mt-2 w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+              >
+                {COUNTRIES.map((country) => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

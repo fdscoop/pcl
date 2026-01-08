@@ -62,6 +62,8 @@ async function verifyAadhaarOTP(requestId: string, otp: string): Promise<any> {
 }
 
 export async function POST(request: NextRequest) {
+  let user: any = null
+  
   try {
     const { request_id, otp } = await request.json()
 
@@ -87,7 +89,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    user = authUser
 
     if (!user) {
       return NextResponse.json(
@@ -501,7 +504,25 @@ export async function POST(request: NextRequest) {
       }
     })
   } catch (error: any) {
-    console.error('❌ Error in OTP verification:', error.message)
+    console.error('❌ Error in OTP verification:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data,
+      status: error.response?.status,
+      userId: user?.id,
+      userEmail: user?.email
+    })
+
+    // More specific error messages
+    if (error.message?.includes('RLS') || error.message?.includes('permission denied')) {
+      return NextResponse.json(
+        {
+          error: 'Database access issue. Please try again or contact support.',
+          details: 'RLS policy error'
+        },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
       {

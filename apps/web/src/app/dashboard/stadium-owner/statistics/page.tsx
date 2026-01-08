@@ -206,199 +206,260 @@ export default function StatisticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full border-3 border-orange-200 dark:border-orange-900"></div>
+            <div className="w-12 h-12 rounded-full border-3 border-orange-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Loading statistics...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Statistics</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Overview of your stadium performance and analytics
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-lg shadow-blue-500/30">
+              <BarChart3 className="h-5 w-5 text-white" />
+            </div>
+            Statistics
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-0.5 text-xs sm:text-sm">
+            Overview of your stadium performance
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Stadiums</CardTitle>
-            <Building2 className="h-4 w-4 text-blue-600" />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all group overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-slate-600 to-slate-500"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-3.5">
+            <CardTitle className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">Total Stadiums</CardTitle>
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+              <Building2 className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalStadiums}</div>
-            <p className="text-xs text-gray-500">
-              {stats.activeStadiums} active
+          <CardContent className="px-3.5 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.totalStadiums}</div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{stats.activeStadiums}</span> active
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-            <Calendar className="h-4 w-4 text-green-600" />
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all group overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-amber-500"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-3.5">
+            <CardTitle className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">Total Bookings</CardTitle>
+            <div className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/40 group-hover:bg-orange-200 dark:group-hover:bg-orange-900/60 transition-colors">
+              <Calendar className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBookings}</div>
-            <p className="text-xs text-gray-500">
-              {stats.upcomingBookings} upcoming
+          <CardContent className="px-3.5 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.totalBookings}</div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <span className="text-orange-600 dark:text-orange-400 font-semibold">{stats.upcomingBookings}</span> upcoming
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-yellow-600" />
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all group overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-3.5">
+            <CardTitle className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">Total Revenue</CardTitle>
+            <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/60 transition-colors">
+              <DollarSign className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{stats.totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-gray-500">
+          <CardContent className="px-3.5 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">₹{stats.totalRevenue.toFixed(0)}</div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
               All time earnings
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all group overflow-hidden">
+          <div className="h-1 w-full bg-gradient-to-r from-purple-500 to-pink-500"></div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-3.5">
+            <CardTitle className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">Occupancy Rate</CardTitle>
+            <div className="p-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/40 group-hover:bg-purple-200 dark:group-hover:bg-purple-900/60 transition-colors">
+              <TrendingUp className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.occupancyRate.toFixed(1)}%</div>
-            <p className="text-xs text-gray-500">
+          <CardContent className="px-3.5 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.occupancyRate.toFixed(1)}%</div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
               Overall utilization
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 px-4 py-3.5">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40">
+                <BarChart3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
               Revenue Trend
             </CardTitle>
-            <CardDescription>Monthly revenue (last 6 months)</CardDescription>
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Monthly revenue (last 6 months)</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-5 px-4 pb-4">
             {stats.revenueByMonth.length > 0 ? (
               <SimpleLineChart 
                 data={stats.revenueByMonth}
-                height={200}
+                height={180}
                 color="#3b82f6"
               />
             ) : (
-              <div className="flex items-center justify-center h-48 text-gray-400">
-                No revenue data available
+              <div className="flex flex-col items-center justify-center h-40 text-slate-500 dark:text-slate-400">
+                <BarChart3 className="h-10 w-10 mb-2 opacity-50" />
+                <p className="text-sm">No revenue data available</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-green-600" />
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 px-4 py-3.5">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <div className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/40">
+                <PieChart className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
               Bookings by Stadium
             </CardTitle>
-            <CardDescription>Distribution of bookings across stadiums</CardDescription>
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Distribution of bookings across stadiums</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-5 px-4 pb-4">
             {stats.bookingsByStadium.length > 0 ? (
               <SimplePieChart 
                 data={stats.bookingsByStadium}
-                size={180}
+                size={160}
               />
             ) : (
-              <div className="flex items-center justify-center h-48 text-gray-400">
-                No booking data available
+              <div className="flex flex-col items-center justify-center h-40 text-slate-500 dark:text-slate-400">
+                <PieChart className="h-10 w-10 mb-2 opacity-50" />
+                <p className="text-sm">No booking data available</p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Stadium Performance</CardTitle>
-          <CardDescription>Booking count by stadium</CardDescription>
+      {/* Stadium Performance */}
+      <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 px-4 py-3.5">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+              <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            Stadium Performance
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Booking count by stadium</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-5 px-4 pb-4">
           {stats.bookingsByStadium.length > 0 ? (
             <SimpleBarChart 
               data={stats.bookingsByStadium}
-              height={250}
+              height={220}
             />
           ) : (
-            <div className="flex items-center justify-center h-48 text-gray-400">
-              No data available
+            <div className="flex flex-col items-center justify-center h-40 text-slate-500 dark:text-slate-400">
+              <Building2 className="h-10 w-10 mb-2 opacity-50" />
+              <p className="text-sm">No data available</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+          <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 px-4 py-3.5">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <div className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/40">
+                <DollarSign className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
               Monthly Performance
             </CardTitle>
-            <CardDescription>Revenue for current month</CardDescription>
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Revenue for current month</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Revenue</span>
-                <span className="text-2xl font-bold text-blue-600">
-                  ₹{stats.monthlyRevenue.toFixed(2)}
+          <CardContent className="pt-4 px-4 pb-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Revenue</span>
+                <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                  ₹{stats.monthlyRevenue.toFixed(0)}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Bookings</span>
-                <span className="text-lg font-semibold">
+              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Bookings</span>
+                <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                   {stats.upcomingBookings}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full"
-                  style={{ width: `${Math.min(stats.occupancyRate, 100)}%` }}
-                ></div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400">Occupancy</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">{stats.occupancyRate.toFixed(1)}%</span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(stats.occupancyRate, 100)}%` }}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-5 w-5 text-green-600" />
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg transition-all">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-900/20 dark:to-emerald-900/20 px-4 py-3.5">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/40">
+                <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
               Booking Overview
             </CardTitle>
-            <CardDescription>Breakdown of all bookings</CardDescription>
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Breakdown of all bookings</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <span className="text-sm font-medium">Upcoming</span>
-                <span className="text-lg font-bold text-green-600">
+          <CardContent className="pt-4 px-4 pb-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Upcoming</span>
+                </div>
+                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
                   {stats.upcomingBookings}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <span className="text-sm font-medium">Completed</span>
-                <span className="text-lg font-bold text-gray-600">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Completed</span>
+                </div>
+                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                   {stats.completedBookings}
                 </span>
               </div>
               {stats.popularStadium && (
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-gray-500 mb-1">Most Popular</p>
-                  <p className="font-medium text-sm">{stats.popularStadium}</p>
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">Most Popular</p>
+                  <p className="font-semibold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5 text-orange-500" />
+                    {stats.popularStadium}
+                  </p>
                 </div>
               )}
             </div>
@@ -406,12 +467,15 @@ export default function StatisticsPage() {
         </Card>
       </div>
 
+      {/* Empty State */}
       {stats.totalStadiums === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <BarChart3 className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No data available</h3>
-            <p className="text-gray-500 text-center mb-6 max-w-md">
+        <Card className="border-2 border-dashed border-orange-300 dark:border-orange-800 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-200 to-amber-200 dark:from-orange-800/50 dark:to-amber-800/50 flex items-center justify-center mb-5">
+              <BarChart3 className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">No data available</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center text-sm mb-4 max-w-sm px-4">
               Add your first stadium to start tracking statistics and analytics
             </p>
           </CardContent>

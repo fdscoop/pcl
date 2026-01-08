@@ -367,13 +367,16 @@ export default function ContractViewerPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="p-12 shadow-2xl border-2 border-accent/30">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="p-10 shadow-2xl border-2 border-orange-200 rounded-2xl">
+          <div className="flex flex-col items-center gap-5">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full border-4 border-orange-200"></div>
+              <div className="w-20 h-20 rounded-full border-4 border-orange-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+            </div>
             <div className="text-center">
-              <h3 className="text-xl font-bold text-foreground mb-2">Loading Contract</h3>
-              <p className="text-muted-foreground">Please wait while we fetch your contract details...</p>
+              <h3 className="text-2xl font-bold text-slate-800 mb-2">Loading Contract</h3>
+              <p className="text-slate-500">Please wait while we fetch your contract details...</p>
             </div>
           </div>
         </Card>
@@ -383,31 +386,33 @@ export default function ContractViewerPage() {
 
   if (error || !contract || !player) {
     return (
-      <div className="min-h-screen bg-background py-8 px-4 flex items-center justify-center">
+      <div className="py-8 px-4 flex items-center justify-center">
         <div className="max-w-2xl w-full">
-          <Card className="p-10 border-4 border-destructive/30 bg-destructive/10 shadow-2xl">
+          <Card className="p-10 border-4 border-red-200 bg-red-50 shadow-2xl rounded-2xl">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-destructive flex items-center justify-center text-3xl shadow-lg">
+              <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-3xl shadow-lg">
                 ⚠️
               </div>
-              <h2 className="text-3xl font-bold text-destructive">Unable to Load Contract</h2>
+              <h2 className="text-3xl font-bold text-red-700">Unable to Load Contract</h2>
             </div>
-            <div className="bg-card p-6 rounded-lg border-2 border-destructive/20 mb-6">
-              <p className="text-destructive text-lg leading-relaxed">
+            <div className="bg-white p-6 rounded-xl border-2 border-red-200 mb-6">
+              <p className="text-red-700 text-lg leading-relaxed">
                 {error || 'The contract could not be loaded. Please try again or contact support.'}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <Button
                 onClick={() => router.push('/dashboard/player/contracts')}
-                className="flex-1 btn-lift font-semibold py-6 text-lg"
+                size="lg"
+                className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-6 text-lg rounded-xl shadow-lg"
               >
                 ← Back to Contracts
               </Button>
               <Button
                 onClick={() => window.location.reload()}
                 variant="outline"
-                className="flex-1 btn-lift font-semibold py-6 text-lg"
+                size="lg"
+                className="flex-1 font-bold py-6 text-lg border-2 rounded-xl"
               >
                 🔄 Retry
               </Button>
@@ -421,54 +426,42 @@ export default function ContractViewerPage() {
   const playerName = `${player.first_name} ${player.last_name}`
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Navigation */}
-      <nav className="bg-card border-b-2 border-accent/20 shadow-lg fixed top-0 inset-x-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => router.back()}
-                className="btn-lift font-semibold shadow-md"
-                size="sm"
-              >
-                ← Back
-              </Button>
-              <span className="text-accent/50">|</span>
-              <div>
-                <h1 className="text-lg font-bold text-foreground">
-                  📋 {contract.clubs.club_name}
-                </h1>
-                <p className="text-xs text-muted-foreground">Contract Details & Signing</p>
-              </div>
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Contract Header */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-2xl shadow-xl shadow-orange-500/30">
+              📋
             </div>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => window.print()}
-                variant="outline"
-                size="sm"
-                className="border-2 btn-lift font-medium"
-              >
-                🖨️ Print
-              </Button>
-              <Button
-                onClick={() => router.push('/dashboard/player/contracts')}
-                variant="gradient"
-                className="btn-lift font-semibold shadow-md"
-                size="sm"
-              >
-                All Contracts
-              </Button>
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900">{contract.clubs.club_name}</h1>
+              <p className="text-slate-600">Contract Details & Signing</p>
             </div>
           </div>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => window.print()}
+              variant="outline"
+              className="border-2 border-slate-200 font-bold rounded-xl hover:bg-slate-50"
+            >
+              🖨️ Print
+            </Button>
+            <Button
+              onClick={() => router.push('/dashboard/player/contracts')}
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg rounded-xl"
+            >
+              📋 All Contracts
+            </Button>
+          </div>
         </div>
-      </nav>
+      </div>
 
       {/* Main Content */}
-      <div className="pt-0 pb-8 flex flex-col items-center">
+      <div className="pb-8 flex flex-col items-center">
         {error && !loading && (
           <div className="w-full max-w-4xl mx-auto px-4 mb-6">
-            <Card className="p-4 border-red-200 bg-red-50">
+            <Card className="p-4 border-red-200 bg-red-50 rounded-xl">
               <p className="text-red-800">
                 <strong>Error:</strong> {error}
               </p>
@@ -478,48 +471,54 @@ export default function ContractViewerPage() {
 
         {/* Contract Overview - Modern Optimized */}
         <div className="w-full max-w-3xl mx-auto px-4 mt-0 mb-10">
-          <div className="rounded-xl gradient-brand border border-accent/20 shadow-xl p-6 md:p-8 flex flex-col items-center text-center relative overflow-hidden">
+          <div className="rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 border border-orange-400 shadow-2xl shadow-orange-500/30 p-8 md:p-10 flex flex-col items-center text-center relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 bg-grid-pattern"></div>
             <div className="relative z-10 w-full">
-              <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-2 tracking-tight">Contract Overview</h2>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Contract Overview</h2>
               {contract.status === 'pending' && (
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-warning text-warning-foreground font-semibold text-sm shadow">
-                  ⚠️ Action Required
+                <span className="inline-flex items-center gap-2 px-5 py-2 mb-5 rounded-full bg-amber-100 text-amber-800 font-bold text-base shadow-lg">
+                  ⚠️ Action Required - Review & Sign
                 </span>
               )}
               {contract.status === 'active' && (
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-success text-success-foreground font-semibold text-sm shadow">
+                <span className="inline-flex items-center gap-2 px-5 py-2 mb-5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-base shadow-lg">
                   ✅ Contract Active & Signed
                 </span>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-2">
-                <div>
-                  <div className="text-xs font-semibold text-white/70 uppercase mb-1">Club</div>
-                  <div className="text-lg font-bold text-white">{contract.clubs.club_name}</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
+                  <div className="text-xs font-bold text-white/70 uppercase mb-2">🏟️ Club</div>
+                  <div className="text-xl font-bold text-white">{contract.clubs.club_name}</div>
                   {contract.clubs.city && contract.clubs.state && (
                     <div className="text-sm text-white/80 mt-1">📍 {contract.clubs.city}, {contract.clubs.state}</div>
                   )}
                 </div>
-                <div>
-                  <div className="text-xs font-semibold text-white/70 uppercase mb-1">Contract Period</div>
-                  <div className="text-lg font-bold text-white">
-                    {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })} - {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
+                  <div className="text-xs font-bold text-white/70 uppercase mb-2">📅 Contract Period</div>
+                  <div className="text-xl font-bold text-white">
+                    {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </div>
+                  <div className="text-sm text-white/80 mt-1">
+                    to {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs font-semibold text-white/70 uppercase mb-1">Position</div>
-                  <div className="text-lg font-bold text-white capitalize">{contract.position_assigned || 'Not Assigned'}</div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
+                  <div className="text-xs font-bold text-white/70 uppercase mb-2">⚽ Position</div>
+                  <div className="text-xl font-bold text-white capitalize">{contract.position_assigned || 'Not Assigned'}</div>
+                  {contract.jersey_number && (
+                    <div className="text-sm text-white/80 mt-1">Jersey #{contract.jersey_number}</div>
+                  )}
                 </div>
                 {(contract.clubs.email || contract.clubs.phone) && (
-                  <div>
-                    <div className="text-xs font-semibold text-white/70 uppercase mb-1">Contact Club</div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
+                    <div className="text-xs font-bold text-white/70 uppercase mb-2">📞 Contact Club</div>
                     {contract.clubs.email && (
-                      <a href={`mailto:${contract.clubs.email}`} className="block text-white hover:text-accent-foreground hover:underline text-sm mb-1 transition-colors">
+                      <a href={`mailto:${contract.clubs.email}`} className="block text-white hover:text-amber-200 text-base mb-1 transition-colors">
                         📧 {contract.clubs.email}
                       </a>
                     )}
                     {contract.clubs.phone && (
-                      <a href={`tel:${contract.clubs.phone}`} className="block text-white hover:text-accent-foreground hover:underline text-sm transition-colors">
+                      <a href={`tel:${contract.clubs.phone}`} className="block text-white hover:text-amber-200 text-base transition-colors">
                         📱 {contract.clubs.phone}
                       </a>
                     )}
@@ -535,58 +534,61 @@ export default function ContractViewerPage() {
           <div className="w-full max-w-4xl mx-auto px-4">
             {/* Display stored HTML contract */}
             <div
-              className="bg-white rounded-xl shadow-2xl overflow-hidden border-2 border-blue-100 hover:shadow-3xl transition-shadow duration-300"
+              className="bg-white rounded-2xl shadow-2xl shadow-orange-500/10 overflow-hidden border-2 border-orange-200 hover:shadow-3xl transition-shadow duration-300"
               dangerouslySetInnerHTML={{ __html: contractHtml }}
             />
             
             {/* Signing Panel - PROMINENT AND ATTENTION-GRABBING */}
             {contract.signing_status === 'unsigned' && (
-              <div className="w-full max-w-4xl mx-auto px-4 mt-12 mb-12">
+              <div className="w-full max-w-4xl mx-auto mt-12 mb-12">
                 {/* Sticky Badge */}
                 <div className="mb-6 text-center">
-                  <div className="inline-block bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg">
-                    ⭐ ACTION REQUIRED - Sign Contract
+                  <div className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white px-8 py-3 rounded-full font-bold text-base shadow-xl shadow-orange-500/30">
+                    ⭐ ACTION REQUIRED - Sign Your Contract
                   </div>
                 </div>
 
-                <Card className="p-8 bg-white border-4 border-green-500 shadow-2xl relative overflow-hidden">
+                <Card className="p-8 md:p-10 bg-white border-4 border-orange-400 shadow-2xl shadow-orange-500/20 relative overflow-hidden rounded-2xl">
                   {/* Decorative background accent */}
-                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-green-100 rounded-full opacity-50 pointer-events-none"></div>
+                  <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full opacity-60 pointer-events-none"></div>
+                  <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-amber-100 to-orange-100 rounded-full opacity-40 pointer-events-none"></div>
                   <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-4xl">✍️</span>
-                      <h2 className="text-3xl font-bold text-green-700">Sign This Contract Now</h2>
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-3xl shadow-lg">
+                        ✍️
+                      </div>
+                      <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800">Sign This Contract</h2>
                     </div>
                     <p className="text-lg text-slate-600 mb-8 font-medium">
                       Complete the form below to digitally sign and accept this contract. This action is final.
                     </p>
                     
                     {/* Progress indicator */}
-                    <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm font-semibold text-blue-900 mb-3">📋 Sign-off Progress:</p>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${signature.trim() ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                    <div className="mb-8 p-5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200">
+                      <p className="text-base font-bold text-orange-900 mb-4">📋 Signing Progress:</p>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-all ${signature.trim() ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
                             {signature.trim() ? '✓' : '1'}
                           </div>
-                          <span className={signature.trim() ? 'text-green-700 font-semibold' : 'text-slate-600'}>
-                            Your name provided {signature.trim() && <span>✓</span>}
+                          <span className={`text-base ${signature.trim() ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+                            Your name provided {signature.trim() && <span className="text-emerald-500">✓</span>}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${signingDate ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-all ${signingDate ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
                             {signingDate ? '✓' : '2'}
                           </div>
-                          <span className={signingDate ? 'text-green-700 font-semibold' : 'text-slate-600'}>
-                            Signing date selected {signingDate && <span>✓</span>}
+                          <span className={`text-base ${signingDate ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+                            Signing date selected {signingDate && <span className="text-emerald-500">✓</span>}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${agreedToTerms ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-all ${agreedToTerms ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
                             {agreedToTerms ? '✓' : '3'}
                           </div>
-                          <span className={agreedToTerms ? 'text-green-700 font-semibold' : 'text-slate-600'}>
-                            Terms agreed & confirmed {agreedToTerms && <span>✓</span>}
+                          <span className={`text-base ${agreedToTerms ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+                            Terms agreed & confirmed {agreedToTerms && <span className="text-emerald-500">✓</span>}
                           </span>
                         </div>
                       </div>
@@ -594,14 +596,14 @@ export default function ContractViewerPage() {
                     
                     {/* Validation Errors - PROMINENT */}
                     {validationErrors.length > 0 && (
-                      <div className="mb-8 p-5 bg-red-50 border-l-8 border-red-600 rounded-r-lg shadow-md">
-                        <h3 className="font-bold text-red-900 mb-3 text-lg flex items-center gap-2">
-                          <span>🚨</span> Please Fix These Issues
+                      <div className="mb-8 p-6 bg-red-50 border-l-8 border-red-500 rounded-r-xl shadow-lg">
+                        <h3 className="font-bold text-red-900 mb-3 text-lg flex items-center gap-3">
+                          <span className="text-2xl">🚨</span> Please Fix These Issues
                         </h3>
                         <ul className="space-y-2">
                           {validationErrors.map((errorMsg, idx) => (
-                            <li key={idx} className="text-red-800 font-medium flex items-start gap-3">
-                              <span className="text-red-600 font-bold mt-1">▸</span>
+                            <li key={idx} className="text-red-800 font-medium flex items-start gap-3 text-base">
+                              <span className="text-red-500 font-bold mt-0.5">▸</span>
                               <span>{errorMsg}</span>
                             </li>
                           ))}
@@ -610,10 +612,10 @@ export default function ContractViewerPage() {
                     )}
                     
                     {/* Form Fields - Larger and More Prominent */}
-                    <div className="space-y-6 mb-8 bg-gradient-to-b from-slate-50 to-white p-6 rounded-xl border border-slate-200">
+                    <div className="space-y-6 mb-8 bg-gradient-to-b from-slate-50 to-white p-6 md:p-8 rounded-2xl border-2 border-slate-200">
                       <div>
-                        <label className="block text-base font-bold text-slate-900 mb-3">
-                          👤 Your Name (for signature) <span className="text-red-600 text-2xl">*</span>
+                        <label className="block text-lg font-bold text-slate-900 mb-3">
+                          👤 Your Full Name (for signature) <span className="text-red-500 text-xl">*</span>
                         </label>
                         <input
                           type="text"
@@ -623,22 +625,22 @@ export default function ContractViewerPage() {
                             setSignature(e.target.value)
                             setValidationErrors([])
                           }}
-                          className={`w-full px-5 py-4 border-2 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 transition-all ${
+                          className={`w-full px-6 py-5 border-2 rounded-xl text-lg font-semibold focus:outline-none focus:ring-4 transition-all ${
                             validationErrors.some(e => e.includes('Signature'))
-                              ? 'border-red-500 bg-red-50 focus:ring-red-500'
-                              : 'border-slate-300 focus:border-green-500 focus:ring-green-500'
+                              ? 'border-red-400 bg-red-50 focus:ring-red-200'
+                              : 'border-slate-300 focus:border-orange-500 focus:ring-orange-200'
                           }`}
                           autoFocus
                         />
                         {signature.trim() && (
-                          <p className="text-green-600 text-sm font-semibold mt-2 flex items-center gap-2">
+                          <p className="text-emerald-600 text-base font-semibold mt-3 flex items-center gap-2">
                             <span>✓</span> Signature name entered
                           </p>
                         )}
                       </div>
                       <div>
-                        <label className="block text-base font-bold text-slate-900 mb-3">
-                          📅 Signing Date <span className="text-red-600 text-2xl">*</span>
+                        <label className="block text-lg font-bold text-slate-900 mb-3">
+                          📅 Signing Date <span className="text-red-500 text-xl">*</span>
                         </label>
                         <input
                           type="date"
@@ -647,27 +649,27 @@ export default function ContractViewerPage() {
                             setSigningDate(e.target.value)
                             setValidationErrors([])
                           }}
-                          className={`w-full px-5 py-4 border-2 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 transition-all ${
+                          className={`w-full px-6 py-5 border-2 rounded-xl text-lg font-semibold focus:outline-none focus:ring-4 transition-all ${
                             validationErrors.some(e => e.includes('date'))
-                              ? 'border-red-500 bg-red-50 focus:ring-red-500'
-                              : 'border-slate-300 focus:border-green-500 focus:ring-green-500'
+                              ? 'border-red-400 bg-red-50 focus:ring-red-200'
+                              : 'border-slate-300 focus:border-orange-500 focus:ring-orange-200'
                           }`}
                         />
                         {signingDate && (
-                          <p className="text-green-600 text-sm font-semibold mt-2 flex items-center gap-2">
-                            <span>✓</span> Date selected: {new Date(signingDate).toLocaleDateString('en-IN')}
+                          <p className="text-emerald-600 text-base font-semibold mt-3 flex items-center gap-2">
+                            <span>✓</span> Date selected: {new Date(signingDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </p>
                         )}
                       </div>
                     </div>
 
                     {/* Terms Agreement - HIGHLY PROMINENT */}
-                    <div className={`p-6 mb-8 rounded-xl border-2 transition-all ${
+                    <div className={`p-6 md:p-8 mb-8 rounded-2xl border-3 transition-all ${
                       agreedToTerms 
-                        ? 'bg-green-50 border-green-500 shadow-md' 
-                        : 'bg-amber-50 border-amber-400 border-dashed'
+                        ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-400 shadow-lg shadow-emerald-500/10' 
+                        : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-400 border-dashed'
                     }`}>
-                      <label className="flex items-start gap-4 cursor-pointer group">
+                      <label className="flex items-start gap-5 cursor-pointer group">
                         <div className="relative mt-1">
                           <input
                             type="checkbox"
@@ -676,17 +678,14 @@ export default function ContractViewerPage() {
                               setAgreedToTerms(e.target.checked)
                               setValidationErrors([])
                             }}
-                            className="w-6 h-6 accent-green-600 cursor-pointer"
+                            className="w-7 h-7 accent-emerald-600 cursor-pointer rounded-lg"
                           />
-                          <div className={`absolute inset-0 rounded border-2 transition-all ${
-                            agreedToTerms ? 'border-green-500' : 'border-amber-400 group-hover:border-amber-500'
-                          }`}></div>
                         </div>
                         <div className="flex-1">
-                          <p className={`text-lg font-bold mb-2 ${agreedToTerms ? 'text-green-800' : 'text-amber-900'}`}>
+                          <p className={`text-xl font-bold mb-3 ${agreedToTerms ? 'text-emerald-800' : 'text-amber-900'}`}>
                             🔒 I Understand & Accept All Terms
                           </p>
-                          <p className={`text-base leading-relaxed ${agreedToTerms ? 'text-green-800' : 'text-amber-900'}`}>
+                          <p className={`text-base leading-relaxed ${agreedToTerms ? 'text-emerald-800' : 'text-amber-900'}`}>
                             I have fully read and reviewed the entire contract including:
                             <br />
                             <strong>• Anti-Drug Policy</strong> - Zero tolerance enforcement
@@ -699,19 +698,19 @@ export default function ContractViewerPage() {
                         </div>
                       </label>
                       {agreedToTerms && (
-                        <p className="text-green-700 text-sm font-bold mt-3 flex items-center gap-2">
-                          <span className="text-lg">✅</span> All terms accepted - Ready to sign
+                        <p className="text-emerald-700 text-base font-bold mt-4 flex items-center gap-2">
+                          <span className="text-xl">✅</span> All terms accepted - Ready to sign
                         </p>
                       )}
                       {validationErrors.some(e => e.includes('agree')) && (
-                        <p className="text-red-600 text-sm font-bold mt-3 flex items-center gap-2">
-                          <span className="text-lg">⚠️</span> You must agree to all terms to proceed
+                        <p className="text-red-600 text-base font-bold mt-4 flex items-center gap-2">
+                          <span className="text-xl">⚠️</span> You must agree to all terms to proceed
                         </p>
                       )}
                     </div>
 
                     {/* Action Buttons - PROMINENT */}
-                    <div className="flex gap-4">
+                    <div className="flex flex-col md:flex-row gap-4">
                       <Button
                         onClick={() => handleSignContract(contract.id)}
                         disabled={
@@ -720,18 +719,18 @@ export default function ContractViewerPage() {
                           !signingDate || 
                           !agreedToTerms
                         }
-                        className={`flex-1 font-bold py-4 text-lg rounded-lg transition-all shadow-lg ${
+                        className={`flex-1 font-bold py-6 md:py-5 text-lg md:text-xl rounded-xl transition-all shadow-xl ${
                           isSigning || !signature.trim() || !signingDate || !agreedToTerms
-                            ? 'bg-gray-400 cursor-not-allowed opacity-60'
-                            : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-xl hover:shadow-2xl transform hover:scale-105'
+                            ? 'bg-slate-400 cursor-not-allowed opacity-60'
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-emerald-500/30 hover:shadow-2xl transform hover:scale-[1.02]'
                         }`}
                       >
                         {isSigning ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <span className="animate-spin">⏳</span> Processing Signature...
+                          <span className="flex items-center justify-center gap-3">
+                            <span className="animate-spin text-2xl">⏳</span> Processing Signature...
                           </span>
                         ) : (
-                          <span className="flex items-center justify-center gap-2">
+                          <span className="flex items-center justify-center gap-3">
                             <span className="text-2xl">✓</span> Sign & Accept Contract
                           </span>
                         )}
@@ -739,16 +738,16 @@ export default function ContractViewerPage() {
                       <Button
                         onClick={() => router.push('/dashboard/player/contracts')}
                         variant="outline"
-                        className="flex-1 text-lg font-semibold py-4 rounded-lg border-2 hover:bg-red-50 hover:border-red-400"
+                        className="flex-1 text-lg font-bold py-6 md:py-5 rounded-xl border-3 border-slate-300 hover:bg-red-50 hover:border-red-400 hover:text-red-700 transition-all"
                       >
                         ❌ Decline & Exit
                       </Button>
                     </div>
 
                     {/* Warning message */}
-                    <div className="mt-6 p-4 bg-purple-50 border-l-4 border-purple-600 rounded text-purple-900 text-sm">
-                      <p className="font-semibold">⚡ Important: This is a legally binding digital signature.</p>
-                      <p className="mt-1">Once signed, you cannot undo this action. Please review all terms carefully before proceeding.</p>
+                    <div className="mt-8 p-5 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-500 rounded-xl text-purple-900">
+                      <p className="font-bold text-base">⚡ Important: This is a legally binding digital signature.</p>
+                      <p className="mt-2 text-base">Once signed, you cannot undo this action. Please review all terms carefully before proceeding.</p>
                     </div>
                   </div>
                 </Card>
@@ -757,25 +756,25 @@ export default function ContractViewerPage() {
 
             {/* Signed Contract Info */}
             {contract.signing_status === 'fully_signed' && contract.player_signature_timestamp && (
-              <div className="max-w-4xl mx-auto px-4 mt-8 mb-8">
-                <Card className="p-8 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-4 border-green-400 shadow-2xl">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center text-3xl shadow-lg">
+              <div className="max-w-4xl mx-auto mt-10 mb-10">
+                <Card className="p-8 md:p-10 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 border-4 border-emerald-400 shadow-2xl shadow-emerald-500/20 rounded-2xl">
+                  <div className="flex items-center gap-5 mb-6">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-4xl shadow-xl">
                       ✅
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-green-900">Contract Successfully Signed!</h3>
-                      <p className="text-sm text-green-700">This contract is now active and legally binding</p>
+                      <h3 className="text-3xl font-extrabold text-emerald-900">Contract Successfully Signed!</h3>
+                      <p className="text-base text-emerald-700 mt-1">This contract is now active and legally binding</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-lg border-2 border-green-200">
-                    <div>
-                      <p className="text-xs text-green-700 font-semibold uppercase mb-1">👤 Signed By</p>
-                      <p className="text-lg font-bold text-green-900">{playerName}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-6 bg-white rounded-xl border-2 border-emerald-200">
+                    <div className="p-4 bg-emerald-50 rounded-xl">
+                      <p className="text-xs text-emerald-700 font-bold uppercase mb-2">👤 Signed By</p>
+                      <p className="text-xl font-bold text-emerald-900">{playerName}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-green-700 font-semibold uppercase mb-1">📅 Signed On</p>
-                      <p className="text-lg font-bold text-green-900">
+                    <div className="p-4 bg-emerald-50 rounded-xl">
+                      <p className="text-xs text-emerald-700 font-bold uppercase mb-2">📅 Signed On</p>
+                      <p className="text-xl font-bold text-emerald-900">
                         {new Date(contract.player_signature_timestamp).toLocaleString('en-IN', {
                           dateStyle: 'long',
                           timeStyle: 'short'

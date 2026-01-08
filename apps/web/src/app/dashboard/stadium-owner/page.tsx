@@ -5,8 +5,20 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import { 
+  Building2, 
+  Calendar, 
+  TrendingUp, 
+  DollarSign, 
+  ChevronRight, 
+  Clock,
+  MapPin,
+  Users,
+  Sparkles,
+  CheckCircle2,
+  ArrowUpRight,
+  Loader2
+} from 'lucide-react'
 
 interface DashboardStats {
   totalStadiums: number
@@ -258,12 +270,6 @@ export default function StadiumOwnerDashboard() {
     }
   }
 
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/')
-  }
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -279,411 +285,423 @@ export default function StadiumOwnerDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
       </div>
     )
   }
 
-  // Check if KYC is required
-  const needsKyc = userData?.kyc_status !== 'verified'
+  const kycProgress = (kycStatus.aadhaarVerified ? 1 : 0) + 
+                       (kycStatus.bankVerified ? 1 : 0) + 
+                       (kycStatus.documentsVerified ? 1 : 0)
+  const kycComplete = kycProgress === 3
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="bg-card border-b border-border shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="PCL Logo" className="h-10 w-10" />
-              <span className="text-lg font-semibold text-foreground hidden sm:inline">
-                Professional Club League
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                {userData?.first_name} {userData?.last_name}
-              </span>
-              <Button onClick={handleSignOut} variant="outline" size="sm" className="btn-lift">
-                Sign Out
-              </Button>
-            </div>
+    <div className="space-y-5 sm:space-y-6">
+      {/* Welcome Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-500 to-amber-500 p-5 sm:p-6 text-white shadow-xl shadow-orange-500/25">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-400/30 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Sparkles className="h-4 w-4 text-amber-200" />
+            <span className="text-xs font-medium text-white/90">Stadium Owner Dashboard</span>
           </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1.5">
             Welcome back, {userData?.first_name}! 🏟️
           </h1>
-          <p className="text-muted-foreground">
-            Manage your stadiums, bookings, and availability
+          <p className="text-white/80 text-xs sm:text-sm max-w-lg">
+            Manage your stadiums, track bookings, and grow your business all in one place.
           </p>
         </div>
+      </div>
 
-        {/* KYC Verification Milestone Tracker */}
-        <Card className="mb-8 border-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">🎯</span>
-              KYC Verification Progress
-            </CardTitle>
-            <CardDescription>
-              Complete all steps to activate your stadium and start receiving bookings
-            </CardDescription>
+      {/* KYC Progress Card - Only show if not complete */}
+      {!kycComplete && (
+        <Card className="border-2 border-amber-200 dark:border-amber-900/50 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 overflow-hidden shadow-lg shadow-amber-100/50 dark:shadow-amber-900/10">
+          <CardHeader className="pb-3 pt-4 px-4 sm:px-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/30">
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-100">Complete Your KYC</CardTitle>
+                  <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Verify to unlock all features</CardDescription>
+                </div>
+              </div>
+              <span className="text-xl font-bold text-amber-600 dark:text-amber-400">{kycProgress}/3</span>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Progress Bar */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-foreground">Overall Progress</span>
-                  <span className="text-sm font-bold text-primary">
-                    {(() => {
-                      let count = 0
-                      if (kycStatus.aadhaarVerified) count++
-                      if (kycStatus.bankVerified) count++
-                      if (kycStatus.documentsVerified) count++
-                      return `${count}/3`
-                    })()}
-                  </span>
+          <CardContent className="space-y-3 px-4 sm:px-5 pb-4">
+            {/* Progress Bar */}
+            <div className="h-2 bg-amber-100 dark:bg-amber-900/40 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
+                style={{ width: `${(kycProgress / 3) * 100}%` }}
+              />
+            </div>
+
+            {/* Steps */}
+            <div className="grid grid-cols-3 gap-2">
+              {/* Aadhaar */}
+              <div className={`p-2.5 rounded-xl border-2 transition-all ${
+                kycStatus.aadhaarVerified 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800' 
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+              }`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  {kycStatus.aadhaarVerified ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                  )}
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-200">Aadhaar</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-3">
-                  <div
-                    className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${(() => {
-                        let count = 0
-                        if (kycStatus.aadhaarVerified) count++
-                        if (kycStatus.bankVerified) count++
-                        if (kycStatus.documentsVerified) count++
-                        return (count / 3) * 100
-                      })()}%`
-                    }}
-                  />
-                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Identity</p>
               </div>
 
-              {/* Milestones */}
-              <div className="space-y-4">
-                {/* Milestone 1: Aadhaar */}
-                <div className="flex gap-4 items-start pb-4 border-b border-border last:border-b-0">
-                  <div className="flex-shrink-0 mt-1">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all ${
-                        kycStatus.aadhaarVerified
-                          ? 'bg-green-500'
-                          : 'bg-amber-400'
-                      }`}
-                    >
-                      {kycStatus.aadhaarVerified ? '✓' : '1'}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-foreground">Aadhaar Verification</h4>
-                      {kycStatus.aadhaarVerified && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          ✓ Verified
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Verify your identity using Aadhaar for KYC compliance
-                    </p>
-                    {!kycStatus.aadhaarVerified && (
-                      <Button
-                        onClick={() => router.push('/dashboard/stadium-owner/kyc')}
-                        variant="outline"
-                        size="sm"
-                        className="btn-lift"
-                      >
-                        Start Aadhaar Verification
-                      </Button>
-                    )}
-                  </div>
+              {/* Bank */}
+              <div className={`p-2.5 rounded-xl border-2 transition-all ${
+                kycStatus.bankVerified 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800' 
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+              }`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  {kycStatus.bankVerified ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                  )}
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-200">Bank</span>
                 </div>
-
-                {/* Milestone 2: Bank Account */}
-                <div className="flex gap-4 items-start pb-4 border-b border-border last:border-b-0">
-                  <div className="flex-shrink-0 mt-1">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all ${
-                        kycStatus.bankVerified
-                          ? 'bg-green-500'
-                          : 'bg-amber-400'
-                      }`}
-                    >
-                      {kycStatus.bankVerified ? '✓' : '2'}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-foreground">Bank Account Verification</h4>
-                      {kycStatus.bankVerified && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          ✓ Verified
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Add and verify your bank account for payouts
-                    </p>
-                    {!kycStatus.bankVerified && (
-                      <Button
-                        onClick={() => router.push('/dashboard/stadium-owner/kyc')}
-                        variant="outline"
-                        size="sm"
-                        className="btn-lift"
-                      >
-                        Add Bank Account
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Milestone 3: Documents */}
-                <div className="flex gap-4 items-start">
-                  <div className="flex-shrink-0 mt-1">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-all ${
-                        kycStatus.documentsVerified
-                          ? 'bg-green-500'
-                          : kycStatus.documentsPending
-                          ? 'bg-blue-400'
-                          : 'bg-amber-400'
-                      }`}
-                    >
-                      {kycStatus.documentsVerified ? '✓' : kycStatus.documentsPending ? '⌛' : '3'}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-foreground">Document Verification</h4>
-                      {kycStatus.documentsVerified && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          ✓ Verified
-                        </span>
-                      )}
-                      {kycStatus.documentsPending && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          ⌛ Under Review
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Upload ownership proof for your stadium (typically verified in 2-3 business days)
-                    </p>
-                    {!kycStatus.documentsVerified && (
-                      <Button
-                        onClick={() => router.push('/dashboard/stadium-owner/kyc')}
-                        variant="outline"
-                        size="sm"
-                        className="btn-lift"
-                      >
-                        Upload Documents
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Payouts</p>
               </div>
+
+              {/* Documents */}
+              <div className={`p-2.5 rounded-xl border-2 transition-all ${
+                kycStatus.documentsVerified 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800' 
+                  : kycStatus.documentsPending
+                  ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+              }`}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  {kycStatus.documentsVerified ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : kycStatus.documentsPending ? (
+                    <Clock className="h-3.5 w-3.5 text-blue-500" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-slate-600" />
+                  )}
+                  <span className="font-semibold text-xs text-slate-700 dark:text-slate-200">Docs</span>
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {kycStatus.documentsPending ? 'Review' : 'Proof'}
+                </p>
+              </div>
+            </div>
+
+            <Button 
+              onClick={() => router.push('/dashboard/stadium-owner/kyc')}
+              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/30 h-9 text-sm"
+            >
+              Continue Verification
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Stadiums */}
+        <Card className="group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/30 transition-all duration-300 hover:-translate-y-1 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 group-hover:from-orange-100 group-hover:to-amber-50 dark:group-hover:from-orange-950/50 dark:group-hover:to-amber-950/30 transition-colors">
+                <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-400 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors" />
+              </div>
+              <ArrowUpRight className="h-3.5 w-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div className="text-2xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-0.5">{stats.totalStadiums}</div>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Total Stadiums</p>
+            <div className="mt-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">
+                {stats.activeStadiums} active
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Listed Stadiums
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{stats.totalStadiums}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.activeStadiums} active
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Bookings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{stats.totalBookings}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+        {/* Bookings */}
+        <Card className="group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/30 transition-all duration-300 hover:-translate-y-1 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30">
+                <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
+              <ArrowUpRight className="h-3.5 w-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div className="text-2xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-0.5">{stats.totalBookings}</div>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Total Bookings</p>
+            <div className="mt-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
                 {stats.todayBookings} today
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                This Month's Revenue
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">
-                {formatCurrency(stats.monthRevenue)}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stats.totalBookings > 0 ? 'Keep it up!' : 'Start earning'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="card-hover border-2 hover:border-accent/50">
-            <CardHeader>
-              <CardTitle>🏟️ {stats.totalStadiums > 0 ? 'Manage Stadiums' : 'List Your First Stadium'}</CardTitle>
-              <CardDescription>
-                {stats.totalStadiums > 0 ? 'View and edit your stadium listings' : 'Add details, photos, and amenities'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant={stats.totalStadiums > 0 ? 'outline' : 'gradient'} 
-                className="w-full btn-lift"
-                onClick={() => router.push('/dashboard/stadium-owner/stadiums')}
-              >
-                {stats.totalStadiums > 0 ? 'View Stadiums' : 'Add Stadium'}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover border-2 hover:border-accent/50">
-            <CardHeader>
-              <CardTitle>� View Statistics</CardTitle>
-              <CardDescription>
-                Revenue analytics and booking trends
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                className="w-full btn-lift" 
-                variant="outline"
-                onClick={() => router.push('/dashboard/stadium-owner/statistics')}
-              >
-                View Stats
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Stadiums</CardTitle>
-            <CardDescription>Manage your listed venues</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {stadiums.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No stadiums listed yet</p>
-                <p className="text-sm mt-2">List your first stadium to start accepting bookings!</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {stadiums.slice(0, 3).map((stadium: any) => (
-                  <div 
-                    key={stadium.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/5 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">{stadium.stadium_name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        📍 {stadium.city}, {stadium.state}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        💰 {formatCurrency(stadium.hourly_rate)}/hour
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-                        stadium.is_active 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {stadium.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {stadiums.length > 3 && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => router.push('/dashboard/stadium-owner/stadiums')}
-                  >
-                    View All Stadiums ({stadiums.length})
-                  </Button>
-                )}
-              </div>
-            )}
+              </span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Recent Bookings</CardTitle>
-            <CardDescription>Latest booking requests and confirmations</CardDescription>
+        {/* Revenue */}
+        <Card className="group hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/30 transition-all duration-300 hover:-translate-y-1 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <CardContent className="p-3.5 sm:p-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-emerald-950/50 dark:to-teal-950/30">
+                <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <ArrowUpRight className="h-3.5 w-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-0.5">
+              {formatCurrency(stats.monthRevenue)}
+            </div>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">This Month</p>
+            <div className="mt-2 flex items-center gap-1">
+              <TrendingUp className="h-3 w-3 text-emerald-500" />
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">Revenue</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Action */}
+        <Card 
+          className="group cursor-pointer hover:shadow-xl hover:shadow-orange-200/50 dark:hover:shadow-orange-900/20 transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20 border-orange-200 dark:border-orange-900/50 hover:border-orange-300 dark:hover:border-orange-800"
+          onClick={() => router.push('/dashboard/stadium-owner/stadiums')}
+        >
+          <CardContent className="p-3.5 sm:p-4 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg shadow-orange-500/30">
+                <Building2 className="h-4 w-4 text-white" />
+              </div>
+              <ChevronRight className="h-4 w-4 text-orange-500 group-hover:translate-x-1 transition-transform" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-0.5">
+                {stats.totalStadiums > 0 ? 'Manage' : 'Add Stadium'}
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {stats.totalStadiums > 0 ? 'View all stadiums' : 'List your first venue'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Recent Bookings */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 pt-4">
+            <div>
+              <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-100">Recent Bookings</CardTitle>
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Latest reservations</CardDescription>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30 h-8 text-xs"
+              onClick={() => router.push('/dashboard/stadium-owner/bookings')}
+            >
+              View All
+              <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+            </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             {recentBookings.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No bookings yet</p>
-                <p className="text-sm mt-2">Bookings will appear here once clubs reserve your stadiums</p>
+              <div className="text-center py-6">
+                <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center">
+                  <Calendar className="h-7 w-7 text-slate-400" />
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 font-medium text-sm">No bookings yet</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Bookings will appear here
+                </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recentBookings.map((booking: any) => (
                   <div 
                     key={booking.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/5 transition-colors"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   >
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
-                        {booking.stadium?.stadium_name || 'Unknown Stadium'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        📅 {formatDateTime(booking.slot_date, booking.start_time)} - {booking.end_time}
-                      </p>
-                      {booking.booked_by_user && (
-                        <p className="text-sm text-muted-foreground">
-                          👤 {booking.booked_by_user.first_name} {booking.booked_by_user.last_name}
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 flex items-center justify-center">
+                        <Building2 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-xs text-slate-700 dark:text-slate-200">
+                          {booking.stadium?.stadium_name || 'Stadium'}
                         </p>
-                      )}
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" />
+                          {formatDateTime(booking.slot_date, booking.start_time)}
+                        </p>
+                      </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-foreground">
+                      <p className="font-bold text-xs text-emerald-600 dark:text-emerald-400">
                         {formatCurrency(
                           ((new Date(`2000-01-01T${booking.end_time}`).getTime() - 
                             new Date(`2000-01-01T${booking.start_time}`).getTime()) / 
                             (1000 * 60 * 60)) * (booking.stadium?.hourly_rate || 0)
                         )}
                       </p>
-                      <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 mt-1">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 mt-0.5">
                         Confirmed
                       </span>
                     </div>
                   </div>
                 ))}
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => router.push('/dashboard/stadium-owner/bookings')}
-                >
-                  View All Bookings
-                </Button>
               </div>
             )}
           </CardContent>
         </Card>
-      </main>
+
+        {/* Your Stadiums */}
+        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-4 pt-4">
+            <div>
+              <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-100">Your Stadiums</CardTitle>
+              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">Manage venues</CardDescription>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30 h-8 text-xs"
+              onClick={() => router.push('/dashboard/stadium-owner/stadiums')}
+            >
+              Manage
+              <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+            </Button>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            {stadiums.length === 0 ? (
+              <div className="text-center py-6">
+                <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 flex items-center justify-center">
+                  <Building2 className="h-7 w-7 text-orange-600 dark:text-orange-400" />
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 font-medium text-sm">No stadiums listed</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-3">
+                  Add your first stadium
+                </p>
+                <Button 
+                  onClick={() => router.push('/dashboard/stadium-owner/stadiums')}
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 h-9 text-sm"
+                >
+                  Add Stadium
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {stadiums.slice(0, 4).map((stadium: any) => (
+                  <div 
+                    key={stadium.id}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group cursor-pointer"
+                    onClick={() => router.push('/dashboard/stadium-owner/stadiums')}
+                  >
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-100 to-amber-50 dark:from-orange-950/50 dark:to-amber-950/30 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-xs text-slate-700 dark:text-slate-200 truncate">
+                          {stadium.stadium_name}
+                        </p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                          <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                          <span className="truncate">{stadium.city}, {stadium.state}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <p className="font-bold text-xs text-slate-700 dark:text-slate-200">
+                        {formatCurrency(stadium.hourly_rate)}/hr
+                      </p>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold mt-0.5 ${
+                        stadium.is_active 
+                          ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' 
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {stadium.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {stadiums.length > 4 && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-1 h-9 text-xs border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    onClick={() => router.push('/dashboard/stadium-owner/stadiums')}
+                  >
+                    View All ({stadiums.length})
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex flex-col items-center gap-1.5 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-200 dark:hover:border-orange-900/50 transition-all group border-slate-200 dark:border-slate-800"
+          onClick={() => router.push('/dashboard/stadium-owner/bookings')}
+        >
+          <div className="p-2 rounded-xl bg-orange-100 dark:bg-orange-900/40 group-hover:bg-orange-200 dark:group-hover:bg-orange-900/60 transition-colors">
+            <Calendar className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          </div>
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-slate-300">Bookings</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex flex-col items-center gap-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-900/50 transition-all group border-slate-200 dark:border-slate-800"
+          onClick={() => router.push('/dashboard/stadium-owner/statistics')}
+        >
+          <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/40 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/60 transition-colors">
+            <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          </div>
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-slate-300">Statistics</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex flex-col items-center gap-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-200 dark:hover:border-emerald-900/50 transition-all group border-slate-200 dark:border-slate-800"
+          onClick={() => router.push('/dashboard/stadium-owner/payouts')}
+        >
+          <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/60 transition-colors">
+            <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-slate-300">Payouts</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          className="h-auto py-3 flex flex-col items-center gap-1.5 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-200 dark:hover:border-amber-900/50 transition-all group border-slate-200 dark:border-slate-800"
+          onClick={() => router.push('/dashboard/stadium-owner/kyc')}
+        >
+          <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/40 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/60 transition-colors">
+            <Users className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <span className="text-[10px] sm:text-xs font-semibold text-slate-600 dark:text-slate-300">KYC</span>
+        </Button>
+      </div>
     </div>
   )
 }

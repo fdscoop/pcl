@@ -64,12 +64,27 @@ export default function LoginForm() {
         throw new Error('Please confirm your email address before signing in. Check your inbox for the confirmation link.')
       }
 
-      // Get user role from our users table
+      // Get user role from our users table with retry logic for RLS issues
       let { data: userData, error: userError } = await supabase
         .from('users')
         .select('role, kyc_status, is_active')
         .eq('id', authData.user.id)
         .single()
+
+      // Retry once if we get a 500 error (common RLS timing issue)
+      if (userError && userError.message?.includes('500')) {
+        console.log('Retrying user fetch due to RLS timing issue...')
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+        
+        const retry = await supabase
+          .from('users')
+          .select('role, kyc_status, is_active')
+          .eq('id', authData.user.id)
+          .single()
+        
+        userData = retry.data
+        userError = retry.error
+      }
 
       // If user record doesn't exist, create it now (after email confirmation)
       if (userError && userError.code === 'PGRST116') {
@@ -102,8 +117,24 @@ export default function LoginForm() {
 
         userData = newUser
       } else if (userError || !userData) {
-        console.error('User fetch error:', userError)
-        throw new Error('Failed to load your account. Please try again or contact support.')
+        console.error('User fetch error details:', {
+          error: userError,
+          code: userError?.code,
+          message: userError?.message,
+          details: userError?.details,
+          hint: userError?.hint,
+          userId: authData.user.id,
+          userEmail: authData.user.email
+        })
+        
+        // More specific error message based on error type
+        if (userError?.message?.includes('500') || userError?.code === '500') {
+          throw new Error('Database access issue. Please try logging in again in a moment.')
+        } else if (userError?.code === 'PGRST301') {
+          throw new Error('Authentication session expired. Please try logging in again.')
+        } else {
+          throw new Error('Failed to load your account. Please try again or contact support.')
+        }
       }
 
       // Check if user is active

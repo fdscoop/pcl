@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/context/ToastContext'
 import { ArrowLeft, Save, User, MapPin, Briefcase, DollarSign, Award, Info, Upload, CheckCircle } from 'lucide-react'
+import { KERALA_DISTRICTS, INDIAN_STATES, COUNTRIES, getDistrictsForState } from '@/lib/constants/locations'
 
 export default function RefereeProfile() {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function RefereeProfile() {
   const [formData, setFormData] = useState({
     bio: '',
     city: '',
-    state: '',
+    state: 'Kerala', // Default to Kerala for Phase 1
     district: '',
     country: 'India',
     experience_years: 0,
@@ -39,26 +40,8 @@ export default function RefereeProfile() {
     registration_document_url: ''
   })
 
-  // District options for India
-  const indianDistricts = [
-    // Maharashtra
-    'Mumbai Suburban', 'Mumbai City', 'Pune', 'Nagpur', 'Nashik', 'Aurangabad', 'Solapur', 'Ahmednagar', 'Kolhapur', 'Sangli',
-    // Delhi
-    'Central Delhi', 'New Delhi', 'North Delhi', 'South Delhi', 'East Delhi', 'West Delhi', 'North West Delhi', 'North East Delhi', 'South West Delhi', 'Shahdara',
-    // Karnataka
-    'Bengaluru Urban', 'Bengaluru Rural', 'Mysuru', 'Hubli-Dharwad', 'Mangaluru', 'Belagavi', 'Ballari', 'Vijayapura', 'Shivamogga', 'Tumakuru',
-    // Tamil Nadu
-    'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli', 'Tiruppur', 'Vellore', 'Erode', 'Thanjavur',
-    // West Bengal
-    'Kolkata', 'Howrah', 'North 24 Parganas', 'South 24 Parganas', 'Hooghly', 'Bardhaman', 'Nadia', 'Murshidabad', 'Birbhum', 'Bankura',
-    // Gujarat
-    'Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar', 'Jamnagar', 'Junagadh', 'Gandhinagar', 'Anand', 'Bharuch',
-    // Rajasthan
-    'Jaipur', 'Jodhpur', 'Kota', 'Bikaner', 'Ajmer', 'Udaipur', 'Bhilwara', 'Alwar', 'Bharatpur', 'Sikar',
-    // Uttar Pradesh
-    'Lucknow', 'Kanpur Nagar', 'Ghaziabad', 'Agra', 'Meerut', 'Varanasi', 'Allahabad', 'Bareilly', 'Aligarh', 'Moradabad',
-    // Add more districts as needed
-  ].sort()
+  // Get available districts based on selected state
+  const availableDistricts = getDistrictsForState(formData.state)
 
   useEffect(() => {
     loadProfile()
@@ -422,11 +405,36 @@ export default function RefereeProfile() {
               <Label htmlFor="city" className="text-gray-700 font-medium">City *</Label>
               <Input
                 id="city"
-                placeholder="e.g., Mumbai"
+                placeholder="e.g., Kochi"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="mt-2 rounded-xl border-gray-200"
+                className="mt-2 rounded-xl border-orange-200 focus:border-orange-400 focus:ring-orange-400/20"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="state" className="text-gray-700 font-medium">State *</Label>
+              <select
+                id="state"
+                value={formData.state}
+                onChange={(e) => {
+                  const newState = e.target.value;
+                  setFormData({ 
+                    ...formData, 
+                    state: newState,
+                    district: '' // Reset district when state changes
+                  });
+                }}
+                className="mt-2 w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+              >
+                <option value="">Select State</option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+              {formData.state === 'Kerala' && (
+                <p className="text-xs text-orange-600 mt-1">🏏 Kerala - Phase 1 focus region</p>
+              )}
             </div>
 
             <div>
@@ -440,38 +448,42 @@ export default function RefereeProfile() {
                 id="district"
                 value={formData.district}
                 onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                className="mt-2 w-full rounded-xl border-gray-200 border p-3 bg-white"
+                disabled={!formData.state}
+                className="mt-2 w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20 disabled:bg-gray-100 disabled:text-gray-400"
               >
-                <option value="">Select District</option>
-                {indianDistricts.map((district) => (
+                <option value="">
+                  {!formData.state 
+                    ? "Select State First" 
+                    : availableDistricts.length === 0 
+                      ? "No districts available" 
+                      : "Select District"
+                  }
+                </option>
+                {availableDistricts.map((district) => (
                   <option key={district} value={district}>{district}</option>
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                 <Info className="h-3 w-3" />
-                District will be auto-filled from your KYC verification
+                {formData.state === 'Kerala' 
+                  ? "Kerala districts available in Phase 1" 
+                  : "District will be auto-filled from your KYC verification"
+                }
               </p>
             </div>
 
             <div>
-              <Label htmlFor="state" className="text-gray-700 font-medium">State *</Label>
-              <Input
-                id="state"
-                placeholder="e.g., Maharashtra"
-                value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                className="mt-2 rounded-xl border-gray-200"
-              />
-            </div>
-
-            <div>
               <Label htmlFor="country" className="text-gray-700 font-medium">Country</Label>
-              <Input
+              <select
                 id="country"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                className="mt-2 rounded-xl border-gray-200"
-              />
+                className="mt-2 w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+              >
+                {COUNTRIES.map((country) => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

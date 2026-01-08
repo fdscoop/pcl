@@ -35,13 +35,8 @@ export default function KYCUploadPage() {
           return
         }
 
-        // Check if KYC already approved
-        if (profile?.kyc_status === 'verified') {
-          router.push('/dashboard/player')
-          return
-        }
-
-        setUser(user)
+        // Don't redirect if KYC is already verified - show status instead
+        setUser({ ...user, kyc_status: profile?.kyc_status })
       } catch (error) {
         console.error('Error checking auth:', error)
         router.push('/auth/login')
@@ -85,11 +80,42 @@ export default function KYCUploadPage() {
               KYC Verification
             </h1>
             <p className="text-slate-600">
-              Upload your identification documents to get verified and appear in club searches
+              {user?.kyc_status === 'verified' 
+                ? 'Your identity has been verified and you are eligible for club searches'
+                : 'Upload your identification documents to get verified and appear in club searches'
+              }
             </p>
           </div>
 
-          <KYCUploadForm />
+          {user?.kyc_status === 'verified' ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">KYC Verified</h3>
+              <p className="text-gray-600 mb-6">
+                Your identity verification is complete. You are now visible to club scouts and can receive contract offers.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => router.push('/dashboard/player')}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Back to Dashboard
+                </button>
+                <button
+                  onClick={() => router.push('/dashboard/player/contracts')}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                >
+                  View Contracts
+                </button>
+              </div>
+            </div>
+          ) : (
+            <KYCUploadForm />
+          )}
         </div>
       </main>
     </div>

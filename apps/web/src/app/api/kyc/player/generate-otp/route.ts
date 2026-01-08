@@ -115,17 +115,69 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is a player
-    const { data: userData } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('role, kyc_status')
+      .select('role, kyc_status, email, full_name')
       .eq('id', user.id)
       .single()
 
-    if (userData?.role !== 'player') {
+    console.log('👤 User data check:', {
+      userId: user.id,
+      email: user.email,
+      userData,
+      userError
+    })
+
+    if (userError) {
+      console.error('❌ Error fetching user data:', userError)
       return NextResponse.json(
-        { error: 'This endpoint is only for players' },
-        { status: 403 }
+        { error: 'Failed to verify user role', details: userError.message },
+        { status: 500 }
       )
+    }
+
+    if (!userData || userData.role !== 'player') {
+      console.error('❌ Role check failed:', {
+        expectedRole: 'player',
+        actualRole: userData?.role,
+        userData
+      })
+
+      // If user has no role, try to set them as player (common case for new signups)
+      if (userData && (userData.role === null || userData.role === '' || userData.role === undefined)) {
+        console.log('🔧 User has no role, attempting to set as player...')
+        
+        const { data: updatedUser, error: updateError } = await supabase
+          .from('users')
+          .update({ role: 'player' })
+          .eq('id', user.id)
+          .select('role')
+          .single()
+
+        if (updateError) {
+          console.error('❌ Failed to update user role:', updateError)
+          return NextResponse.json(
+            { 
+              error: 'Account setup incomplete. Please contact support.',
+              details: 'Unable to set user role'
+            },
+            { status: 500 }
+          )
+        }
+
+        console.log('✅ Successfully set user role to player:', updatedUser)
+        // Continue with the request since user is now a player
+      } else {
+        // User has a different role or other issue
+        return NextResponse.json(
+          { 
+            error: 'This endpoint is only for players',
+            userRole: userData?.role,
+            suggestion: userData?.role ? `Use the ${userData.role} KYC endpoint instead` : 'Please set up your account first'
+          },
+          { status: 403 }
+        )
+      }
     }
 
     // Duplicate Prevention Logic (Per PCL Rules):
@@ -139,25 +191,44 @@ export async function POST(request: NextRequest) {
     //   - Club A + Club B = Cannot share Aadhaar ❌
     //   - This would be fraud (different people using same identity)
     //
-    // Implementation: Check if this Aadhaar is already used by another PLAYER
+    // 🚫 FRAUD PREVENTION: Check if this Aadhaar is already used by ANOTHER player
+    // Allow same player to re-verify (player + same aadhaar = not fraud)  
+    // Block different player using same Aadhaar (player + same aadhaar + different profile = fraud)
     const { data: existingPlayer } = await supabase
       .from('users')
-      .select('id, role, kyc_status')
+      .select('id, role, kyc_status, email')
       .eq('aadhaar_number', cleanedAadhaar)
       .eq('role', 'player')  // Only check for other PLAYERS
       .eq('kyc_status', 'verified')
-      .neq('id', user.id)
+      .neq('id', user.id) // Exclude current user (allow re-verification)
       .single()
 
     if (existingPlayer) {
+      console.error('🚨 FRAUD ATTEMPT: Player trying to use Aadhaar from different verified player')
+      console.error('Current player:', user.id, user.email)
+      console.error('Existing player:', existingPlayer.id, existingPlayer.email)
+      
       return NextResponse.json(
         {
           error: 'Aadhaar Already Registered',
-          message: 'This Aadhaar number is already verified with another player account. Each Aadhaar can only be used by one player. If you believe this is an error, please contact support@professionalclubleague.com'
+          message: `This Aadhaar number is already verified with another player account (${existingPlayer.email}). Each Aadhaar can only be used by one player. If you believe this is an error, please contact support@professionalclubleague.com`
         },
         { status: 400 }
       )
     }
+
+    // Check if current user is re-verifying with same Aadhaar
+    const { data: currentUserAadhaar } = await supabase
+      .from('users')
+      .select('aadhaar_number, kyc_status')
+      .eq('id', user.id)
+      .single()
+    
+    if (currentUserAadhaar?.aadhaar_number === cleanedAadhaar) {
+      console.log('✅ Same user re-verification detected - allowing OTP generation')
+    }
+
+    console.log('✅ Fraud check passed - Aadhaar can be used by this player')
 
     // Call Cashfree to generate OTP
     const result = await generateAadhaarOTP(cleanedAadhaar)

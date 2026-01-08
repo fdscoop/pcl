@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { X, Loader2 } from 'lucide-react'
 import { useToast } from '@/context/ToastContext'
+import { KERALA_DISTRICTS, INDIAN_STATES, COUNTRIES, getDistrictsForState } from '@/lib/constants/locations'
 
 interface StadiumFormModalProps {
   isOpen: boolean
@@ -30,7 +31,7 @@ export default function StadiumFormModal({
     location: '',
     city: '',
     district: '',
-    state: '',
+    state: 'Kerala', // Default to Kerala for Phase 1
     country: 'India',
     capacity: '',
     hourly_rate: '',
@@ -43,6 +44,9 @@ export default function StadiumFormModal({
   const [hasUnprocessedFiles, setHasUnprocessedFiles] = useState(false)
   const { addToast } = useToast()
   const supabase = createClient()
+
+  // Get available districts based on selected state
+  const availableDistricts = getDistrictsForState(formData.state)
 
   useEffect(() => {
     if (stadium) {
@@ -425,32 +429,64 @@ export default function StadiumFormModal({
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="state">
+                State <span className="text-red-500">*</span>
+              </Label>
+              <select
+                id="state"
+                value={formData.state}
+                onChange={(e) => {
+                  const newState = e.target.value;
+                  setFormData({ 
+                    ...formData, 
+                    state: newState,
+                    district: '' // Reset district when state changes
+                  });
+                }}
+                required
+                className="w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+              >
+                <option value="">Select State</option>
+                {INDIAN_STATES.map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+              {formData.state === 'Kerala' && (
+                <p className="text-xs text-orange-600 mt-1">🏏 Kerala - Phase 1 focus region</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="district">
                 District
               </Label>
-              <Input
+              <select
                 id="district"
                 value={formData.district}
                 onChange={(e) =>
                   setFormData({ ...formData, district: e.target.value })
                 }
-                placeholder="e.g., Mumbai Suburban"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="state">
-                State <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="state"
-                value={formData.state}
-                onChange={(e) =>
-                  setFormData({ ...formData, state: e.target.value })
+                disabled={!formData.state}
+                className="w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20 disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                <option value="">
+                  {!formData.state 
+                    ? "Select State First" 
+                    : availableDistricts.length === 0 
+                      ? "No districts available" 
+                      : "Select District"
+                  }
+                </option>
+                {availableDistricts.map((district) => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500">
+                {formData.state === 'Kerala' 
+                  ? "Kerala districts available in Phase 1" 
+                  : "Select district for local visibility"
                 }
-                required
-                placeholder="e.g., Maharashtra"
-              />
+              </p>
             </div>
 
             <div className="space-y-2">

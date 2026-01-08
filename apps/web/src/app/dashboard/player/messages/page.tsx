@@ -282,60 +282,76 @@ export default function PlayerMessagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              Messages
-              {threads.filter(t => t.unreadCount > 0).length > 0 && (
-                <Badge variant="destructive" className="animate-pulse">
-                  {threads.reduce((sum, t) => sum + t.unreadCount, 0)} new
-                </Badge>
-              )}
-            </h1>
-            <p className="text-muted-foreground">Review club communications and reply when needed.</p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" className="btn-lift" onClick={() => router.back()}>
-              Back
-            </Button>
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-3xl shadow-xl shadow-orange-500/30">
+                💬
+              </div>
+              <div>
+                <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+                  Messages
+                  {threads.filter(t => t.unreadCount > 0).length > 0 && (
+                    <Badge className="bg-gradient-to-r from-red-500 to-rose-500 text-white animate-pulse px-3 py-1 text-sm font-bold rounded-full shadow-lg">
+                      {threads.reduce((sum, t) => sum + t.unreadCount, 0)} new
+                    </Badge>
+                  )}
+                </h1>
+                <p className="text-lg text-slate-600 mt-1">Review club communications and reply when needed.</p>
+              </div>
+            </div>
             <Button
-              variant="gradient"
-              className="btn-lift"
+              variant="outline"
               onClick={() => userId && loadMessages(userId)}
               disabled={loading}
+              className="border-2 border-orange-200 font-bold rounded-xl hover:bg-orange-50 px-5 py-3"
             >
-              {loading ? 'Loading...' : 'Refresh'}
+              {loading ? '⏳' : '🔄'} Refresh
             </Button>
           </div>
         </div>
 
         {error && (
-          <Card className="mb-6 border-destructive/30 bg-destructive/5">
-            <CardContent className="py-4 text-destructive font-medium">
-              {error}
+          <Card className="mb-6 border-2 border-red-300 bg-red-50 rounded-2xl shadow-lg">
+            <CardContent className="py-5 px-6 text-red-700 font-medium text-base flex items-center gap-3">
+              <span className="text-2xl">⚠️</span> {error}
             </CardContent>
           </Card>
         )}
         {successMessage && (
-          <Card className="mb-6 border-success/30 bg-success/10">
-            <CardContent className="py-4 text-success font-medium">
-              {successMessage}
+          <Card className="mb-6 border-2 border-emerald-300 bg-emerald-50 rounded-2xl shadow-lg">
+            <CardContent className="py-5 px-6 text-emerald-700 font-medium text-base flex items-center gap-3">
+              <span className="text-2xl">✅</span> {successMessage}
             </CardContent>
           </Card>
         )}
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-          <Card className="border-0 bg-gradient-to-b from-sky-50/10 via-transparent to-primary/5 shadow-xl my-6 bg-card/70">
-            <CardHeader className="rounded-t-2xl bg-sky-100/30 border-b border-sky-200/40">
-              <CardTitle>Conversations</CardTitle>
-              <CardDescription>Your latest club threads</CardDescription>
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
+          <Card className="border-2 border-orange-200 bg-white rounded-2xl shadow-xl shadow-orange-500/10 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 border-b-2 border-orange-100 py-5 px-6">
+              <CardTitle className="text-xl font-bold text-slate-800">📥 Conversations</CardTitle>
+              <CardDescription className="text-base">Your latest club threads</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 max-h-[560px] overflow-auto bg-sky-50/5">
+            <CardContent className="space-y-3 max-h-[560px] overflow-auto p-4 bg-gradient-to-b from-white to-orange-50/30">
               {loading ? (
-                <div className="text-sm text-muted-foreground">Loading messages...</div>
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full border-4 border-orange-200"></div>
+                    <div className="w-12 h-12 rounded-full border-4 border-orange-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+                  </div>
+                  <p className="mt-4 text-slate-600 font-medium">Loading messages...</p>
+                </div>
               ) : threads.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No conversations yet.</div>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center text-3xl">
+                    📭
+                  </div>
+                  <p className="text-lg font-medium text-slate-700">No conversations yet</p>
+                  <p className="text-sm text-slate-500 mt-1">Messages from clubs will appear here</p>
+                </div>
               ) : (
                 threads.map((thread) => (
                   <ThreadItem
@@ -349,19 +365,19 @@ export default function PlayerMessagesPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 bg-gradient-to-b from-primary/10 via-transparent to-accent/5 shadow-xl bg-card/70">
-            <CardHeader className="rounded-t-2xl bg-sky-100/30 border-b border-sky-200/40 py-3 my-4">
-              <CardTitle>Conversation</CardTitle>
-              <CardDescription>
+          <Card className="border-2 border-orange-200 bg-white rounded-2xl shadow-xl shadow-orange-500/10 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 border-b-2 border-orange-100 py-5 px-6">
+              <CardTitle className="text-xl font-bold text-slate-800">💬 Conversation</CardTitle>
+              <CardDescription className="text-base">
                 {selectedThread
                   ? `Chat with ${selectedThread.otherPartyName}`
                   : 'Select a conversation to view details'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-5">
               {selectedThread ? (
-                <div className="space-y-4">
-                  <div className="space-y-4 max-h-[360px] overflow-auto scroll-smooth" id="message-container">
+                <div className="space-y-5">
+                  <div className="space-y-4 max-h-[400px] overflow-auto scroll-smooth rounded-xl bg-gradient-to-b from-slate-50 to-orange-50/30 p-4 border-2 border-slate-100" id="message-container">
                     {selectedThread.messages.map((message) => (
                       <MessageBubble
                         key={message.id}
@@ -379,27 +395,38 @@ export default function PlayerMessagesPage() {
                     )}
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-sm font-semibold text-foreground">Reply</label>
+                  <div className="space-y-4 p-5 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200">
+                    <label className="text-base font-bold text-slate-800 flex items-center gap-2">
+                      ✍️ Reply
+                    </label>
                     <textarea
-                      className="w-full min-h-[120px] rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      className="w-full min-h-[120px] rounded-xl border-2 border-slate-200 px-4 py-3 text-base focus:outline-none focus:ring-4 focus:ring-orange-200 focus:border-orange-400 transition-all"
                       placeholder="Write your response..."
                       value={replyContent}
                       onChange={(event) => setReplyContent(event.target.value)}
                     />
                     <Button
-                      variant="gradient"
-                      className="btn-lift"
                       disabled={sending || !replyContent.trim()}
                       onClick={handleSendReply}
+                      className={`w-full font-bold py-4 text-lg rounded-xl transition-all shadow-lg ${
+                        sending || !replyContent.trim()
+                          ? 'bg-slate-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-orange-500/30'
+                      }`}
                     >
-                      {sending ? 'Sending...' : 'Send Reply'}
+                      {sending ? '⏳ Sending...' : '📤 Send Reply'}
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">
-                  Choose a conversation from the list to view the full thread.
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 flex items-center justify-center text-4xl shadow-lg">
+                    💬
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Select a Conversation</h3>
+                  <p className="text-base text-slate-600">
+                    Choose a conversation from the list to view the full thread.
+                  </p>
                 </div>
               )}
             </CardContent>

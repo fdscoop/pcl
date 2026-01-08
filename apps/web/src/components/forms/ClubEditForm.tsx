@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert } from '@/components/ui/alert'
 import type { Club } from '@/types/database'
+import { KERALA_DISTRICTS, INDIAN_STATES, COUNTRIES, getDistrictsForState } from '@/lib/constants/locations'
 
 const clubTypes = [
   'Registered',
@@ -33,6 +34,7 @@ const clubEditSchema = z.object({
   registration_number: z.string().optional(),
   founded_year: z.string().min(4, 'Please enter a valid year').max(4),
   city: z.string().min(2, 'City is required'),
+  district: z.string().optional(),
   state: z.string().min(2, 'State is required'),
   country: z.string().min(2, 'Country is required'),
   email: z.string().email('Please enter a valid email'),
@@ -54,11 +56,17 @@ export default function ClubEditForm({ club }: ClubEditFormProps) {
   const [loading, setLoading] = useState(false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(club.logo_url || null)
+  
+  // State for managing location dropdowns
+  const [selectedState, setSelectedState] = useState<string>(club.state || 'Kerala')
+  const [selectedDistrict, setSelectedDistrict] = useState<string>(club.district || '')
+  const [selectedCountry, setSelectedCountry] = useState<string>(club.country || 'India')
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ClubEditFormData>({
     resolver: zodResolver(clubEditSchema),
@@ -69,8 +77,9 @@ export default function ClubEditForm({ club }: ClubEditFormProps) {
       registration_number: club.registration_number || '',
       founded_year: club.founded_year?.toString() || '',
       city: club.city,
-      state: club.state,
-      country: club.country,
+      district: club.district || '',
+      state: club.state || 'Kerala',
+      country: club.country || 'India',
       email: club.email,
       phone: club.phone,
       website: club.website || '',
@@ -79,6 +88,9 @@ export default function ClubEditForm({ club }: ClubEditFormProps) {
   })
 
   const clubType = watch('club_type')
+
+  // Get available districts based on selected state
+  const availableDistricts = getDistrictsForState(selectedState)
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -364,7 +376,7 @@ export default function ClubEditForm({ club }: ClubEditFormProps) {
           <Input
             id="city"
             type="text"
-            placeholder="e.g., Mumbai"
+            placeholder="e.g., Kochi"
             {...register('city')}
           />
           {errors.city && (
@@ -375,26 +387,82 @@ export default function ClubEditForm({ club }: ClubEditFormProps) {
         {/* State */}
         <div className="space-y-2">
           <Label htmlFor="state">State/Province *</Label>
-          <Input
+          <select
             id="state"
-            type="text"
-            placeholder="e.g., Maharashtra"
-            {...register('state')}
-          />
+            value={selectedState}
+            onChange={(e) => {
+              const newState = e.target.value;
+              setSelectedState(newState);
+              setSelectedDistrict(''); // Reset district when state changes
+              setValue('state', newState);
+              setValue('district', '');
+            }}
+            className="w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+          >
+            <option value="">Select State</option>
+            {INDIAN_STATES.map((state) => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
           {errors.state && (
             <p className="text-sm text-red-600">{errors.state.message}</p>
           )}
+          {selectedState === 'Kerala' && (
+            <p className="text-xs text-orange-600">🏏 Kerala - Phase 1 focus region</p>
+          )}
+        </div>
+
+        {/* District */}
+        <div className="space-y-2">
+          <Label htmlFor="district">District</Label>
+          <select
+            id="district"
+            value={selectedDistrict}
+            onChange={(e) => {
+              const newDistrict = e.target.value;
+              setSelectedDistrict(newDistrict);
+              setValue('district', newDistrict);
+            }}
+            disabled={!selectedState}
+            className="w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20 disabled:bg-gray-100 disabled:text-gray-400"
+          >
+            <option value="">
+              {!selectedState 
+                ? "Select State First" 
+                : availableDistricts.length === 0 
+                  ? "No districts available" 
+                  : "Select District"
+              }
+            </option>
+            {availableDistricts.map((district) => (
+              <option key={district} value={district}>{district}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500">
+            {selectedState === 'Kerala' 
+              ? "Kerala districts available in Phase 1" 
+              : "Select district for local visibility"
+            }
+          </p>
         </div>
 
         {/* Country */}
         <div className="space-y-2">
           <Label htmlFor="country">Country *</Label>
-          <Input
+          <select
             id="country"
-            type="text"
-            placeholder="e.g., India"
-            {...register('country')}
-          />
+            value={selectedCountry}
+            onChange={(e) => {
+              const newCountry = e.target.value;
+              setSelectedCountry(newCountry);
+              setValue('country', newCountry);
+            }}
+            className="w-full rounded-xl border-orange-200 focus:border-orange-400 border-2 p-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+          >
+            {COUNTRIES.map((country) => (
+              <option key={country} value={country}>{country}</option>
+            ))}
+          </select>
           {errors.country && (
             <p className="text-sm text-red-600">{errors.country.message}</p>
           )}

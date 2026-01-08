@@ -15,398 +15,401 @@ import { useToast } from '@/context/ToastContext'
 import { Search, Filter, MapPin, Users, TrendingUp } from 'lucide-react'
 
 interface Player {
-  id: string
-  user_id: string
-  unique_player_id: string
-  photo_url?: string | null
-  position?: string
-  state?: string | null
-  district?: string | null
-  address?: string | null
-  jersey_number?: number | null
-  height_cm?: number | null
-  weight_kg?: number | null
-  date_of_birth?: string | null
-  nationality?: string
-  total_matches_played: number
-  total_goals_scored: number
-  total_assists: number
-  is_available_for_scout: boolean
-  users?: {
-    id: string
-    first_name: string
-    last_name: string
-    email: string
-    bio?: string | null
-  }
+ id: string
+ user_id: string
+ unique_player_id: string
+ photo_url?: string | null
+ position?: string
+ state?: string | null
+ district?: string | null
+ address?: string | null
+ jersey_number?: number | null
+ height_cm?: number | null
+ weight_kg?: number | null
+ date_of_birth?: string | null
+ nationality?: string
+ total_matches_played: number
+ total_goals_scored: number
+ total_assists: number
+ is_available_for_scout: boolean
+ users?: {
+ id: string
+ first_name: string
+ last_name: string
+ email: string
+ bio?: string | null
+ }
 }
 
 export default function ScoutPlayersPage() {
-  const router = useRouter()
-  const { addToast } = useToast()
-  const [club, setClub] = useState<any>(null)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedPosition, setSelectedPosition] = useState('all')
-  const [selectedState, setSelectedState] = useState('all')
-  const [selectedDistrict, setSelectedDistrict] = useState('all')
-  const [messageModal, setMessageModal] = useState<{ isOpen: boolean; player: Player | null }>({
-    isOpen: false,
-    player: null
-  })
-  const [messageContent, setMessageContent] = useState('')
-  const [sendingMessage, setSendingMessage] = useState(false)
-  const [viewModal, setViewModal] = useState<{ isOpen: boolean; player: Player | null }>({
-    isOpen: false,
-    player: null
-  })
-  const [contractModal, setContractModal] = useState<{ isOpen: boolean; player: Player | null }>({
-    isOpen: false,
-    player: null
-  })
-  const [showFilters, setShowFilters] = useState(false)
+ const router = useRouter()
+ const { addToast } = useToast()
+ const [club, setClub] = useState<any>(null)
+ const [players, setPlayers] = useState<Player[]>([])
+ const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([])
+ const [loading, setLoading] = useState(true)
+ const [searchTerm, setSearchTerm] = useState('')
+ const [selectedPosition, setSelectedPosition] = useState('all')
+ const [selectedState, setSelectedState] = useState('all')
+ const [selectedDistrict, setSelectedDistrict] = useState('all')
+ const [messageModal, setMessageModal] = useState<{ isOpen: boolean; player: Player | null }>({
+ isOpen: false,
+ player: null
+ })
+ const [messageContent, setMessageContent] = useState('')
+ const [sendingMessage, setSendingMessage] = useState(false)
+ const [viewModal, setViewModal] = useState<{ isOpen: boolean; player: Player | null }>({
+ isOpen: false,
+ player: null
+ })
+ const [contractModal, setContractModal] = useState<{ isOpen: boolean; player: Player | null }>({
+ isOpen: false,
+ player: null
+ })
+ const [showFilters, setShowFilters] = useState(false)
 
-  const positions = ['Goalkeeper', 'Defender', 'Midfielder', 'Forward']
+ const positions = ['Goalkeeper', 'Defender', 'Midfielder', 'Forward']
 
-  // Dynamically extract unique states and districts from loaded players
-  const availableStates = Array.from(
-    new Set(players.filter(p => p.state).map(p => p.state).sort())
-  ) as string[]
+ // Dynamically extract unique states and districts from loaded players
+ const availableStates = Array.from(
+ new Set(players.filter(p => p.state).map(p => p.state).sort())
+ ) as string[]
 
-  const availableDistricts = selectedState !== 'all'
-    ? Array.from(
-        new Set(
-          players
-            .filter(p => p.state === selectedState && p.district)
-            .map(p => p.district)
-            .sort()
-        )
-      ) as string[]
-    : []
+ const availableDistricts = selectedState !== 'all'
+ ? Array.from(
+ new Set(
+ players
+ .filter(p => p.state === selectedState && p.district)
+ .map(p => p.district)
+ .sort()
+ )
+ ) as string[]
+ : []
 
-  useEffect(() => {
-    loadData()
-  }, [])
+ useEffect(() => {
+ loadData()
+ }, [])
 
-  useEffect(() => {
-    filterPlayers()
-  }, [players, searchTerm, selectedPosition, selectedState, selectedDistrict])
+ useEffect(() => {
+ filterPlayers()
+ }, [players, searchTerm, selectedPosition, selectedState, selectedDistrict])
 
-  const loadData = async () => {
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+ const loadData = async () => {
+ try {
+ const supabase = createClient()
+ const { data: { user } } = await supabase.auth.getUser()
 
-      if (!user) {
-        router.push('/auth/login')
-        return
-      }
+ if (!user) {
+ router.push('/auth/login')
+ return
+ }
 
-      // Get club data
-      const { data: clubData, error: clubError } = await supabase
-        .from('clubs')
-        .select('*')
-        .eq('owner_id', user.id)
-        .single()
+ // Get club data
+ const { data: clubData, error: clubError } = await supabase
+ .from('clubs')
+ .select('*')
+ .eq('owner_id', user.id)
+ .single()
 
-      if (clubError) {
-        console.error('Error loading club:', clubError)
-        addToast({
-          type: 'error',
-          title: 'Error',
-          description: 'Failed to load your club information'
-        })
-        return
-      }
+ if (clubError) {
+ console.error('Error loading club:', clubError)
+ addToast({
+ type: 'error',
+ title: 'Error',
+ description: 'Failed to load your club information'
+ })
+ return
+ }
 
-      if (clubData) {
-        const normalizedClub = {
-          id: clubData.id,
-          name: clubData.club_name,
-          type: clubData.club_type,
-          category: clubData.category,
-          city: clubData.city,
-          state: clubData.state,
-          country: clubData.country,
-          email: clubData.contact_email || clubData.email,
-          phone: clubData.contact_phone || clubData.phone,
-          logo_url: clubData.logo_url
-        }
-        setClub(normalizedClub)
+ if (clubData) {
+ const normalizedClub = {
+ id: clubData.id,
+ name: clubData.club_name,
+ type: clubData.club_type,
+ category: clubData.category,
+ city: clubData.city,
+ state: clubData.state,
+ country: clubData.country,
+ email: clubData.contact_email || clubData.email,
+ phone: clubData.contact_phone || clubData.phone,
+ logo_url: clubData.logo_url
+ }
+ setClub(normalizedClub)
 
-        // Check KYC verification status
-        if (!clubData.kyc_verified) {
-          router.replace('/dashboard/club-owner/kyc')
-          return
-        }
-      }
+ // Check KYC verification status
+ if (!clubData.kyc_verified) {
+ router.replace('/dashboard/club-owner/kyc')
+ return
+ }
+ }
 
-      // Get verified players available for scouting
-      const { data: playersData, error } = await supabase
-        .from('players')
-        .select(`
-          id,
-          user_id,
-          position,
-          photo_url,
-          unique_player_id,
-          jersey_number,
-          height_cm,
-          weight_kg,
-          date_of_birth,
-          nationality,
-          preferred_foot,
-          current_club_id,
-          is_available_for_scout,
-          state,
-          district,
-          address,
-          total_matches_played,
-          total_goals_scored,
-          total_assists,
-          users!players_user_id_fkey (
-            id,
-            first_name,
-            last_name,
-            email,
-            bio
-          )
-        `)
-        .eq('is_available_for_scout', true)
-        .order('created_at', { ascending: false })
+ // Get verified players available for scouting
+ const { data: playersData, error } = await supabase
+ .from('players')
+ .select(`
+ id,
+ user_id,
+ position,
+ photo_url,
+ unique_player_id,
+ jersey_number,
+ height_cm,
+ weight_kg,
+ date_of_birth,
+ nationality,
+ preferred_foot,
+ current_club_id,
+ is_available_for_scout,
+ state,
+ district,
+ address,
+ total_matches_played,
+ total_goals_scored,
+ total_assists,
+ users!players_user_id_fkey (
+ id,
+ first_name,
+ last_name,
+ email,
+ bio
+ )
+ `)
+ .eq('is_available_for_scout', true)
+ .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Error loading players:', error)
-        addToast({
-          type: 'error',
-          title: 'Error',
-          description: 'Failed to load players'
-        })
-      } else {
-        setPlayers((playersData || []) as unknown as Player[])
-      }
-    } catch (error) {
-      console.error('Error in loadData:', error)
-      addToast({
-        type: 'error',
-        title: 'Error',
-        description: 'Something went wrong'
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
+ if (error) {
+ console.error('Error loading players:', error)
+ addToast({
+ type: 'error',
+ title: 'Error',
+ description: 'Failed to load players'
+ })
+ } else {
+ setPlayers((playersData || []) as unknown as Player[])
+ }
+ } catch (error) {
+ console.error('Error in loadData:', error)
+ addToast({
+ type: 'error',
+ title: 'Error',
+ description: 'Something went wrong'
+ })
+ } finally {
+ setLoading(false)
+ }
+ }
 
-  const filterPlayers = () => {
-    let filtered = players
+ const filterPlayers = () => {
+ let filtered = players
 
-    // Search by name or email
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      filtered = filtered.filter(p => {
-        const user = p.users
-        return (
-          `${user?.first_name} ${user?.last_name}`.toLowerCase().includes(term) ||
-          user?.email?.toLowerCase().includes(term) ||
-          p.unique_player_id?.toLowerCase().includes(term)
-        )
-      })
-    }
+ // Search by name or email
+ if (searchTerm) {
+ const term = searchTerm.toLowerCase()
+ filtered = filtered.filter(p => {
+ const user = p.users
+ return (
+ `${user?.first_name} ${user?.last_name}`.toLowerCase().includes(term) ||
+ user?.email?.toLowerCase().includes(term) ||
+ p.unique_player_id?.toLowerCase().includes(term)
+ )
+ })
+ }
 
-    // Filter by position
-    if (selectedPosition !== 'all') {
-      filtered = filtered.filter(p => p.position === selectedPosition)
-    }
+ // Filter by position
+ if (selectedPosition !== 'all') {
+ filtered = filtered.filter(p => p.position === selectedPosition)
+ }
 
-    // Filter by state
-    if (selectedState !== 'all') {
-      filtered = filtered.filter(p => p.state === selectedState)
-    }
+ // Filter by state
+ if (selectedState !== 'all') {
+ filtered = filtered.filter(p => p.state === selectedState)
+ }
 
-    // Filter by district
-    if (selectedDistrict !== 'all') {
-      filtered = filtered.filter(p => p.district === selectedDistrict)
-    }
+ // Filter by district
+ if (selectedDistrict !== 'all') {
+ filtered = filtered.filter(p => p.district === selectedDistrict)
+ }
 
-    setFilteredPlayers(filtered)
-  }
+ setFilteredPlayers(filtered)
+ }
 
-  const handleContactPlayer = (player: Player) => {
-    setMessageModal({ isOpen: true, player })
-    setMessageContent('')
-  }
+ const handleContactPlayer = (player: Player) => {
+ setMessageModal({ isOpen: true, player })
+ setMessageContent('')
+ }
 
-  const handleSendMessage = async () => {
-    if (!messageModal.player || !messageContent.trim()) {
-      addToast({
-        type: 'error',
-        title: 'Message Empty',
-        description: 'Please enter a message before sending'
-      })
-      return
-    }
+ const handleSendMessage = async () => {
+ if (!messageModal.player || !messageContent.trim()) {
+ addToast({
+ type: 'error',
+ title: 'Message Empty',
+ description: 'Please enter a message before sending'
+ })
+ return
+ }
 
-    try {
-      setSendingMessage(true)
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+ try {
+ setSendingMessage(true)
+ const supabase = createClient()
+ const { data: { user } } = await supabase.auth.getUser()
 
-      if (!user || !club) {
-        addToast({
-          type: 'error',
-          title: 'Error',
-          description: 'Could not identify sender'
-        })
-        return
-      }
+ if (!user || !club) {
+ addToast({
+ type: 'error',
+ title: 'Error',
+ description: 'Could not identify sender'
+ })
+ return
+ }
 
-      const { error } = await supabase
-        .from('messages')
-        .insert([
-          {
-            sender_id: user.id,
-            sender_type: 'club_owner',
-            receiver_id: messageModal.player.user_id,
-            receiver_type: 'player',
-            subject: `Message from ${club.name}`,
-            content: messageContent,
-            created_at: new Date().toISOString()
-          }
-        ])
+ const { error } = await supabase
+ .from('messages')
+ .insert([
+ {
+ sender_id: user.id,
+ sender_type: 'club_owner',
+ receiver_id: messageModal.player.user_id,
+ receiver_type: 'player',
+ subject: `Message from ${club.name}`,
+ content: messageContent,
+ created_at: new Date().toISOString()
+ }
+ ])
 
-      if (error) {
-        console.error('Error sending message:', error)
-        addToast({
-          type: 'error',
-          title: 'Failed to Send',
-          description: 'Could not send message. Please try again.'
-        })
-      } else {
-        const user = messageModal.player?.users
-        addToast({
-          type: 'success',
-          title: 'Message Sent',
-          description: `Message sent to ${user?.first_name}!`
-        })
-        setMessageModal({ isOpen: false, player: null })
-        setMessageContent('')
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      addToast({
-        type: 'error',
-        title: 'Error',
-        description: 'Error sending message'
-      })
-    } finally {
-      setSendingMessage(false)
-    }
-  }
+ if (error) {
+ console.error('Error sending message:', error)
+ addToast({
+ type: 'error',
+ title: 'Failed to Send',
+ description: 'Could not send message. Please try again.'
+ })
+ } else {
+ const user = messageModal.player?.users
+ addToast({
+ type: 'success',
+ title: 'Message Sent',
+ description: `Message sent to ${user?.first_name}!`
+ })
+ setMessageModal({ isOpen: false, player: null })
+ setMessageContent('')
+ }
+ } catch (error) {
+ console.error('Error:', error)
+ addToast({
+ type: 'error',
+ title: 'Error',
+ description: 'Error sending message'
+ })
+ } finally {
+ setSendingMessage(false)
+ }
+ }
 
-  const handleCreateContract = async (contractData: any) => {
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+ const handleCreateContract = async (contractData: any) => {
+ try {
+ const supabase = createClient()
+ const { data: { user } } = await supabase.auth.getUser()
 
-      if (!user || !club) {
-        throw new Error('Authentication required')
-      }
+ if (!user || !club) {
+ throw new Error('Authentication required')
+ }
 
-      const contractToInsert = {
-        player_id: contractData.playerId,
-        club_id: contractData.clubId,
-        status: 'pending',
-        contract_type: contractData.contractType,
-        contract_start_date: contractData.startDate,
-        contract_end_date: contractData.endDate,
-        notice_period: contractData.noticePeriod ? parseInt(contractData.noticePeriod) : null,
-        annual_salary: contractData.annualSalary ? parseFloat(contractData.annualSalary) : null,
-        salary_monthly: contractData.annualSalary ? parseFloat(contractData.annualSalary) / 12 : null,
-        signing_bonus: contractData.signingBonus ? parseFloat(contractData.signingBonus) : null,
-        release_clause: contractData.releaseClause ? parseFloat(contractData.releaseClause) : null,
-        goal_bonus: contractData.goalBonus ? parseFloat(contractData.goalBonus) : null,
-        appearance_bonus: contractData.appearanceBonus ? parseFloat(contractData.appearanceBonus) : null,
-        medical_insurance: contractData.medicalInsurance ? parseFloat(contractData.medicalInsurance) : null,
-        housing_allowance: contractData.housingAllowance ? parseFloat(contractData.housingAllowance) : null,
-        position_assigned: contractData.position || null,
-        jersey_number: contractData.jerseyNumber ? parseInt(contractData.jerseyNumber) : null,
-        training_days_per_week: contractData.trainingDaysPerWeek ? parseInt(contractData.trainingDaysPerWeek) : null,
-        image_rights: contractData.imageRights || 'yes',
-        agent_name: contractData.agentName || null,
-        agent_contact: contractData.agentContact || null,
-        terms_conditions: contractData.termsAndConditions || null,
-        created_by: user.id,
-        signing_status: 'unsigned',
-        club_signature_timestamp: contractData.clubSignatoryDate ? new Date(contractData.clubSignatoryDate).toISOString() : new Date().toISOString(),
-        club_signature_name: contractData.clubSignatoryName || club.club_name,
-        player_signature_timestamp: null,
-        player_signature_data: null,
-        contract_html: null
-      }
+ const contractToInsert = {
+ player_id: contractData.playerId,
+ club_id: contractData.clubId,
+ status: 'pending',
+ contract_type: contractData.contractType,
+ contract_start_date: contractData.startDate,
+ contract_end_date: contractData.endDate,
+ notice_period: contractData.noticePeriod ? parseInt(contractData.noticePeriod) : null,
+ annual_salary: contractData.annualSalary ? parseFloat(contractData.annualSalary) : null,
+ salary_monthly: contractData.annualSalary ? parseFloat(contractData.annualSalary) / 12 : null,
+ signing_bonus: contractData.signingBonus ? parseFloat(contractData.signingBonus) : null,
+ release_clause: contractData.releaseClause ? parseFloat(contractData.releaseClause) : null,
+ goal_bonus: contractData.goalBonus ? parseFloat(contractData.goalBonus) : null,
+ appearance_bonus: contractData.appearanceBonus ? parseFloat(contractData.appearanceBonus) : null,
+ medical_insurance: contractData.medicalInsurance ? parseFloat(contractData.medicalInsurance) : null,
+ housing_allowance: contractData.housingAllowance ? parseFloat(contractData.housingAllowance) : null,
+ position_assigned: contractData.position || null,
+ jersey_number: contractData.jerseyNumber ? parseInt(contractData.jerseyNumber) : null,
+ training_days_per_week: contractData.trainingDaysPerWeek ? parseInt(contractData.trainingDaysPerWeek) : null,
+ image_rights: contractData.imageRights || 'yes',
+ agent_name: contractData.agentName || null,
+ agent_contact: contractData.agentContact || null,
+ terms_conditions: contractData.termsAndConditions || null,
+ created_by: user.id,
+ signing_status: 'unsigned',
+ club_signature_timestamp: contractData.clubSignatoryDate ? new Date(contractData.clubSignatoryDate).toISOString() : new Date().toISOString(),
+ club_signature_name: contractData.clubSignatoryName || club.club_name,
+ player_signature_timestamp: null,
+ player_signature_data: null,
+ contract_html: null
+ }
 
-      const { data, error } = await supabase
-        .from('contracts')
-        .insert([contractToInsert])
-        .select()
-        .single()
+ const { data, error } = await supabase
+ .from('contracts')
+ .insert([contractToInsert])
+ .select()
+ .single()
 
-      if (error) {
-        console.error('Error creating contract:', error)
-        throw new Error(error.message || 'Failed to create contract')
-      }
+ if (error) {
+ console.error('Error creating contract:', error)
+ throw new Error(error.message || 'Failed to create contract')
+ }
 
-      // Create notification for player
-      const { data: playerData } = await supabase
-        .from('players')
-        .select('user_id')
-        .eq('id', contractData.playerId)
-        .single()
+ // Create notification for player
+ const { data: playerData } = await supabase
+ .from('players')
+ .select('user_id')
+ .eq('id', contractData.playerId)
+ .single()
 
-      if (playerData) {
-        await supabase.from('notifications').insert([
-          {
-            user_id: playerData.user_id,
-            type: 'contract_offer',
-            title: 'New Contract Offer',
-            message: `${club.name} has sent you a contract offer. Please review and sign.`,
-            action_url: `/dashboard/player/contracts/${data.id}`,
-            read: false
-          }
-        ])
-      }
+ if (playerData) {
+ await supabase.from('notifications').insert([
+ {
+ user_id: playerData.user_id,
+ type: 'contract_offer',
+ title: 'New Contract Offer',
+ message: `${club.name} has sent you a contract offer. Please review and sign.`,
+ action_url: `/dashboard/player/contracts/${data.id}`,
+ read: false
+ }
+ ])
+ }
 
-      addToast({
-        type: 'success',
-        title: 'Contract Sent',
-        description: 'Contract offer has been sent to the player'
-      })
+ addToast({
+ type: 'success',
+ title: 'Contract Sent',
+ description: 'Contract offer has been sent to the player'
+ })
 
-      setContractModal({ isOpen: false, player: null })
-    } catch (error) {
-      console.error('Error creating contract:', error)
-      addToast({
-        type: 'error',
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create contract'
-      })
-    }
-  }
+ setContractModal({ isOpen: false, player: null })
+ } catch (error) {
+ console.error('Error creating contract:', error)
+ addToast({
+ type: 'error',
+ title: 'Error',
+ description: error instanceof Error ? error.message : 'Failed to create contract'
+ })
+ }
+ }
 
-  const clearFilters = () => {
-    setSearchTerm('')
-    setSelectedPosition('all')
-    setSelectedState('all')
-    setSelectedDistrict('all')
-  }
+ const clearFilters = () => {
+ setSearchTerm('')
+ setSelectedPosition('all')
+ setSelectedState('all')
+ setSelectedDistrict('all')
+ }
 
-  if (loading) {
+ if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
-          <p className="mt-4 text-gray-600">Loading players...</p>
+          <div className="relative mx-auto w-12 h-12">
+            <div className="w-12 h-12 rounded-full border-4 border-teal-200"></div>
+            <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-teal-500 border-t-transparent animate-spin"></div>
+          </div>
+          <p className="mt-4 text-slate-500 text-sm">Loading players...</p>
         </div>
       </div>
     )
@@ -419,69 +422,69 @@ export default function ScoutPlayersPage() {
   ].filter(Boolean).length
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      {/* Page Header */}
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+      {/* Page Header - Mobile optimized */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Scout Players</h1>
-            <p className="text-gray-600 mt-1">Discover and recruit talented players for your club</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Scout Players</h1>
+            <p className="text-slate-600 text-sm sm:text-base mt-1">Discover and recruit talented players</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-sm">
-              <Users className="w-4 h-4 mr-1" />
+            <Badge variant="outline" className="text-xs sm:text-sm bg-teal-50 border-teal-200 text-teal-700">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               {players.length} Available
             </Badge>
           </div>
         </div>
       </div>
 
-      {/* Search and Filter Section */}
-      <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="pb-4">
+      {/* Search and Filter Section - Mobile friendly */}
+      <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
+        <CardHeader className="pb-3 sm:pb-4 bg-gradient-to-r from-teal-50 to-cyan-50">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Search className="w-5 h-5 text-teal-600" />
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
               Search & Filter
             </CardTitle>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden"
+              className="lg:hidden text-xs"
             >
-              <Filter className="w-4 h-4 mr-2" />
+              <Filter className="w-4 h-4 mr-1" />
               Filters
               {activeFiltersCount > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]">
                   {activeFiltersCount}
                 </Badge>
               )}
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-4">
           {/* Search Bar - Always visible */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
             <Input
               type="text"
               placeholder="Search by name, email, or player ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11"
+              className="pl-9 sm:pl-10 h-10 sm:h-11 text-sm"
             />
           </div>
 
           {/* Filters - Responsive */}
-          <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 ${!showFilters && 'hidden lg:grid'}`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${!showFilters && 'hidden lg:grid'}`}>
             {/* Position Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1.5 sm:mb-2">Position</label>
               <select
                 value={selectedPosition}
                 onChange={(e) => setSelectedPosition(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-slate-200 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 <option value="all">All Positions</option>
                 {positions.map(pos => (
@@ -492,14 +495,14 @@ export default function ScoutPlayersPage() {
 
             {/* State Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1.5 sm:mb-2">State</label>
               <select
                 value={selectedState}
                 onChange={(e) => {
                   setSelectedState(e.target.value)
                   setSelectedDistrict('all')
-                }}
-                className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+ }}
+                className="w-full px-3 py-2 text-sm border border-slate-200 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 <option value="all">All States</option>
                 {availableStates.map(state => (
@@ -510,12 +513,12 @@ export default function ScoutPlayersPage() {
 
             {/* District Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-700 mb-1.5 sm:mb-2">District</label>
               <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
                 disabled={selectedState === 'all' || availableDistricts.length === 0}
-                className="w-full px-3 py-2 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                className="w-full px-3 py-2 text-sm border border-slate-200 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400"
               >
                 <option value="all">All Districts</option>
                 {availableDistricts.map(district => (
@@ -526,8 +529,8 @@ export default function ScoutPlayersPage() {
 
             {/* Results and Clear */}
             <div className="flex flex-col justify-end gap-2">
-              <div className="flex items-center justify-between px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg">
-                <span className="text-sm font-medium text-teal-900">
+              <div className="flex items-center justify-between px-3 py-2 bg-teal-50 border border-teal-200 rounded-xl">
+                <span className="text-xs sm:text-sm font-medium text-teal-900">
                   {filteredPlayers.length} Result{filteredPlayers.length !== 1 ? 's' : ''}
                 </span>
                 {activeFiltersCount > 0 && (
@@ -546,21 +549,21 @@ export default function ScoutPlayersPage() {
         </CardContent>
       </Card>
 
-      {/* Players Grid */}
+      {/* Players Grid - Mobile responsive */}
       {filteredPlayers.length === 0 ? (
-        <Card className="border-gray-200">
+        <Card className="border-0 shadow-lg rounded-2xl">
           <CardContent className="py-12">
             <div className="text-center">
-              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Players Found</h3>
-              <p className="text-gray-600 mb-4">
+              <Users className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">No Players Found</h3>
+              <p className="text-slate-600 mb-4 text-sm">
                 {players.length === 0 
                   ? "No players are currently available for scouting."
                   : "Try adjusting your filters to see more results."
                 }
               </p>
               {activeFiltersCount > 0 && (
-                <Button onClick={clearFilters} variant="outline">
+                <Button onClick={clearFilters} variant="outline" size="sm">
                   Clear Filters
                 </Button>
               )}
@@ -568,7 +571,7 @@ export default function ScoutPlayersPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {filteredPlayers.map((player) => (
             <CompactPlayerCard
               key={player.id}
@@ -581,229 +584,229 @@ export default function ScoutPlayersPage() {
         </div>
       )}
 
-      {/* Message Modal */}
-      {messageModal.isOpen && messageModal.player && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
-            <CardHeader className="border-b bg-gradient-to-r from-teal-50 to-blue-50">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <span>💬</span>
-                Send Message
-              </CardTitle>
-              <CardDescription>
-                To: {messageModal.player.users?.first_name} {messageModal.player.users?.last_name}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Message
-                </label>
-                <textarea
-                  value={messageContent}
-                  onChange={(e) => setMessageContent(e.target.value)}
-                  placeholder="Write your message here... Be professional and clear about your interest."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400 resize-none"
-                  rows={5}
-                  disabled={sendingMessage}
-                  maxLength={500}
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  {messageContent.length}/500 characters
-                </p>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setMessageModal({ isOpen: false, player: null })}
-                  disabled={sendingMessage}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white"
-                  onClick={handleSendMessage}
-                  disabled={sendingMessage || messageContent.trim().length === 0}
-                >
-                  {sendingMessage ? 'Sending...' : 'Send Message'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+ {/* Message Modal */}
+ {messageModal.isOpen && messageModal.player && (
+ <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+ <Card className="w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
+ <CardHeader className="border-b bg-gradient-to-r from-teal-50 to-blue-50">
+ <CardTitle className="text-xl flex items-center gap-2">
+ <span>💬</span>
+ Send Message
+ </CardTitle>
+ <CardDescription>
+ To: {messageModal.player.users?.first_name} {messageModal.player.users?.last_name}
+ </CardDescription>
+ </CardHeader>
+ <CardContent className="space-y-4 pt-6">
+ <div>
+ <label className="block text-sm font-medium text-gray-700 mb-2">
+ Message
+ </label>
+ <textarea
+ value={messageContent}
+ onChange={(e) => setMessageContent(e.target.value)}
+ placeholder="Write your message here... Be professional and clear about your interest."
+ className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400 resize-none"
+ rows={5}
+ disabled={sendingMessage}
+ maxLength={500}
+ />
+ <p className="text-xs text-gray-500 mt-2">
+ {messageContent.length}/500 characters
+ </p>
+ </div>
+ <div className="flex gap-3 pt-2">
+ <Button
+ variant="outline"
+ className="flex-1"
+ onClick={() => setMessageModal({ isOpen: false, player: null })}
+ disabled={sendingMessage}
+ >
+ Cancel
+ </Button>
+ <Button
+ className="flex-1 bg-teal-600 hover:bg-teal-700 text-white"
+ onClick={handleSendMessage}
+ disabled={sendingMessage || messageContent.trim().length === 0}
+ >
+ {sendingMessage ? 'Sending...' : 'Send Message'}
+ </Button>
+ </div>
+ </CardContent>
+ </Card>
+ </div>
+ )}
 
-      {/* Player Details Modal */}
-      {viewModal.isOpen && viewModal.player && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 p-4 animate-in fade-in duration-200 overflow-y-auto flex items-start justify-center pt-4">
-          <Card className="w-full max-w-3xl shadow-xl animate-in zoom-in-95 duration-200 my-8">
-            <CardHeader className="border-b bg-gradient-to-r from-teal-50 via-blue-50 to-purple-50">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-2xl font-bold">
-                    {viewModal.player.users?.first_name} {viewModal.player.users?.last_name}
-                  </CardTitle>
-                  <CardDescription className="text-sm mt-1">
-                    Player ID: {viewModal.player.unique_player_id}
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewModal({ isOpen: false, player: null })}
-                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                >
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
+ {/* Player Details Modal */}
+ {viewModal.isOpen && viewModal.player && (
+ <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 p-4 animate-in fade-in duration-200 overflow-y-auto flex items-start justify-center pt-4">
+ <Card className="w-full max-w-3xl shadow-xl animate-in zoom-in-95 duration-200 my-8">
+ <CardHeader className="border-b bg-gradient-to-r from-teal-50 via-blue-50 to-purple-50">
+ <div className="flex justify-between items-start">
+ <div>
+ <CardTitle className="text-2xl font-bold">
+ {viewModal.player.users?.first_name} {viewModal.player.users?.last_name}
+ </CardTitle>
+ <CardDescription className="text-sm mt-1">
+ Player ID: {viewModal.player.unique_player_id}
+ </CardDescription>
+ </div>
+ <Button
+ variant="ghost"
+ size="sm"
+ onClick={() => setViewModal({ isOpen: false, player: null })}
+ className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+ >
+ ✕
+ </Button>
+ </div>
+ </CardHeader>
 
-            <CardContent className="space-y-6 pt-6">
-              {/* Player Photo */}
-              {viewModal.player.photo_url && (
-                <div className="relative w-full h-72 rounded-xl overflow-hidden border-2 border-gray-200">
-                  <Image
-                    src={viewModal.player.photo_url}
-                    alt={`${viewModal.player.users?.first_name} ${viewModal.player.users?.last_name}`}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
+ <CardContent className="space-y-6 pt-6">
+ {/* Player Photo */}
+ {viewModal.player.photo_url && (
+ <div className="relative w-full h-72 rounded-xl overflow-hidden border-2 border-gray-200">
+ <Image
+ src={viewModal.player.photo_url}
+ alt={`${viewModal.player.users?.first_name} ${viewModal.player.users?.last_name}`}
+ fill
+ className="object-cover"
+ />
+ </div>
+ )}
 
-              {/* Player Bio */}
-              {viewModal.player.users?.bio && (
-                <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-blue-200 rounded-xl p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    About Player
-                  </h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">{viewModal.player.users.bio}</p>
-                </div>
-              )}
+ {/* Player Bio */}
+ {viewModal.player.users?.bio && (
+ <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-blue-200 rounded-xl p-4">
+ <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+ <TrendingUp className="w-4 h-4" />
+ About Player
+ </h3>
+ <p className="text-sm text-gray-700 leading-relaxed">{viewModal.player.users.bio}</p>
+ </div>
+ )}
 
-              {/* Basic Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">Position</p>
-                    <p className="text-base font-semibold text-gray-900">{viewModal.player.position || 'N/A'}</p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">Nationality</p>
-                    <p className="text-base font-semibold text-gray-900">{viewModal.player.nationality || 'N/A'}</p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">Jersey #</p>
-                    <p className="text-base font-semibold text-gray-900">{viewModal.player.jersey_number || 'N/A'}</p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">Height</p>
-                    <p className="text-base font-semibold text-gray-900">{viewModal.player.height_cm ? `${viewModal.player.height_cm} cm` : 'N/A'}</p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">Weight</p>
-                    <p className="text-base font-semibold text-gray-900">{viewModal.player.weight_kg ? `${viewModal.player.weight_kg} kg` : 'N/A'}</p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">Date of Birth</p>
-                    <p className="text-base font-semibold text-gray-900">
-                      {viewModal.player.date_of_birth
-                        ? new Date(viewModal.player.date_of_birth).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })
-                        : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
+ {/* Basic Information */}
+ <div>
+ <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+ <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">Position</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.position || 'N/A'}</p>
+ </div>
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">Nationality</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.nationality || 'N/A'}</p>
+ </div>
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">Jersey #</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.jersey_number || 'N/A'}</p>
+ </div>
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">Height</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.height_cm ? `${viewModal.player.height_cm} cm` : 'N/A'}</p>
+ </div>
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">Weight</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.weight_kg ? `${viewModal.player.weight_kg} kg` : 'N/A'}</p>
+ </div>
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">Date of Birth</p>
+ <p className="text-base font-semibold text-gray-900">
+ {viewModal.player.date_of_birth
+ ? new Date(viewModal.player.date_of_birth).toLocaleDateString('en-US', {
+ year: 'numeric',
+ month: 'short',
+ day: 'numeric'
+ })
+ : 'N/A'}
+ </p>
+ </div>
+ </div>
+ </div>
 
-              {/* Performance Statistics */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Statistics</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 p-5 rounded-xl text-center">
-                    <p className="text-3xl font-bold text-blue-700">{viewModal.player.total_matches_played}</p>
-                    <p className="text-xs text-blue-600 font-medium mt-2">Matches Played</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 p-5 rounded-xl text-center">
-                    <p className="text-3xl font-bold text-green-700">{viewModal.player.total_goals_scored}</p>
-                    <p className="text-xs text-green-600 font-medium mt-2">Goals Scored</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 p-5 rounded-xl text-center">
-                    <p className="text-3xl font-bold text-purple-700">{viewModal.player.total_assists}</p>
-                    <p className="text-xs text-purple-600 font-medium mt-2">Assists</p>
-                  </div>
-                </div>
-              </div>
+ {/* Performance Statistics */}
+ <div>
+ <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Statistics</h3>
+ <div className="grid grid-cols-3 gap-4">
+ <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 p-5 rounded-xl text-center">
+ <p className="text-3xl font-bold text-blue-700">{viewModal.player.total_matches_played}</p>
+ <p className="text-xs text-blue-600 font-medium mt-2">Matches Played</p>
+ </div>
+ <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 p-5 rounded-xl text-center">
+ <p className="text-3xl font-bold text-green-700">{viewModal.player.total_goals_scored}</p>
+ <p className="text-xs text-green-600 font-medium mt-2">Goals Scored</p>
+ </div>
+ <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 p-5 rounded-xl text-center">
+ <p className="text-3xl font-bold text-purple-700">{viewModal.player.total_assists}</p>
+ <p className="text-xs text-purple-600 font-medium mt-2">Assists</p>
+ </div>
+ </div>
+ </div>
 
-              {/* Location Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-teal-600" />
-                  Location
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">State</p>
-                    <p className="text-base font-semibold text-gray-900">{viewModal.player.state || 'N/A'}</p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 font-medium mb-1">District</p>
-                    <p className="text-base font-semibold text-gray-900">{viewModal.player.district || 'N/A'}</p>
-                  </div>
-                  {viewModal.player.address && (
-                    <div className="col-span-2 bg-gray-50 border border-gray-200 p-4 rounded-lg">
-                      <p className="text-xs text-gray-500 font-medium mb-1">Address</p>
-                      <p className="text-base font-semibold text-gray-900">{viewModal.player.address}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+ {/* Location Information */}
+ <div>
+ <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+ <MapPin className="w-5 h-5 text-teal-600" />
+ Location
+ </h3>
+ <div className="grid grid-cols-2 gap-4">
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">State</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.state || 'N/A'}</p>
+ </div>
+ <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">District</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.district || 'N/A'}</p>
+ </div>
+ {viewModal.player.address && (
+ <div className="col-span-2 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+ <p className="text-xs text-gray-500 font-medium mb-1">Address</p>
+ <p className="text-base font-semibold text-gray-900">{viewModal.player.address}</p>
+ </div>
+ )}
+ </div>
+ </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t">
-                <Button
-                  className="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white"
-                  onClick={() => {
-                    if (viewModal.player) {
-                      setViewModal({ isOpen: false, player: null })
-                      handleContactPlayer(viewModal.player)
-                    }
-                  }}
-                >
-                  💬 Send Message
-                </Button>
-                <Button
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
-                  onClick={() => {
-                    if (viewModal.player) {
-                      setViewModal({ isOpen: false, player: null })
-                      setContractModal({ isOpen: true, player: viewModal.player })
-                    }
-                  }}
-                >
-                  📄 Send Contract
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+ {/* Action Buttons */}
+ <div className="flex gap-3 pt-4 border-t">
+ <Button
+ className="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white"
+ onClick={() => {
+ if (viewModal.player) {
+ setViewModal({ isOpen: false, player: null })
+ handleContactPlayer(viewModal.player)
+ }
+ }}
+ >
+ 💬 Send Message
+ </Button>
+ <Button
+ className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+ onClick={() => {
+ if (viewModal.player) {
+ setViewModal({ isOpen: false, player: null })
+ setContractModal({ isOpen: true, player: viewModal.player })
+ }
+ }}
+ >
+ 📄 Send Contract
+ </Button>
+ </div>
+ </CardContent>
+ </Card>
+ </div>
+ )}
 
-      {/* Contract Modal */}
-      {contractModal.isOpen && contractModal.player && (
-        <ElaboratedContractModal
-          player={contractModal.player}
-          club={club}
-          onClose={() => setContractModal({ isOpen: false, player: null })}
-          onSubmit={handleCreateContract}
-        />
-      )}
-    </div>
-  )
+ {/* Contract Modal */}
+ {contractModal.isOpen && contractModal.player && (
+ <ElaboratedContractModal
+ player={contractModal.player}
+ club={club}
+ onClose={() => setContractModal({ isOpen: false, player: null })}
+ onSubmit={handleCreateContract}
+ />
+ )}
+ </div>
+ )
 }

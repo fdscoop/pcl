@@ -15,22 +15,22 @@
 const USE_DUMMY_API = process.env.NEXT_PUBLIC_KYC_MODE === 'dummy' || !process.env.NEXT_PUBLIC_CASHFREE_API_KEY
 
 interface AadhaarOTPResponse {
-  success: boolean
-  message: string
-  ref_id?: string // Reference ID for OTP verification
-  error?: string
+ success: boolean
+ message: string
+ ref_id?: string // Reference ID for OTP verification
+ error?: string
 }
 
 interface AadhaarVerifyResponse {
-  success: boolean
-  message: string
-  data?: {
-    name: string
-    dob: string
-    gender: string
-    address: string
-  }
-  error?: string
+ success: boolean
+ message: string
+ data?: {
+ name: string
+ dob: string
+ gender: string
+ address: string
+ }
+ error?: string
 }
 
 /**
@@ -39,24 +39,24 @@ interface AadhaarVerifyResponse {
  * @returns Promise with OTP generation result
  */
 export async function generateAadhaarOTP(aadhaarNumber: string): Promise<AadhaarOTPResponse> {
-  // Remove spaces and validate
-  const cleanAadhaar = aadhaarNumber.replace(/\s/g, '')
+ // Remove spaces and validate
+ const cleanAadhaar = aadhaarNumber.replace(/\s/g, '')
 
-  if (!/^\d{12}$/.test(cleanAadhaar)) {
-    return {
-      success: false,
-      message: 'Invalid Aadhaar number',
-      error: 'Aadhaar number must be 12 digits'
-    }
-  }
+ if (!/^\d{12}$/.test(cleanAadhaar)) {
+ return {
+ success: false,
+ message: 'Invalid Aadhaar number',
+ error: 'Aadhaar number must be 12 digits'
+ }
+ }
 
-  if (USE_DUMMY_API) {
-    // Dummy implementation
-    return dummyGenerateOTP(cleanAadhaar)
-  }
+ if (USE_DUMMY_API) {
+ // Dummy implementation
+ return dummyGenerateOTP(cleanAadhaar)
+ }
 
-  // Real Cashfree API implementation
-  return cashfreeGenerateOTP(cleanAadhaar)
+ // Real Cashfree API implementation
+ return cashfreeGenerateOTP(cleanAadhaar)
 }
 
 /**
@@ -66,24 +66,24 @@ export async function generateAadhaarOTP(aadhaarNumber: string): Promise<Aadhaar
  * @returns Promise with verification result
  */
 export async function verifyAadhaarOTP(
-  refId: string,
-  otp: string
+ refId: string,
+ otp: string
 ): Promise<AadhaarVerifyResponse> {
-  if (!/^\d{6}$/.test(otp)) {
-    return {
-      success: false,
-      message: 'Invalid OTP',
-      error: 'OTP must be 6 digits'
-    }
-  }
+ if (!/^\d{6}$/.test(otp)) {
+ return {
+ success: false,
+ message: 'Invalid OTP',
+ error: 'OTP must be 6 digits'
+ }
+ }
 
-  if (USE_DUMMY_API) {
-    // Dummy implementation
-    return dummyVerifyOTP(refId, otp)
-  }
+ if (USE_DUMMY_API) {
+ // Dummy implementation
+ return dummyVerifyOTP(refId, otp)
+ }
 
-  // Real Cashfree API implementation
-  return cashfreeVerifyOTP(refId, otp)
+ // Real Cashfree API implementation
+ return cashfreeVerifyOTP(refId, otp)
 }
 
 /**
@@ -92,48 +92,48 @@ export async function verifyAadhaarOTP(
  */
 
 async function dummyGenerateOTP(aadhaarNumber: string): Promise<AadhaarOTPResponse> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1500))
+ // Simulate API delay
+ await new Promise(resolve => setTimeout(resolve, 1500))
 
-  console.log('🔐 DUMMY: Generating OTP for Aadhaar:', aadhaarNumber)
-  console.log('📱 DUMMY: OTP would be sent to registered mobile')
-  console.log('🎯 DUMMY: Test OTP: 123456')
+ console.log('🔐 DUMMY: Generating OTP for Aadhaar:', aadhaarNumber)
+ console.log('📱 DUMMY: OTP would be sent to registered mobile')
+ console.log('🎯 DUMMY: Test OTP: 123456')
 
-  return {
-    success: true,
-    message: 'OTP sent successfully to registered mobile number',
-    ref_id: `DUMMY_REF_${Date.now()}`
-  }
+ return {
+ success: true,
+ message: 'OTP sent successfully to registered mobile number',
+ ref_id: `DUMMY_REF_${Date.now()}`
+ }
 }
 
 async function dummyVerifyOTP(refId: string, otp: string): Promise<AadhaarVerifyResponse> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1500))
+ // Simulate API delay
+ await new Promise(resolve => setTimeout(resolve, 1500))
 
-  console.log('🔐 DUMMY: Verifying OTP for ref:', refId)
-  console.log('📱 DUMMY: OTP entered:', otp)
+ console.log('🔐 DUMMY: Verifying OTP for ref:', refId)
+ console.log('📱 DUMMY: OTP entered:', otp)
 
-  // Accept OTP: 123456 for testing
-  if (otp !== '123456') {
-    return {
-      success: false,
-      message: 'Invalid OTP',
-      error: 'The OTP entered is incorrect. Please try again.'
-    }
-  }
+ // Accept OTP: 123456 for testing
+ if (otp !== '123456') {
+ return {
+ success: false,
+ message: 'Invalid OTP',
+ error: 'The OTP entered is incorrect. Please try again.'
+ }
+ }
 
-  console.log('✅ DUMMY: OTP verified successfully')
+ console.log('✅ DUMMY: OTP verified successfully')
 
-  return {
-    success: true,
-    message: 'Aadhaar verified successfully',
-    data: {
-      name: 'Test User',
-      dob: '1995-01-01',
-      gender: 'Male',
-      address: 'Test Address, Test City, Test State'
-    }
-  }
+ return {
+ success: true,
+ message: 'Aadhaar verified successfully',
+ data: {
+ name: 'Test User',
+ dob: '1995-01-01',
+ gender: 'Male',
+ address: 'Test Address, Test City, Test State'
+ }
+ }
 }
 
 /**
@@ -142,98 +142,98 @@ async function dummyVerifyOTP(refId: string, otp: string): Promise<AadhaarVerify
  */
 
 async function cashfreeGenerateOTP(aadhaarNumber: string): Promise<AadhaarOTPResponse> {
-  try {
-    const apiKey = process.env.NEXT_PUBLIC_CASHFREE_API_KEY
-    const apiSecret = process.env.CASHFREE_API_SECRET // Keep secret on server-side
+ try {
+ const apiKey = process.env.NEXT_PUBLIC_CASHFREE_API_KEY
+ const apiSecret = process.env.CASHFREE_API_SECRET // Keep secret on server-side
 
-    // TODO: Replace with actual Cashfree API endpoint
-    const response = await fetch('https://api.cashfree.com/verification/aadhaar/otp', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey || '',
-        'x-api-secret': apiSecret || '',
-      },
-      body: JSON.stringify({
-        aadhaar_number: aadhaarNumber,
-      }),
-    })
+ // TODO: Replace with actual Cashfree API endpoint
+ const response = await fetch('https://api.cashfree.com/verification/aadhaar/otp', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'x-api-key': apiKey || '',
+ 'x-api-secret': apiSecret || '',
+ },
+ body: JSON.stringify({
+ aadhaar_number: aadhaarNumber,
+ }),
+ })
 
-    const data = await response.json()
+ const data = await response.json()
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Failed to generate OTP',
-        error: data.message || 'API request failed'
-      }
-    }
+ if (!response.ok) {
+ return {
+ success: false,
+ message: 'Failed to generate OTP',
+ error: data.message || 'API request failed'
+ }
+ }
 
-    return {
-      success: true,
-      message: 'OTP sent successfully',
-      ref_id: data.ref_id
-    }
-  } catch (error) {
-    console.error('Cashfree API error:', error)
-    return {
-      success: false,
-      message: 'Failed to generate OTP',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }
-  }
+ return {
+ success: true,
+ message: 'OTP sent successfully',
+ ref_id: data.ref_id
+ }
+ } catch (error) {
+ console.error('Cashfree API error:', error)
+ return {
+ success: false,
+ message: 'Failed to generate OTP',
+ error: error instanceof Error ? error.message : 'Unknown error'
+ }
+ }
 }
 
 async function cashfreeVerifyOTP(
-  refId: string,
-  otp: string
+ refId: string,
+ otp: string
 ): Promise<AadhaarVerifyResponse> {
-  try {
-    const apiKey = process.env.NEXT_PUBLIC_CASHFREE_API_KEY
-    const apiSecret = process.env.CASHFREE_API_SECRET
+ try {
+ const apiKey = process.env.NEXT_PUBLIC_CASHFREE_API_KEY
+ const apiSecret = process.env.CASHFREE_API_SECRET
 
-    // TODO: Replace with actual Cashfree API endpoint
-    const response = await fetch('https://api.cashfree.com/verification/aadhaar/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey || '',
-        'x-api-secret': apiSecret || '',
-      },
-      body: JSON.stringify({
-        ref_id: refId,
-        otp: otp,
-      }),
-    })
+ // TODO: Replace with actual Cashfree API endpoint
+ const response = await fetch('https://api.cashfree.com/verification/aadhaar/verify', {
+ method: 'POST',
+ headers: {
+ 'Content-Type': 'application/json',
+ 'x-api-key': apiKey || '',
+ 'x-api-secret': apiSecret || '',
+ },
+ body: JSON.stringify({
+ ref_id: refId,
+ otp: otp,
+ }),
+ })
 
-    const data = await response.json()
+ const data = await response.json()
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Verification failed',
-        error: data.message || 'Invalid OTP'
-      }
-    }
+ if (!response.ok) {
+ return {
+ success: false,
+ message: 'Verification failed',
+ error: data.message || 'Invalid OTP'
+ }
+ }
 
-    return {
-      success: true,
-      message: 'Aadhaar verified successfully',
-      data: {
-        name: data.name,
-        dob: data.dob,
-        gender: data.gender,
-        address: data.address,
-      }
-    }
-  } catch (error) {
-    console.error('Cashfree API error:', error)
-    return {
-      success: false,
-      message: 'Verification failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }
-  }
+ return {
+ success: true,
+ message: 'Aadhaar verified successfully',
+ data: {
+ name: data.name,
+ dob: data.dob,
+ gender: data.gender,
+ address: data.address,
+ }
+ }
+ } catch (error) {
+ console.error('Cashfree API error:', error)
+ return {
+ success: false,
+ message: 'Verification failed',
+ error: error instanceof Error ? error.message : 'Unknown error'
+ }
+ }
 }
 
 /**
@@ -241,11 +241,11 @@ async function cashfreeVerifyOTP(
  * Example: 123456789012 -> XXXX XXXX 9012
  */
 export function maskAadhaar(aadhaarNumber: string): string {
-  const cleaned = aadhaarNumber.replace(/\s/g, '')
-  if (cleaned.length !== 12) return aadhaarNumber
+ const cleaned = aadhaarNumber.replace(/\s/g, '')
+ if (cleaned.length !== 12) return aadhaarNumber
 
-  const masked = 'XXXX XXXX ' + cleaned.slice(-4)
-  return masked
+ const masked = 'XXXX XXXX ' + cleaned.slice(-4)
+ return masked
 }
 
 /**
@@ -253,6 +253,6 @@ export function maskAadhaar(aadhaarNumber: string): string {
  * Example: 123456789012 -> 1234 5678 9012
  */
 export function formatAadhaar(aadhaarNumber: string): string {
-  const cleaned = aadhaarNumber.replace(/\s/g, '')
-  return cleaned.match(/.{1,4}/g)?.join(' ') || cleaned
+ const cleaned = aadhaarNumber.replace(/\s/g, '')
+ return cleaned.match(/.{1,4}/g)?.join(' ') || cleaned
 }

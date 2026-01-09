@@ -55,12 +55,15 @@ export const initializeCapacitor = async (): Promise<void> => {
   try {
     // Configure status bar - this is crucial for preventing overlap
     if (getPlatform() === 'android') {
-      // Set status bar style and color
-      await StatusBar.setStyle({ style: Style.Dark });
-      await StatusBar.setBackgroundColor({ color: '#0d1b3e' });
-      
-      // Ensure status bar doesn't overlay content - CRITICAL for Android
+      // First, ensure status bar doesn't overlay content - CRITICAL for Android
       await StatusBar.setOverlaysWebView({ overlay: false });
+      
+      // Set status bar to be opaque with dark background
+      // Use Light style (light icons/text) on dark background
+      await StatusBar.setStyle({ style: Style.Light });
+      
+      // Set a solid dark blue background color
+      await StatusBar.setBackgroundColor({ color: '#0d1b3e' });
       
       // Add padding to body to ensure content doesn't go behind status bar
       // This is especially important when loading from remote URL
@@ -72,7 +75,7 @@ export const initializeCapacitor = async (): Promise<void> => {
         document.body.style.paddingTop = `${statusBarHeight}px`;
       }
       
-      console.log('Android status bar configured with padding');
+      console.log('Android status bar configured: Dark blue background with light icons');
     } else if (getPlatform() === 'ios') {
       // iOS configuration
       await StatusBar.setStyle({ style: Style.Dark });

@@ -111,7 +111,18 @@ export default function PushNotificationPrompt() {
     setIsLoading(true)
     try {
       // Check if running on native platform (Android/iOS)
-      if (isNativePlatform()) {
+      const isNative = isNativePlatform()
+      const capacitorAvailable = typeof (window as any).Capacitor !== 'undefined'
+      const capacitorNative = capacitorAvailable ? Capacitor.isNativePlatform() : false
+      
+      console.log('🔍 Platform detection:', {
+        isNative,
+        capacitorAvailable,
+        capacitorNative,
+        userAgent: navigator.userAgent.substring(0, 100)
+      })
+      
+      if (isNative) {
         console.log('📱 Using native push notifications')
         setupNativePushListeners()
         const result = await initializeNativePushNotifications(userId)
@@ -121,6 +132,7 @@ export default function PushNotificationPrompt() {
           console.log('✅ Native push notifications enabled!')
           alert('Push notifications enabled! You will now receive notifications.')
         } else {
+          console.error('❌ Native push failed:', result.error)
           alert(result.error || 'Failed to enable notifications. Please check your device settings.')
         }
       } else {
@@ -132,6 +144,7 @@ export default function PushNotificationPrompt() {
           setShowPrompt(false)
           console.log('✅ Web push notifications enabled!')
         } else {
+          console.error('❌ Web push failed:', result.error)
           alert(result.error || 'Failed to enable notifications. Please check your browser settings.')
         }
       }

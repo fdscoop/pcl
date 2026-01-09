@@ -75,13 +75,16 @@ export async function sendMessageWithPush(payload: {
     }
 
     // Send push notification to receiver (don't await - send in background)
+    console.log('📤 Attempting to send push notification to:', payload.receiverId)
     sendPushToUser(
       payload.receiverId,
       `New message from ${senderName}`,
       payload.content.substring(0, 100),
       '/dashboard/messages'
-    ).catch(err => {
-      console.error('Failed to send push notification:', err)
+    ).then(result => {
+      console.log('✅ Push notification result:', result)
+    }).catch(err => {
+      console.error('❌ Failed to send push notification:', err)
       // Don't fail the message if push fails
     })
 

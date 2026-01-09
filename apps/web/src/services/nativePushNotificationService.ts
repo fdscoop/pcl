@@ -136,11 +136,10 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
       return false
     }
 
-    // Check if token already exists
+    // Check if token already exists for ANY user (not just current user)
     const { data: existingToken, error: checkError } = await supabase
       .from('notification_tokens')
-      .select('id')
-      .eq('user_id', userId)
+      .select('id, user_id')
       .eq('token', token)
       .maybeSingle()
 
@@ -148,31 +147,67 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
       console.error('❌ Error checking existing token:', checkError)
     }
 
+    console.log('🔍 Token ownership check:', {
+      tokenExists: !!existingToken,
+      currentOwner: existingToken?.user_id,
+      newOwner: userId,
+      needsTransfer: existingToken && existingToken.user_id !== userId
+    })
+
     if (existingToken) {
-      // Update existing token to active
-      console.log('📝 Updating existing token:', existingToken.id)
-      
-      const { error } = await supabase
-        .from('notification_tokens')
-        .update({
-          is_active: true,
-          last_used_at: new Date().toISOString()
-        })
-        .eq('id', existingToken.id)
+      if (existingToken.user_id === userId) {
+        // Same user, just update to active
+        console.log('📝 Updating existing token for same user:', existingToken.id)
+        
+        const { error } = await supabase
+          .from('notification_tokens')
+          .update({
+            is_active: true,
+            last_used_at: new Date().toISOString()
+          })
+          .eq('id', existingToken.id)
 
-      if (error) {
-        console.error('❌ Error updating token:', {
-          error,
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        })
-        return false
+        if (error) {
+          console.error('❌ Error updating token:', {
+            error,
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          })
+          return false
+        }
+
+        console.log('✅ Token updated for same user')
+        return true
+      } else {
+        // Different user - transfer token ownership (same device, different login)
+        console.log('🔄 Transferring token ownership from', existingToken.user_id, 'to', userId)
+        
+        const { error } = await supabase
+          .from('notification_tokens')
+          .update({
+            user_id: userId, // Transfer ownership
+            is_active: true,
+            last_used_at: new Date().toISOString(),
+            device_info: deviceInfo // Update device info
+          })
+          .eq('id', existingToken.id)
+
+        if (error) {
+          console.error('❌ Error transferring token ownership:', {
+            error,
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          })
+          return false
+        }
+
+        console.log('✅ Token ownership transferred successfully')
+        return true
       }
-
-      console.log('✅ Token updated in database')
-      return true
     }
 
     // Insert new token

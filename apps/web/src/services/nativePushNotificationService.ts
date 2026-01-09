@@ -90,6 +90,25 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
   try {
     const supabase = createClient()
 
+    // Verify current auth session first
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('🔐 Auth verification for token save:', {
+      requestedUserId: userId,
+      authUserId: user?.id,
+      authUserEmail: user?.email,
+      authError: authError?.message
+    })
+
+    if (authError || !user) {
+      console.error('❌ Auth verification failed:', authError)
+      return false
+    }
+
+    if (user.id !== userId) {
+      console.error('❌ User ID mismatch:', { expected: userId, actual: user.id })
+      return false
+    }
+
     // Get device info
     const deviceInfo = {
       platform: Capacitor.getPlatform(),
@@ -99,6 +118,23 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
     }
 
     console.log('💾 Saving native token to database:', { userId, token: token.substring(0, 20) + '...', deviceInfo })
+
+    // Get user profile to verify role and permissions
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('id, role, email, is_active')
+      .eq('id', userId)
+      .single()
+
+    console.log('👤 User profile check:', {
+      userProfile,
+      profileError: profileError?.message
+    })
+
+    if (profileError || !userProfile) {
+      console.error('❌ Cannot verify user profile:', profileError)
+      return false
+    }
 
     // Check if token already exists
     const { data: existingToken, error: checkError } = await supabase
@@ -114,6 +150,8 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
 
     if (existingToken) {
       // Update existing token to active
+      console.log('📝 Updating existing token:', existingToken.id)
+      
       const { error } = await supabase
         .from('notification_tokens')
         .update({
@@ -123,7 +161,13 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
         .eq('id', existingToken.id)
 
       if (error) {
-        console.error('❌ Error updating token:', error)
+        console.error('❌ Error updating token:', {
+          error,
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
         return false
       }
 
@@ -132,18 +176,28 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
     }
 
     // Insert new token
+    const insertData = {
+      user_id: userId,
+      token: token,
+      device_type: Capacitor.getPlatform(), // 'android' or 'ios'
+      device_info: deviceInfo,
+      is_active: true
+    }
+
+    console.log('📝 Attempting to insert token:', insertData)
+
     const { error } = await supabase
       .from('notification_tokens')
-      .insert({
-        user_id: userId,
-        token: token,
-        device_type: Capacitor.getPlatform(), // 'android' or 'ios'
-        device_info: deviceInfo,
-        is_active: true
-      })
+      .insert(insertData)
 
     if (error) {
-      console.error('❌ Error saving token:', error)
+      console.error('❌ Error saving token:', {
+        error,
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
       return false
     }
 

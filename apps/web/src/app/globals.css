@@ -1,5 +1,37 @@
 @import "tailwindcss";
 
+/* Safe area support for mobile devices (status bar and navigation bar) */
+/* Priority: Use safe-area-inset if available, otherwise use fixed padding */
+
+/* iOS native safe area support */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Android and fallback - ensure content never goes behind status bar */
+@media screen and (max-width: 767px) {
+  body {
+    /* Use CSS variable set by Capacitor, or fallback to safe-area-inset, or minimum 24px */
+    padding-top: max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px), 24px) !important;
+  }
+  
+  /* Ensure the first child also respects this padding */
+  body > div:first-child {
+    margin-top: 0;
+  }
+}
+
+/* Force padding on mobile platforms when detected via Capacitor */
+body.mobile-app {
+  padding-top: max(var(--status-bar-height, 24px), 24px) !important;
+}
+
+
 @layer base {
   :root {
     /* Brand Colors - Dark Blue & Orange */

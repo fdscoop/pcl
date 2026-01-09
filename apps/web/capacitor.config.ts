@@ -7,9 +7,9 @@ const config: CapacitorConfig = {
   appName: 'PCL - Professional Club League',
   webDir: 'public', // Fallback directory (not used when server.url is set)
   server: {
-    // Load from your production Vercel deployment
+    // Load from your production domain
     // This means the app always loads the latest version from the web
-    url: 'https://pcl.vercel.app',
+    url: 'https://www.professionalclubleague.com',
     cleartext: false,
     androidScheme: 'https',
   },
@@ -26,7 +26,8 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: 'DARK',
-      backgroundColor: '#1a1a2e',
+      backgroundColor: '#0d1b3e',
+      overlaysWebView: false, // This prevents content from going behind status bar
     },
     Keyboard: {
       resizeOnFullScreen: true,
@@ -36,6 +37,8 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: false, // Set to true for debugging
+    // Enable safe area support for status bar and navigation bar
+    appendUserAgent: 'PCL-Mobile-App',
   },
 };
 

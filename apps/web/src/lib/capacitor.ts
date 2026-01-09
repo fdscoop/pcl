@@ -36,6 +36,12 @@ export const initializeCapacitor = async (): Promise<void> => {
   }
 
   console.log(`Running on ${getPlatform()}`);
+  
+  // Add mobile-app class to body for CSS targeting
+  if (document.body) {
+    document.body.classList.add('mobile-app');
+    document.body.classList.add(`platform-${getPlatform()}`);
+  }
 
   try {
     // Hide splash screen after app is ready
@@ -47,10 +53,33 @@ export const initializeCapacitor = async (): Promise<void> => {
   }
 
   try {
-    // Configure status bar for Android
+    // Configure status bar - this is crucial for preventing overlap
     if (getPlatform() === 'android') {
+      // Set status bar style and color
       await StatusBar.setStyle({ style: Style.Dark });
-      await StatusBar.setBackgroundColor({ color: '#1a1a2e' });
+      await StatusBar.setBackgroundColor({ color: '#0d1b3e' });
+      
+      // Ensure status bar doesn't overlay content - CRITICAL for Android
+      await StatusBar.setOverlaysWebView({ overlay: false });
+      
+      // Add padding to body to ensure content doesn't go behind status bar
+      // This is especially important when loading from remote URL
+      const statusBarHeight = 24; // Standard Android status bar height in px
+      document.documentElement.style.setProperty('--status-bar-height', `${statusBarHeight}px`);
+      
+      // Apply padding immediately
+      if (document.body) {
+        document.body.style.paddingTop = `${statusBarHeight}px`;
+      }
+      
+      console.log('Android status bar configured with padding');
+    } else if (getPlatform() === 'ios') {
+      // iOS configuration
+      await StatusBar.setStyle({ style: Style.Dark });
+      await StatusBar.setOverlaysWebView({ overlay: false });
+      
+      // iOS uses safe-area-inset natively, so less manual work needed
+      console.log('iOS status bar configured');
     }
   } catch (error) {
     console.warn('StatusBar configuration failed:', error);

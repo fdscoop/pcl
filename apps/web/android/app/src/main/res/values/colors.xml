@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PCL Brand Colors -->
+    <color name="colorPrimary">#0d1b3e</color>
+    <color name="colorPrimaryDark">#0d1b3e</color>
+    <color name="colorAccent">#ff8c42</color>
+    
+    <!-- Status Bar and Navigation Colors -->
+    <color name="statusBarColor">#0d1b3e</color>
+    <color name="navigationBarColor">#0d1b3e</color>
+    
+    <!-- Common Colors -->
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+</resources>

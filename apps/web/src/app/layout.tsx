@@ -28,6 +28,7 @@ export default function RootLayout({
  <html lang="en" className="light">
  <head>
  <meta name="theme-color" content="#0d1b3e" />
+ <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
  </head>
  <body className="w-full h-full min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100"
  style={{ colorScheme: 'light' }}

@@ -8,12 +8,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-comp
 // Initialize Firebase in service worker
 // Note: These values will be loaded from environment at build time
 firebase.initializeApp({
-  apiKey: "AIzaSyCR95bDVUC9MTq746hJRYJWyd3889_mXGw",
+  apiKey: "AIzaSyARrEFN63VRJEJBVtNVEibqziegEQta7gQ",
   authDomain: "pcl-professional-club-league.firebaseapp.com",
   projectId: "pcl-professional-club-league",
   storageBucket: "pcl-professional-club-league.firebasestorage.app",
   messagingSenderId: "605135281202",
-  appId: "1:605135281202:android:eac97e4ace09317a95702b"
+  appId: "1:605135281202:web:1ba4184f4057b13495702b"
 })
 
 const messaging = firebase.messaging()

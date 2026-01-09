@@ -79,6 +79,23 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 }
 
 /**
+ * Unregister old service workers to ensure clean slate
+ */
+async function unregisterOldServiceWorkers(): Promise<void> {
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    for (const registration of registrations) {
+      if (registration.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+        await registration.unregister()
+        console.log('Unregistered old service worker:', registration.active.scriptURL)
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to unregister old service workers:', error)
+  }
+}
+
+/**
  * Subscribe to push notifications and save token to database
  */
 export async function subscribeToNotifications(userId: string): Promise<{
@@ -112,18 +129,35 @@ export async function subscribeToNotifications(userId: string): Promise<{
       return { success: false, error: 'VAPID key not configured' }
     }
 
+    // Unregister old service workers first
+    await unregisterOldServiceWorkers()
+
     // Register service worker
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    await navigator.serviceWorker.ready
+    let registration
+    try {
+      registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      await navigator.serviceWorker.ready
+      console.log('Service worker registered successfully')
+    } catch (swError) {
+      console.error('Service worker registration failed:', swError)
+      return { success: false, error: `Service worker registration failed: ${swError}` }
+    }
 
     // Get FCM token
-    const token = await getToken(messaging, {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: registration
-    })
+    let token
+    try {
+      token = await getToken(messaging, {
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration
+      })
+      console.log('FCM token obtained:', token ? 'success' : 'failed')
+    } catch (tokenError) {
+      console.error('Failed to get FCM token:', tokenError)
+      return { success: false, error: `Failed to get FCM token: ${tokenError}` }
+    }
 
     if (!token) {
-      return { success: false, error: 'Failed to get FCM token' }
+      return { success: false, error: 'Failed to get FCM token - empty token returned' }
     }
 
     // Save token to Supabase

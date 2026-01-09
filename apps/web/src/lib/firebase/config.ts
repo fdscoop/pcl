@@ -14,6 +14,17 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-DXCFBH7967"
 }
 
+// Log config for debugging (hide sensitive values)
+if (typeof window !== 'undefined') {
+  console.log('🔥 Firebase config loaded:', {
+    projectId: firebaseConfig.projectId,
+    appId: firebaseConfig.appId,
+    messagingSenderId: firebaseConfig.messagingSenderId,
+    hasApiKey: !!firebaseConfig.apiKey,
+    apiKeySource: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'env' : 'fallback'
+  })
+}
+
 // Initialize Firebase (only once)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
 
@@ -42,3 +53,8 @@ export { app, onMessage }
 
 // VAPID Key for Web Push
 export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "BBkiBTx3DpjcPOquqJRQQG24PRBZrBWL0hlhxcgRigdggG5coUNoqWxnaeoEqCGTiTJvwK4l5Wqj4ntS2xxIZPk"
+
+// Log VAPID key source for debugging
+if (typeof window !== 'undefined') {
+  console.log('🔑 VAPID key source:', process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ? 'env' : 'fallback')
+}

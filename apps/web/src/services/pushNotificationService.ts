@@ -170,6 +170,9 @@ export async function subscribeToNotifications(userId: string): Promise<{
       return { success: false, error: 'Firebase messaging not available' }
     }
 
+    // Log VAPID key for debugging (first/last 10 chars only for security)
+    console.log('🔑 VAPID key check:', VAPID_KEY ? `${VAPID_KEY.substring(0, 10)}...${VAPID_KEY.substring(VAPID_KEY.length - 10)}` : 'NOT SET')
+    
     if (!VAPID_KEY) {
       return { success: false, error: 'VAPID key not configured' }
     }

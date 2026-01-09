@@ -95,17 +95,22 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
       platform: Capacitor.getPlatform(),
       model: 'unknown',
       os: Capacitor.getPlatform(),
+      userAgent: navigator.userAgent
     }
 
-    console.log('💾 Saving native token to database:', { userId, token, deviceInfo })
+    console.log('💾 Saving native token to database:', { userId, token: token.substring(0, 20) + '...', deviceInfo })
 
     // Check if token already exists
-    const { data: existingToken } = await supabase
+    const { data: existingToken, error: checkError } = await supabase
       .from('notification_tokens')
       .select('id')
       .eq('user_id', userId)
       .eq('token', token)
-      .single()
+      .maybeSingle()
+
+    if (checkError) {
+      console.error('❌ Error checking existing token:', checkError)
+    }
 
     if (existingToken) {
       // Update existing token to active
@@ -113,7 +118,7 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
         .from('notification_tokens')
         .update({
           is_active: true,
-          updated_at: new Date().toISOString()
+          last_used_at: new Date().toISOString()
         })
         .eq('id', existingToken.id)
 
@@ -133,11 +138,8 @@ async function saveNativeTokenToDatabase(userId: string, token: string): Promise
         user_id: userId,
         token: token,
         device_type: Capacitor.getPlatform(), // 'android' or 'ios'
-        browser: 'native-app',
-        os: deviceInfo.os,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        device_info: deviceInfo,
+        is_active: true
       })
 
     if (error) {

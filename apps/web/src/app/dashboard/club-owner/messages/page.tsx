@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -48,6 +48,9 @@ export default function ClubOwnerMessagesPage() {
  const [selectedThreadKey, setSelectedThreadKey] = useState<string | null>(null)
  const [replyContent, setReplyContent] = useState('')
  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+ // Mobile view state: 'list' shows conversations list, 'chat' shows conversation detail
+ const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
+ const messageContainerRef = useRef<HTMLDivElement>(null)
 
  const threads = useMemo<ThreadSummary[]>(() => {
  const combined: ThreadMessage[] = [
@@ -78,16 +81,20 @@ export default function ClubOwnerMessagesPage() {
  const sample = latestMessage
  const otherPartyId = sample.direction === 'in' ? sample.sender_id : sample.receiver_id
  const otherPartyType = sample.direction === 'in' ? sample.sender_type : sample.receiver_type
- const clubSample = messages.find((msg) => msg.club_name || msg.club_logo)
- const playerSample = messages.find((msg) => msg.sender_name || msg.sender_photo)
- const otherPartyName =
- otherPartyType === 'club_owner'
- ? clubSample?.club_name || 'Club'
- : playerSample?.sender_name || sample.sender_name || 'Player'
- const otherPartyLogo =
- otherPartyType === 'club_owner'
- ? clubSample?.club_logo
- : playerSample?.sender_photo || sample.sender_photo
+ 
+ // Find the most relevant message with sender info
+ const messageWithSenderInfo = messages.find((msg) => 
+ msg.sender_name && msg.sender_name !== 'Unknown'
+ ) || messages.find((msg) => msg.sender_name) || sample
+
+ const otherPartyName = otherPartyType === 'club_owner'
+ ? messageWithSenderInfo.club_name || 'Club'
+ : messageWithSenderInfo.sender_name || 'Player'
+ 
+ const otherPartyLogo = otherPartyType === 'club_owner'
+ ? messageWithSenderInfo.club_logo || undefined
+ : messageWithSenderInfo.sender_photo || undefined
+ 
  const unreadCount = sorted.filter(
  (message) => message.direction === 'in' && !message.is_read
  ).length
@@ -243,6 +250,8 @@ export default function ClubOwnerMessagesPage() {
  const handleSelectThread = async (thread: ThreadSummary) => {
  setSelectedThreadKey(thread.key)
  setSuccessMessage(null)
+ // Switch to chat view on mobile when selecting a thread
+ setMobileView('chat')
 
  const unreadMessages = thread.messages.filter(
  (message) => message.direction === 'in' && !message.is_read
@@ -263,6 +272,13 @@ export default function ClubOwnerMessagesPage() {
  )
  }
  }
+ 
+ // Scroll to bottom of messages after a short delay
+ setTimeout(() => {
+ if (messageContainerRef.current) {
+ messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
+ }
+ }, 100)
  }
 
  const handleSendReply = async () => {
@@ -295,79 +311,99 @@ export default function ClubOwnerMessagesPage() {
  }
  setSuccessMessage('Reply sent.')
  setSending(false)
+ 
+ // Scroll to bottom after sending
+ setTimeout(() => {
+ if (messageContainerRef.current) {
+ messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
+ }
+ }, 100)
+ }
+
+ // Helper to go back to list view on mobile
+ const handleBackToList = () => {
+ setMobileView('list')
  }
 
  return (
- <div className="min-h-screen">
- <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
- <div className="mb-6">
+ <div className="h-[100dvh] bg-slate-50/50 flex flex-col overflow-hidden">
+ <main className="flex-1 flex flex-col max-w-[1800px] mx-auto w-full px-2 sm:px-6 lg:px-8 py-2 sm:py-4 overflow-hidden">
+ {/* Header - Compact on mobile, hidden when in chat view */}
+ <div className={`shrink-0 mb-2 sm:mb-4 ${mobileView === 'chat' ? 'hidden lg:block' : ''}`}>
  <div className="flex items-center justify-between">
- <div>
- <p className="text-teal-600 font-medium mb-1">welcome back 👋</p>
- <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
- Messages
+ <div className="flex items-center gap-2">
+ <h1 className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+ 💬 Messages
  {threads.filter(t => t.unreadCount > 0).length > 0 && (
- <Badge variant="destructive" className="animate-pulse text-sm px-3 py-1">
- {threads.reduce((sum, t) => sum + t.unreadCount, 0)} new
+ <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5">
+ {threads.reduce((sum, t) => sum + t.unreadCount, 0)}
  </Badge>
  )}
  </h1>
  </div>
- <div className="flex gap-3">
+ <div className="flex gap-2">
  <button
  onClick={() => router.back()}
- className="px-4 py-2 text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors"
+ className="p-2 text-sm text-teal-600 hover:text-teal-700 font-medium border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors"
+ aria-label="Back"
  >
- Back
+ <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+ </svg>
  </button>
  <button
  onClick={() => userId && loadMessages(userId)}
  disabled={loading}
- className="px-6 py-2 text-sm bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+ className="p-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+ aria-label="Refresh"
  >
- {loading ? 'Loading...' : 'Refresh'}
+ {loading ? (
+ <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+ <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+ <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+ </svg>
+ ) : '🔄'}
  </button>
  </div>
  </div>
  </div>
 
+ {/* Error/Success Messages - Compact */}
  {error && (
- <div className="mb-6 rounded-xl border-2 border-red-200 bg-red-50/50 backdrop-blur-sm px-5 py-4 shadow-md">
- <p className="text-red-700 font-medium flex items-center gap-2">
- <span className="text-xl">⚠️</span>
- {error}
+ <div className={`shrink-0 mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 ${mobileView === 'chat' ? 'hidden lg:block' : ''}`}>
+ <p className="text-red-700 font-medium flex items-center gap-2 text-xs sm:text-sm">
+ ⚠️ {error}
  </p>
  </div>
  )}
  {successMessage && (
- <div className="mb-6 rounded-xl border-2 border-green-200 bg-green-50/50 backdrop-blur-sm px-5 py-4 shadow-md">
- <p className="text-green-700 font-medium flex items-center gap-2">
- <span className="text-xl">✓</span>
- {successMessage}
+ <div className={`shrink-0 mb-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 ${mobileView === 'chat' ? 'hidden lg:block' : ''}`}>
+ <p className="text-green-700 font-medium flex items-center gap-2 text-xs sm:text-sm">
+ ✓ {successMessage}
  </p>
  </div>
  )}
 
- <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6">
- {/* Conversations List */}
- <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
- <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
- <h2 className="text-xl font-bold text-white">Conversations</h2>
- <p className="text-teal-50 text-sm mt-1">Your latest player threads</p>
+ {/* Desktop: Side-by-side layout | Mobile: Full height toggle */}
+ <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-3 sm:gap-4 min-h-0">
+ {/* Conversations List - Full height on mobile */}
+ <div className={`flex flex-col bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden border border-slate-200 min-h-0 ${mobileView === 'chat' ? 'hidden lg:flex' : 'flex'}`}>
+ <div className="shrink-0 bg-gradient-to-r from-teal-500 to-teal-600 px-3 sm:px-4 py-2.5 sm:py-3">
+ <h2 className="text-base sm:text-lg font-bold text-white">Conversations</h2>
+ <p className="text-teal-100 text-xs mt-0.5">Your player threads</p>
  </div>
- <div className="px-4 py-3 space-y-2 max-h-[calc(100vh-280px)] overflow-auto bg-gradient-to-b from-sky-50/20 to-transparent">
+ <div className="flex-1 overflow-auto px-2 py-2 space-y-1.5 bg-gradient-to-b from-sky-50/30 to-transparent">
  {initialLoading ? (
- <>
+ <div className="space-y-1.5">
  <ThreadItemSkeleton />
  <ThreadItemSkeleton />
  <ThreadItemSkeleton />
- <ThreadItemSkeleton />
- </>
+ </div>
  ) : threads.length === 0 ? (
- <div className="text-center py-12">
- <div className="text-5xl mb-4">💬</div>
- <p className="text-sm font-semibold text-gray-700">No conversations yet</p>
- <p className="text-xs text-gray-500 mt-2">Messages from players will appear here</p>
+ <div className="text-center py-8">
+ <div className="text-3xl mb-2">💬</div>
+ <p className="text-sm font-medium text-gray-600">No conversations yet</p>
+ <p className="text-xs text-gray-400 mt-1">Messages will appear here</p>
  </div>
  ) : (
  threads.map((thread) => (
@@ -382,22 +418,77 @@ export default function ClubOwnerMessagesPage() {
  </div>
  </div>
 
- {/* Conversation Detail */}
- <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200">
- <div className="bg-gradient-to-r from-teal-500 to-teal-600 px-6 py-4">
- <h2 className="text-xl font-bold text-white">Conversation</h2>
- <p className="text-teal-50 text-sm mt-1">
- {selectedThread
- ? `Chat with ${selectedThread.otherPartyName}`
- : 'Select a conversation to view details'}
+ {/* Conversation Detail - Full height on mobile */}
+ <div className={`flex flex-col bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden border border-slate-200 min-h-0 ${mobileView === 'list' ? 'hidden lg:flex' : 'flex'}`}>
+ {/* Chat Header */}
+ <div className="shrink-0 bg-gradient-to-r from-teal-500 to-teal-600 px-3 sm:px-4 py-2 sm:py-3">
+ <div className="flex items-center gap-2 sm:gap-3">
+ {/* Back button - Mobile only */}
+ <button
+ onClick={handleBackToList}
+ className="lg:hidden flex items-center justify-center w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+ aria-label="Back to conversations"
+ >
+ <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+ </svg>
+ </button>
+ {/* Avatar */}
+ {selectedThread && (
+ <div className="shrink-0">
+ {selectedThread.otherPartyLogo ? (
+ <img
+ src={selectedThread.otherPartyLogo}
+ alt={selectedThread.otherPartyName}
+ className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-white/30"
+ />
+ ) : (
+ <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm">
+ {selectedThread.otherPartyName.slice(0, 2).toUpperCase()}
+ </div>
+ )}
+ </div>
+ )}
+ <div className="flex-1 min-w-0">
+ <h2 className="text-sm sm:text-base font-bold text-white truncate">
+ {selectedThread ? selectedThread.otherPartyName : 'Conversation'}
+ </h2>
+ <p className="text-teal-100 text-xs truncate">
+ {selectedThread ? 'Tap to view profile' : 'Select a chat'}
  </p>
  </div>
- <div className="px-6 py-5">
+ {/* Refresh button in chat header for mobile */}
+ <button
+ onClick={() => userId && loadMessages(userId)}
+ disabled={loading}
+ className="lg:hidden p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+ aria-label="Refresh"
+ >
+ {loading ? (
+ <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+ <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+ <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+ </svg>
+ ) : (
+ <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+ </svg>
+ )}
+ </button>
+ </div>
+ </div>
+
+ {/* Messages Area */}
+ <div className="flex-1 flex flex-col min-h-0 p-2 sm:p-4">
  {initialLoading ? (
  <ConversationSkeleton />
  ) : selectedThread ? (
- <div className="space-y-5">
- <div className="space-y-4 max-h-[calc(100vh-480px)] overflow-auto scroll-smooth pr-2" id="message-container">
+ <>
+ {/* Messages Container */}
+ <div 
+ ref={messageContainerRef}
+ className="flex-1 overflow-auto space-y-2 sm:space-y-3 pr-1 scroll-smooth"
+ >
  {selectedThread.messages.map((message) => (
  <MessageBubble
  key={message.id}
@@ -407,36 +498,43 @@ export default function ClubOwnerMessagesPage() {
  selfAvatarUrl={clubLogoUrl}
  />
  ))}
-
- {/* Add a small bottom spacer when the latest message is outgoing (club) */}
- {selectedThread.messages.length > 0 &&
- selectedThread.messages[selectedThread.messages.length - 1].direction === 'out' && (
- <div className="h-6" />
- )}
  </div>
 
- <div className="space-y-3 pt-4 border-t-2 border-slate-200">
- <label className="text-sm font-bold text-gray-900">Reply</label>
+ {/* Reply Input - Compact on mobile */}
+ <div className="shrink-0 pt-2 sm:pt-3 border-t border-slate-100 mt-2">
+ <div className="flex gap-2 items-end">
  <textarea
- className="w-full min-h-[120px] rounded-xl border-2 border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all resize-none"
- placeholder="Write your response..."
+ className="flex-1 min-h-[40px] max-h-[100px] rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all resize-none"
+ placeholder="Type a message..."
  value={replyContent}
  onChange={(event) => setReplyContent(event.target.value)}
+ rows={1}
  />
  <button
  disabled={sending || !replyContent.trim()}
  onClick={handleSendReply}
- className="px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+ className="shrink-0 w-10 h-10 flex items-center justify-center bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-full font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+ aria-label="Send message"
  >
- {sending ? 'Sending...' : 'Send Reply'}
+ {sending ? (
+ <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+ <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+ <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+ </svg>
+ ) : (
+ <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+ <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+ </svg>
+ )}
  </button>
  </div>
  </div>
+ </>
  ) : (
- <div className="text-center py-16">
- <div className="text-6xl mb-4">📨</div>
- <p className="text-base font-semibold text-gray-700">Select a conversation</p>
- <p className="text-sm text-gray-500 mt-2">Choose a thread from the left to view messages</p>
+ <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+ <div className="text-4xl sm:text-5xl mb-3">📨</div>
+ <p className="text-sm sm:text-base font-medium text-gray-600">Select a conversation</p>
+ <p className="text-xs text-gray-400 mt-1">Choose a chat from the list</p>
  </div>
  )}
  </div>

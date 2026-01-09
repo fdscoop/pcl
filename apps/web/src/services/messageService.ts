@@ -24,6 +24,13 @@ export interface MessageWithSenderInfo extends Message {
  club_logo?: string
 }
 
+export interface MessageWithReceiverInfo extends Message {
+ receiver_name?: string
+ receiver_photo?: string
+ club_name?: string
+ club_logo?: string
+}
+
 /**
  * Get all messages for a user (inbox)
  */
@@ -34,6 +41,7 @@ export async function getInboxMessages(userId: string): Promise<{
  try {
  const supabase = createClient()
 
+ // Get messages with basic sender information joined
  const { data: messagesData, error: messagesError } = await supabase
  .from('messages')
  .select('*')
@@ -49,63 +57,111 @@ export async function getInboxMessages(userId: string): Promise<{
  return { messages: [] }
  }
 
+ // Group unique sender IDs to reduce database calls
+ const clubOwnerIds = new Set<string>()
+ const playerIds = new Set<string>()
+
+ messagesData.forEach(msg => {
+ if (msg.sender_type === 'club_owner') {
+ clubOwnerIds.add(msg.sender_id)
+ } else if (msg.sender_type === 'player') {
+ playerIds.add(msg.sender_id)
+ }
+ })
+
+ // Batch fetch club information for all club owners
+ const clubsMap = new Map<string, any>()
+ if (clubOwnerIds.size > 0) {
+ try {
+ const { data: clubs } = await supabase
+ .from('clubs')
+ .select('owner_id, club_name, logo_url')
+ .in('owner_id', Array.from(clubOwnerIds))
+
+ clubs?.forEach(club => {
+ clubsMap.set(club.owner_id, club)
+ })
+ } catch (error) {
+ console.warn('Failed to fetch club data:', error)
+ }
+ }
+
+ // Batch fetch player information for all players
+ const playersMap = new Map<string, any>()
+ if (playerIds.size > 0) {
+ try {
+ const { data: players } = await supabase
+ .from('players')
+ .select('user_id, photo_url')
+ .in('user_id', Array.from(playerIds))
+
+ players?.forEach(player => {
+ playersMap.set(player.user_id, player)
+ })
+ } catch (error) {
+ console.warn('Failed to fetch player data:', error)
+ }
+ }
+
+ // Batch fetch user names (this might fail due to RLS, so we handle gracefully)
+ const usersMap = new Map<string, any>()
+ const allUserIds = [...clubOwnerIds, ...playerIds]
+ if (allUserIds.length > 0) {
+ try {
+ const { data: users } = await supabase
+ .from('users')
+ .select('id, first_name, last_name')
+ .in('id', allUserIds)
+
+ users?.forEach(user => {
+ usersMap.set(user.id, user)
+ })
+ } catch (error) {
+ // RLS prevents reading user data, we'll use fallback names
+ console.info('Using fallback names due to RLS restrictions')
+ }
+ }
+
  // Enrich messages with sender information
- const enrichedMessages = await Promise.all(
- messagesData.map(async (msg) => {
+ const enrichedMessages: MessageWithSenderInfo[] = messagesData.map(msg => {
  const enriched: MessageWithSenderInfo = { ...msg }
 
- // Get sender info based on sender type
  if (msg.sender_type === 'club_owner') {
- const { data: club } = await supabase
- .from('clubs')
- .select('club_name, logo_url')
- .eq('owner_id', msg.sender_id)
- .single()
-
+ const club = clubsMap.get(msg.sender_id)
  if (club) {
  enriched.club_name = club.club_name
  enriched.club_logo = club.logo_url
+ enriched.sender_name = club.club_name || 'Club'
+ } else {
+ enriched.sender_name = 'Club'
  }
 
- // Get user name
- const { data: user } = await supabase
- .from('users')
- .select('first_name, last_name')
- .eq('id', msg.sender_id)
- .single()
-
- if (user) {
+ // Try to get user name if available
+ const user = usersMap.get(msg.sender_id)
+ if (user && user.first_name && user.last_name) {
  const fullName = `${user.first_name} ${user.last_name}`.trim()
- enriched.sender_name = fullName || 'Unknown'
+ if (fullName) {
+ enriched.sender_name = fullName
+ }
  }
  } else if (msg.sender_type === 'player') {
- // Fetch player info
- const { data: player } = await supabase
- .from('players')
- .select('photo_url, user_id')
- .eq('user_id', msg.sender_id)
- .single()
-
+ const player = playersMap.get(msg.sender_id)
  if (player) {
  enriched.sender_photo = player.photo_url
  }
 
- // Get user name
- const { data: user } = await supabase
- .from('users')
- .select('first_name, last_name')
- .eq('id', msg.sender_id)
- .single()
-
- if (user) {
+ // Try to get user name if available
+ const user = usersMap.get(msg.sender_id)
+ if (user && user.first_name && user.last_name) {
  const fullName = `${user.first_name} ${user.last_name}`.trim()
- enriched.sender_name = fullName || 'Unknown'
+ enriched.sender_name = fullName || 'Player'
+ } else {
+ enriched.sender_name = 'Player'
  }
  }
 
  return enriched
  })
- )
 
  return { messages: enrichedMessages }
  } catch (err) {
@@ -121,12 +177,13 @@ export async function getInboxMessages(userId: string): Promise<{
  * Get all messages sent by a user
  */
 export async function getSentMessages(userId: string): Promise<{
- messages: MessageWithSenderInfo[]
+ messages: MessageWithReceiverInfo[]
  error?: string
 }> {
  try {
  const supabase = createClient()
 
+ // Get messages sent by the user
  const { data: messagesData, error: messagesError } = await supabase
  .from('messages')
  .select('*')
@@ -142,63 +199,111 @@ export async function getSentMessages(userId: string): Promise<{
  return { messages: [] }
  }
 
- // Enrich messages with receiver information
- const enrichedMessages = await Promise.all(
- messagesData.map(async (msg) => {
- const enriched: MessageWithSenderInfo = { ...msg }
+ // Group unique receiver IDs to reduce database calls
+ const clubOwnerIds = new Set<string>()
+ const playerIds = new Set<string>()
 
- // Get receiver info based on receiver type
+ messagesData.forEach(msg => {
  if (msg.receiver_type === 'club_owner') {
- const { data: club } = await supabase
- .from('clubs')
- .select('club_name, logo_url')
- .eq('owner_id', msg.receiver_id)
- .single()
+ clubOwnerIds.add(msg.receiver_id)
+ } else if (msg.receiver_type === 'player') {
+ playerIds.add(msg.receiver_id)
+ }
+ })
 
+ // Batch fetch club information for all club owners
+ const clubsMap = new Map<string, any>()
+ if (clubOwnerIds.size > 0) {
+ try {
+ const { data: clubs } = await supabase
+ .from('clubs')
+ .select('owner_id, club_name, logo_url')
+ .in('owner_id', Array.from(clubOwnerIds))
+
+ clubs?.forEach(club => {
+ clubsMap.set(club.owner_id, club)
+ })
+ } catch (error) {
+ console.warn('Failed to fetch club data:', error)
+ }
+ }
+
+ // Batch fetch player information for all players
+ const playersMap = new Map<string, any>()
+ if (playerIds.size > 0) {
+ try {
+ const { data: players } = await supabase
+ .from('players')
+ .select('user_id, photo_url')
+ .in('user_id', Array.from(playerIds))
+
+ players?.forEach(player => {
+ playersMap.set(player.user_id, player)
+ })
+ } catch (error) {
+ console.warn('Failed to fetch player data:', error)
+ }
+ }
+
+ // Batch fetch user names (this might fail due to RLS, so we handle gracefully)
+ const usersMap = new Map<string, any>()
+ const allUserIds = [...clubOwnerIds, ...playerIds]
+ if (allUserIds.length > 0) {
+ try {
+ const { data: users } = await supabase
+ .from('users')
+ .select('id, first_name, last_name')
+ .in('id', allUserIds)
+
+ users?.forEach(user => {
+ usersMap.set(user.id, user)
+ })
+ } catch (error) {
+ // RLS prevents reading user data, we'll use fallback names
+ console.info('Using fallback names due to RLS restrictions')
+ }
+ }
+
+ // Enrich messages with receiver information
+ const enrichedMessages: MessageWithReceiverInfo[] = messagesData.map(msg => {
+ const enriched: MessageWithReceiverInfo = { ...msg }
+
+ if (msg.receiver_type === 'club_owner') {
+ const club = clubsMap.get(msg.receiver_id)
  if (club) {
  enriched.club_name = club.club_name
  enriched.club_logo = club.logo_url
+ enriched.receiver_name = club.club_name || 'Club'
+ } else {
+ enriched.receiver_name = 'Club'
  }
 
- // Get user name
- const { data: user } = await supabase
- .from('users')
- .select('first_name, last_name')
- .eq('id', msg.receiver_id)
- .single()
-
- if (user) {
+ // Try to get user name if available
+ const user = usersMap.get(msg.receiver_id)
+ if (user && user.first_name && user.last_name) {
  const fullName = `${user.first_name} ${user.last_name}`.trim()
- enriched.sender_name = fullName || 'Unknown'
+ if (fullName) {
+ enriched.receiver_name = fullName
+ }
  }
  } else if (msg.receiver_type === 'player') {
- // Fetch player info
- const { data: player } = await supabase
- .from('players')
- .select('photo_url, user_id')
- .eq('user_id', msg.receiver_id)
- .single()
-
+ const player = playersMap.get(msg.receiver_id)
  if (player) {
- enriched.sender_photo = player.photo_url
+ enriched.receiver_photo = player.photo_url
  }
 
- // Get user name
- const { data: user } = await supabase
- .from('users')
- .select('first_name, last_name')
- .eq('id', msg.receiver_id)
- .single()
-
- if (user) {
+ // Try to get user name if available
+ const user = usersMap.get(msg.receiver_id)
+ if (user && user.first_name && user.last_name) {
  const fullName = `${user.first_name} ${user.last_name}`.trim()
- enriched.sender_name = fullName || 'Unknown'
+ enriched.receiver_name = fullName || 'Player'
+ } else {
+ enriched.receiver_name = 'Player'
  }
  }
 
  return enriched
  })
- )
 
  return { messages: enrichedMessages }
  } catch (err) {

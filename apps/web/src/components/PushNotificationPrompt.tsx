@@ -49,8 +49,13 @@ export default function PushNotificationPrompt() {
         }
       }
 
-      // Check if running in Capacitor (native app)
-      const isNativeApp = Capacitor.isNativePlatform()
+      // Check if running in Capacitor (native app) by checking user agent or platform
+      const isNativeApp = Capacitor.isNativePlatform() || 
+                          navigator.userAgent.includes('PCL-Mobile-App') ||
+                          navigator.userAgent.includes('wv') // Android WebView
+
+      console.log('📱 Running in native app:', isNativeApp)
+      console.log('📱 User agent:', navigator.userAgent)
 
       // Check if user dismissed the prompt recently (within last 7 days)
       const dismissedAt = localStorage.getItem('push-notification-dismissed')
@@ -67,6 +72,7 @@ export default function PushNotificationPrompt() {
       // For native app, show immediately and prominently
       // For web, show after a short delay
       const delay = isNativeApp ? 500 : 3000
+      console.log('⏰ Showing push notification prompt in', delay, 'ms')
       setTimeout(() => {
         setShowPrompt(true)
       }, delay)

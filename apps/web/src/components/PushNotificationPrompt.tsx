@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Capacitor } from '@capacitor/core'
 import {
   isPushNotificationSupported,
   getNotificationPermission,
@@ -48,9 +49,13 @@ export default function PushNotificationPrompt() {
         }
       }
 
+      // Check if running in Capacitor (native app)
+      const isNativeApp = Capacitor.isNativePlatform()
+
       // Check if user dismissed the prompt recently (within last 7 days)
       const dismissedAt = localStorage.getItem('push-notification-dismissed')
-      if (dismissedAt) {
+      if (dismissedAt && !isNativeApp) {
+        // On web, respect dismissal
         const dismissedDate = new Date(dismissedAt)
         const now = new Date()
         const daysSinceDismissed = (now.getTime() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -59,10 +64,12 @@ export default function PushNotificationPrompt() {
         }
       }
 
-      // Show prompt after a short delay (don't annoy users immediately)
+      // For native app, show immediately and prominently
+      // For web, show after a short delay
+      const delay = isNativeApp ? 500 : 3000
       setTimeout(() => {
         setShowPrompt(true)
-      }, 3000)
+      }, delay)
     } catch (error) {
       console.error('Error checking notification status:', error)
     }

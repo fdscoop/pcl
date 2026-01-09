@@ -4,9 +4,9 @@ import { ReactNode } from 'react'
 
 interface PlayerLayoutProps {
  children: ReactNode
- params: {
+ params: Promise<{
  id: string
- }
+ }>
 }
 
 export default function PlayerLayout({ children }: PlayerLayoutProps) {

@@ -118,6 +118,33 @@ async function waitForServiceWorkerReady(registration: ServiceWorkerRegistration
 }
 
 /**
+ * Check if FCM endpoints are reachable
+ * This helps diagnose network/firewall issues
+ */
+async function checkFCMConnectivity(): Promise<{ reachable: boolean; error?: string }> {
+  try {
+    // Try to reach Firebase CDN
+    const firebaseResponse = await fetch('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js', {
+      method: 'HEAD',
+      mode: 'no-cors'
+    })
+    
+    // Try to reach FCM endpoint
+    const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
+      method: 'HEAD',
+      mode: 'no-cors'
+    })
+    
+    console.log('✅ FCM connectivity check passed')
+    return { reachable: true }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('❌ FCM connectivity check failed:', errorMessage)
+    return { reachable: false, error: errorMessage }
+  }
+}
+
+/**
  * Subscribe to push notifications and save token to database
  */
 export async function subscribeToNotifications(userId: string): Promise<{
@@ -151,6 +178,16 @@ export async function subscribeToNotifications(userId: string): Promise<{
       return { success: false, error: 'VAPID key not configured' }
     }
 
+    // Check FCM connectivity first
+    console.log('🌐 Checking FCM connectivity...')
+    const connectivity = await checkFCMConnectivity()
+    if (!connectivity.reachable) {
+      return {
+        success: false,
+        error: `Cannot reach Firebase servers. Please check your internet connection and try again. ${connectivity.error || ''}`
+      }
+    }
+
     // Unregister ALL service workers first for clean slate
     console.log('🔄 Cleaning up old service workers...')
     await unregisterAllServiceWorkers()
@@ -177,32 +214,69 @@ export async function subscribeToNotifications(userId: string): Promise<{
 
     // Get FCM token with retry logic
     let token
-    try {
-      console.log('🔑 Requesting FCM token...')
-      
-      // Try to get token
-      token = await getToken(messaging, {
-        vapidKey: VAPID_KEY,
-        serviceWorkerRegistration: registration
-      })
-      
-      if (token) {
-        console.log('✅ FCM token obtained successfully')
-      } else {
-        console.warn('⚠️ FCM token is empty')
+    let lastError: Error | null = null
+    const maxRetries = 3
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔑 Requesting FCM token (attempt ${attempt}/${maxRetries})...`)
+        
+        // Add a small delay between retries
+        if (attempt > 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+        }
+        
+        // Try to get token
+        token = await getToken(messaging, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: registration
+        })
+        
+        if (token) {
+          console.log('✅ FCM token obtained successfully')
+          break // Success, exit retry loop
+        } else {
+          console.warn(`⚠️ FCM token is empty (attempt ${attempt}/${maxRetries})`)
+          lastError = new Error('Empty token returned')
+        }
+      } catch (tokenError) {
+        lastError = tokenError as Error
+        console.error(`❌ Failed to get FCM token (attempt ${attempt}/${maxRetries}):`, {
+          name: lastError.name,
+          message: lastError.message
+        })
+        
+        // If it's not the last attempt, continue to retry
+        if (attempt < maxRetries) {
+          console.log(`🔄 Retrying in ${attempt} second(s)...`)
+        }
       }
-    } catch (tokenError) {
-      const error = tokenError as Error
-      console.error('❌ Failed to get FCM token:', {
+    }
+    
+    // If we still don't have a token after all retries, return error
+    if (!token || lastError) {
+      const error = lastError || new Error('Unknown error')
+      console.error('❌ All token request attempts failed:', {
         name: error.name,
         message: error.message,
         stack: error.stack
       })
       
       // Provide more specific error messages
-      let errorMessage = 'Failed to get FCM token'
+      let errorMessage = 'Failed to get FCM token after multiple attempts'
       if (error.name === 'AbortError') {
-        errorMessage = 'Push service registration failed. Please check your internet connection and try again.'
+        errorMessage = `Push notifications are currently unavailable. This may be due to:
+• Network connectivity issues
+• Firewall/VPN blocking FCM servers
+• Browser restrictions on localhost
+
+Try:
+1. Check your internet connection
+2. Disable VPN/firewall temporarily
+3. Use a different browser
+4. Test on a deployed domain (not localhost)
+
+Technical: ${error.message}`
       } else if (error.message.includes('messaging/permission-blocked')) {
         errorMessage = 'Notification permission is blocked. Please enable notifications in your browser settings.'
       } else if (error.message.includes('messaging/unsupported-browser')) {

@@ -380,25 +380,34 @@ export async function unsubscribeFromNotifications(userId: string): Promise<{
 }
 
 /**
- * Check if user is subscribed to notifications
+ * Check if user is subscribed to notifications (web or native)
  */
-export async function isSubscribedToNotifications(userId: string): Promise<boolean> {
+export async function isSubscribedToNotifications(userId: string, deviceType?: string): Promise<boolean> {
   try {
     const supabase = createClient()
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('notification_tokens')
       .select('id')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .eq('device_type', 'web')
       .limit(1)
+
+    // If device type specified, filter by it; otherwise check for any active token
+    if (deviceType) {
+      query = query.eq('device_type', deviceType)
+    }
+
+    const { data, error } = await query
 
     if (error) {
       console.error('Error checking subscription status:', error)
       return false
     }
 
-    return (data?.length ?? 0) > 0
+    const isSubscribed = (data?.length ?? 0) > 0
+    console.log(`📱 isSubscribedToNotifications: ${isSubscribed} (deviceType: ${deviceType || 'any'})`)
+    return isSubscribed
   } catch (error) {
     console.error('Error checking subscription:', error)
     return false

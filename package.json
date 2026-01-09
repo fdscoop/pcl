@@ -1,9 +1,9 @@
 {
   "name": "pcl-monorepo",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "packageManager": "npm@10.0.0",
-  "description": "Professional Club League - Sports Management Platform",
+  "description": "Professional Club League - Sports Management Platform with Android Mobile App",
   "workspaces": [
     "apps/*",
     "packages/*"

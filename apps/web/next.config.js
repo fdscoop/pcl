@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  
   images: {
     remotePatterns: [
       {
@@ -9,8 +11,8 @@ const nextConfig = {
         hostname: '**.supabase.co',
       },
     ],
-    // Allow images from the public and assets folders
-    unoptimized: true, // For development, can optimize later
+    // Required for mobile compatibility
+    unoptimized: true,
   },
   webpack: (config, { isServer }) => {
     config.resolve.alias = {

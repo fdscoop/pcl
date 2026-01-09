@@ -3,6 +3,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import { sendPushToUser } from './sendPushNotification'
 
 export interface Message {
  id: string

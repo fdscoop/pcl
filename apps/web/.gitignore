@@ -15,3 +15,11 @@
 .DS_Store
 .vercel
 .env*.local
+
+# Capacitor / Android
+# Keep android folder in git but exclude build artifacts
+android/app/build/
+android/.gradle/
+android/local.properties
+*.keystore
+*.jks

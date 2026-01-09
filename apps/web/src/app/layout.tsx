@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/context/ToastContext'
+import CapacitorInit from '@/components/CapacitorInit'
 
 export const metadata: Metadata = {
  title: 'Professional Club League - PCL',
@@ -31,9 +32,11 @@ export default function RootLayout({
  <body className="w-full h-full min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100"
  style={{ colorScheme: 'light' }}
  >
+ <CapacitorInit>
  <ToastProvider>
  {children}
  </ToastProvider>
+ </CapacitorInit>
  </body>
  </html>
  );

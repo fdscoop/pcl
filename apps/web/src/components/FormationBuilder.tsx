@@ -9,6 +9,7 @@ import { TextInputDialog } from '@/components/ui/text-input-dialog'
 import { X, ArrowUpCircle, ArrowDownCircle, Trash2, RefreshCw, ArrowLeftRight, Save, Download, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/context/ToastContext'
+import { notifyLineupAnnounced } from '@/services/matchNotificationService'
 
 interface Player {
  id: string
@@ -911,6 +912,62 @@ export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat
  teamId,
  format: formatMap[selectedFormat]
  }))
+
+ // Send push notifications to selected players (only if this is a match-specific lineup)
+ if (matchId && starterInserts.length > 0) {
+ try {
+ // Get player IDs from the lineup
+ const starterPlayerIds = starterInserts
+ .filter((s): s is NonNullable<typeof s> => s !== null)
+ .map(s => s.player_id)
+ 
+ const substitutePlayerIds = subInserts.map(s => s.player_id)
+ 
+ // Get match details for better notification context
+ const { data: matchData } = await supabase
+ .from('matches')
+ .select('match_date, home_team_id, away_team_id')
+ .eq('id', matchId)
+ .single()
+ 
+ // Try to get opponent name
+ let opponentName = 'upcoming match'
+ if (matchData) {
+ const opponentTeamId = matchData.home_team_id === teamId 
+ ? matchData.away_team_id 
+ : matchData.home_team_id
+ 
+ if (opponentTeamId) {
+ const { data: opponentTeam } = await supabase
+ .from('teams')
+ .select('team_name, clubs(club_name)')
+ .eq('id', opponentTeamId)
+ .single()
+ 
+ if (opponentTeam) {
+ const club = Array.isArray(opponentTeam.clubs) ? opponentTeam.clubs[0] : opponentTeam.clubs
+ opponentName = club?.club_name || opponentTeam.team_name || 'opponent'
+ }
+ }
+ }
+ 
+ // Send notifications
+ await notifyLineupAnnounced({
+ matchId,
+ clubId,
+ teamId: teamId || '',
+ opponentName,
+ matchDate: matchData?.match_date,
+ selectedPlayerIds: starterPlayerIds,
+ substitutePlayerIds
+ })
+ 
+ console.log('✅ Lineup notifications sent to players')
+ } catch (notifyError) {
+ console.error('Error sending lineup notifications:', notifyError)
+ // Don't fail the save if notifications fail
+ }
+ }
  } catch (error) {
  console.error('Error saving lineup:', error)
  addToast({

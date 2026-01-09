@@ -13,6 +13,7 @@ import CompactPlayerCard from '@/components/CompactPlayerCard'
 import ElaboratedContractModal from '@/components/ElaboratedContractModal'
 import { useToast } from '@/context/ToastContext'
 import { Search, Filter, MapPin, Users, TrendingUp } from 'lucide-react'
+import { notifyNewContractOffer } from '@/services/matchNotificationService'
 
 interface Player {
  id: string
@@ -375,6 +376,19 @@ export default function ScoutPlayersPage() {
  read: false
  }
  ])
+
+ // Send push notification to player
+ try {
+ await notifyNewContractOffer(
+ playerData.user_id,
+ club.club_name || club.name || 'A club',
+ data.id
+ )
+ console.log('✅ Push notification sent to player for new contract offer')
+ } catch (pushErr) {
+ console.warn('Failed to send push notification:', pushErr)
+ // Don't fail if push notification fails
+ }
  }
 
  addToast({

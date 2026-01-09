@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
+import { notifyContractSigned } from '@/services/matchNotificationService'
 
 export interface SignContractPayload {
  contractId: string
@@ -185,6 +186,19 @@ export async function signContractAsPlayer(payload: SignContractPayload): Promis
  }
  } catch (err) {
  console.warn('❌ Error creating player confirmation notification:', err)
+ }
+
+ // Send push notification to club owner
+ try {
+ await notifyContractSigned(
+ existingContract.club_id,
+ playerFullName,
+ payload.contractId
+ )
+ console.log('✅ Push notification sent to club owner')
+ } catch (pushErr) {
+ console.warn('❌ Error sending push notification:', pushErr)
+ // Don't fail if push notification fails
  }
  } catch (notificationError) {
  console.error('❌ Unexpected error in notification creation:', notificationError)

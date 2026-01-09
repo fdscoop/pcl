@@ -14,6 +14,7 @@ import ElaboratedContractModal from '@/components/ElaboratedContractModal'
 import { useToast } from '@/context/ToastContext'
 import { Search, Filter, MapPin, Users, TrendingUp } from 'lucide-react'
 import { notifyNewContractOffer } from '@/services/matchNotificationService'
+import { sendMessageWithPush } from '@/services/messageServiceWithPush'
 
 interface Player {
  id: string
@@ -251,10 +252,8 @@ export default function ScoutPlayersPage() {
 
  try {
  setSendingMessage(true)
- const supabase = createClient()
- const { data: { user } } = await supabase.auth.getUser()
 
- if (!user || !club) {
+ if (!club) {
  addToast({
  type: 'error',
  title: 'Error',
@@ -263,26 +262,19 @@ export default function ScoutPlayersPage() {
  return
  }
 
- const { error } = await supabase
- .from('messages')
- .insert([
- {
- sender_id: user.id,
- sender_type: 'club_owner',
- receiver_id: messageModal.player.user_id,
- receiver_type: 'player',
+ const result = await sendMessageWithPush({
+ receiverId: messageModal.player.user_id,
+ receiverType: 'player',
  subject: `Message from ${club.name}`,
- content: messageContent,
- created_at: new Date().toISOString()
- }
- ])
+ content: messageContent
+ })
 
- if (error) {
- console.error('Error sending message:', error)
+ if (!result.success) {
+ console.error('Error sending message:', result.error)
  addToast({
  type: 'error',
  title: 'Failed to Send',
- description: 'Could not send message. Please try again.'
+ description: result.error || 'Could not send message. Please try again.'
  })
  } else {
  const user = messageModal.player?.users

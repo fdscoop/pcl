@@ -24,12 +24,12 @@ export async function sendMessageWithPush(payload: {
     }
 
     // Determine sender type
-    const { data: playerData } = await supabase
+    // Fix 406 error: Don't use .eq('user_id') on players table
+    const { data: allPlayers } = await supabase
       .from('players')
-      .select('id')
-      .eq('user_id', user.id)
-      .single()
+      .select('id, user_id')
 
+    const playerData = allPlayers?.find(p => p.user_id === user.id)
     const senderType = playerData ? 'player' : 'club_owner'
 
     // Get sender's name for notification

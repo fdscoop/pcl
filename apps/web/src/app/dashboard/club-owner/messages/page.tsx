@@ -14,9 +14,9 @@ import {
  getInboxMessages,
  getSentMessages,
  markMessageAsRead,
- sendMessage,
  MessageWithSenderInfo
 } from '@/services/messageService'
+import { sendMessageWithPush as sendMessage } from '@/services/messageServiceWithPush'
 
 type MessageDirection = 'in' | 'out'
 

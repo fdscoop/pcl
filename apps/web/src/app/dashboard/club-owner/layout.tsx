@@ -7,6 +7,7 @@ import { ClubSidebarNav, ClubMobileNavList, ClubBottomNav, NavItem } from '@/com
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 import {
   Home,
   Search,
@@ -154,6 +155,9 @@ export default function ClubOwnerLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-teal-50/30 to-slate-100">
+      {/* Push Notification Prompt */}
+      <PushNotificationPrompt />
+      
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b-2 border-teal-200 shadow-lg">
         <div className="flex items-center justify-between px-4 h-16">

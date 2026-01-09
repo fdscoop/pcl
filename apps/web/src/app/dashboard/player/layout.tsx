@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SidebarNav, MobileNavList, BottomNav, NavItem } from '@/components/ui/modern-nav'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 import { 
  Home, 
  User, 
@@ -126,6 +127,9 @@ export default function PlayerLayout({
 
  return (
  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-100">
+ {/* Push Notification Prompt */}
+ <PushNotificationPrompt />
+ 
  {/* Mobile Header */}
  <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b-2 border-orange-200 shadow-lg">
  <div className="flex items-center justify-between px-4 h-16">

@@ -237,13 +237,20 @@ export async function subscribeToNotifications(userId: string): Promise<{
         }
       } catch (tokenError) {
         lastError = tokenError as Error
-        console.error(`❌ Failed to get FCM token (attempt ${attempt}/${maxRetries}):`, {
-          name: lastError.name,
-          message: lastError.message,
-          code: (tokenError as any).code,
-          stack: lastError.stack,
-          fullError: tokenError
-        })
+        
+        // Log detailed error information
+        console.error(`❌ Failed to get FCM token (attempt ${attempt}/${maxRetries})`)
+        console.error('Error name:', lastError.name)
+        console.error('Error message:', lastError.message)
+        console.error('Error code:', (tokenError as any).code)
+        console.error('Full error object:', tokenError)
+        
+        // Try to stringify it
+        try {
+          console.error('Error as JSON:', JSON.stringify(tokenError, Object.getOwnPropertyNames(tokenError)))
+        } catch (e) {
+          console.error('Could not stringify error')
+        }
         
         // If it's not the last attempt, continue to retry
         if (attempt < maxRetries) {

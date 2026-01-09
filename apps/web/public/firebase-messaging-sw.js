@@ -41,8 +41,17 @@ let messaging
 try {
   messaging = firebase.messaging()
   console.log('[firebase-messaging-sw.js] Messaging instance created')
+  
+  // Log messaging configuration for debugging
+  console.log('[firebase-messaging-sw.js] Messaging ready to receive tokens')
 } catch (error) {
   console.error('[firebase-messaging-sw.js] Failed to get messaging instance:', error)
+  console.error('[firebase-messaging-sw.js] Error details:', {
+    name: error.name,
+    message: error.message,
+    code: error.code,
+    stack: error.stack
+  })
   // Don't throw here, as this will prevent the service worker from installing
 }
 

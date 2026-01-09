@@ -123,23 +123,19 @@ async function waitForServiceWorkerReady(registration: ServiceWorkerRegistration
  */
 async function checkFCMConnectivity(): Promise<{ reachable: boolean; error?: string }> {
   try {
-    // Try to reach Firebase CDN
+    // Try to reach Firebase CDN (more reliable test)
     const firebaseResponse = await fetch('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js', {
       method: 'HEAD',
       mode: 'no-cors'
     })
     
-    // Try to reach FCM endpoint
-    const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
-      method: 'HEAD',
-      mode: 'no-cors'
-    })
-    
-    console.log('✅ FCM connectivity check passed')
+    // Note: FCM endpoint returns 404 for HEAD/GET without auth, which is normal
+    // We just want to verify network connectivity, not API functionality
+    console.log('✅ Firebase CDN connectivity check passed')
     return { reachable: true }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error('❌ FCM connectivity check failed:', errorMessage)
+    console.error('❌ Firebase CDN connectivity check failed:', errorMessage)
     return { reachable: false, error: errorMessage }
   }
 }
@@ -243,7 +239,10 @@ export async function subscribeToNotifications(userId: string): Promise<{
         lastError = tokenError as Error
         console.error(`❌ Failed to get FCM token (attempt ${attempt}/${maxRetries}):`, {
           name: lastError.name,
-          message: lastError.message
+          message: lastError.message,
+          code: (tokenError as any).code,
+          stack: lastError.stack,
+          fullError: tokenError
         })
         
         // If it's not the last attempt, continue to retry

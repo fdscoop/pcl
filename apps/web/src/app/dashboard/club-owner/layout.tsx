@@ -194,7 +194,7 @@ export default function ClubOwnerLayout({
             />
             <div className="fixed top-16 left-0 right-0 bottom-0 bg-white z-50 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
               {/* Club Info */}
-              <div className="p-4 border-b border-teal-100">
+              <div className="sticky top-0 bg-white z-10 p-4 border-b border-teal-100 shadow-sm">
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-200">
                   {club?.logo_url ? (
                     <img
@@ -221,13 +221,16 @@ export default function ClubOwnerLayout({
                 </div>
               </div>
 
-              <ClubMobileNavList items={navigation} onItemClick={() => setMobileMenuOpen(false)} />
+              {/* Navigation List - Scrollable */}
+              <div className="pb-20">
+                <ClubMobileNavList items={navigation} onItemClick={() => setMobileMenuOpen(false)} />
+              </div>
 
-              {/* Sign Out */}
-              <div className="p-4 border-t border-slate-200">
+              {/* Sign Out - Fixed at bottom */}
+              <div className="sticky bottom-0 bg-white p-4 border-t-2 border-slate-200 shadow-lg">
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"
+                  className="flex items-center justify-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium border-2 border-red-200"
                 >
                   <LogOut className="w-5 h-5" />
                   <span>Sign Out</span>

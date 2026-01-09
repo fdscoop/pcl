@@ -21,44 +21,78 @@ interface MobileNavProps {
 const ClubMobileNavList = ({ items, onItemClick }: MobileNavProps) => {
   const pathname = usePathname()
 
+  // Group items for better organization
+  const mainItems = items.slice(0, 6) // Dashboard, Scout, Squad, Formations, Matches, Tournaments
+  const communicationItems = items.slice(6, 9) // Messages, Statistics, Contracts
+  const managementItems = items.slice(9) // Finance, Membership, KYC, Settings
+
+  const renderNavItem = (item: NavItem) => {
+    const Icon = item.icon
+    const isActive = pathname === item.href
+
+    return (
+      <Link
+        key={item.name}
+        href={item.href}
+        onClick={onItemClick}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200",
+          "active:scale-[0.98] touch-manipulation",
+          isActive
+            ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25"
+            : "text-slate-600 hover:bg-slate-100"
+        )}
+      >
+        <Icon className="w-5 h-5 flex-shrink-0" />
+        <span className="font-medium flex-1">{item.name}</span>
+        {item.badge && (
+          <span className={cn(
+            "px-2 py-0.5 text-xs font-bold rounded-full",
+            isActive 
+              ? "bg-white/20 text-white" 
+              : "bg-teal-100 text-teal-600"
+          )}>
+            {item.badge}
+          </span>
+        )}
+        <ChevronRight className={cn(
+          "w-4 h-4 transition-transform",
+          isActive ? "text-white/70" : "text-slate-300"
+        )} />
+      </Link>
+    )
+  }
+
   return (
     <nav className="space-y-1 px-3 py-4">
-      {items.map((item) => {
-        const Icon = item.icon
-        const isActive = pathname === item.href
+      {/* Main Navigation */}
+      <div className="space-y-1">
+        {mainItems.map(renderNavItem)}
+      </div>
 
-        return (
-          <Link
-            key={item.name}
-            href={item.href}
-            onClick={onItemClick}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200",
-              "active:scale-[0.98] touch-manipulation",
-              isActive
-                ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25"
-                : "text-slate-600 hover:bg-slate-100"
-            )}
-          >
-            <Icon className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium flex-1">{item.name}</span>
-            {item.badge && (
-              <span className={cn(
-                "px-2 py-0.5 text-xs font-bold rounded-full",
-                isActive 
-                  ? "bg-white/20 text-white" 
-                  : "bg-teal-100 text-teal-600"
-              )}>
-                {item.badge}
-              </span>
-            )}
-            <ChevronRight className={cn(
-              "w-4 h-4 transition-transform",
-              isActive ? "text-white/70" : "text-slate-300"
-            )} />
-          </Link>
-        )
-      })}
+      {/* Communication Section */}
+      {communicationItems.length > 0 && (
+        <>
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Communication</p>
+          </div>
+          <div className="space-y-1">
+            {communicationItems.map(renderNavItem)}
+          </div>
+        </>
+      )}
+
+      {/* Management Section */}
+      {managementItems.length > 0 && (
+        <>
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Management</p>
+          </div>
+          <div className="space-y-1">
+            {managementItems.map(renderNavItem)}
+          </div>
+        </>
+      )}
     </nav>
   )
 }

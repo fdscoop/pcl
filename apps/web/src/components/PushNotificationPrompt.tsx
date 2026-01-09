@@ -111,8 +111,8 @@ export default function PushNotificationPrompt() {
   if (!showPrompt) return null
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm">
-      <div className="bg-white rounded-xl shadow-2xl border-2 border-teal-100 p-4 animate-in slide-in-from-bottom">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl border-2 border-teal-100 p-4 max-w-sm w-full animate-in slide-in-from-bottom">
         {/* Icon */}
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-full flex items-center justify-center">

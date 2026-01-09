@@ -9,6 +9,11 @@ import {
   subscribeToNotifications,
   isSubscribedToNotifications
 } from '@/services/pushNotificationService'
+import {
+  isNativePlatform,
+  initializeNativePushNotifications,
+  setupNativePushListeners
+} from '@/services/nativePushNotificationService'
 
 export default function PushNotificationPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
@@ -86,14 +91,30 @@ export default function PushNotificationPrompt() {
 
     setIsLoading(true)
     try {
-      const result = await subscribeToNotifications(userId)
-
-      if (result.success) {
-        setShowPrompt(false)
-        // Show success message
-        console.log('✅ Push notifications enabled!')
+      // Check if running on native platform (Android/iOS)
+      if (isNativePlatform()) {
+        console.log('📱 Using native push notifications')
+        setupNativePushListeners()
+        const result = await initializeNativePushNotifications(userId)
+        
+        if (result.success) {
+          setShowPrompt(false)
+          console.log('✅ Native push notifications enabled!')
+          alert('Push notifications enabled! You will now receive notifications.')
+        } else {
+          alert(result.error || 'Failed to enable notifications. Please check your device settings.')
+        }
       } else {
-        alert(result.error || 'Failed to enable notifications. Please check your browser settings.')
+        // Use web push notifications
+        console.log('🌐 Using web push notifications')
+        const result = await subscribeToNotifications(userId)
+
+        if (result.success) {
+          setShowPrompt(false)
+          console.log('✅ Web push notifications enabled!')
+        } else {
+          alert(result.error || 'Failed to enable notifications. Please check your browser settings.')
+        }
       }
     } catch (error) {
       console.error('Error enabling notifications:', error)

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SidebarNav, MobileNavList, BottomNav, NavItem } from '@/components/ui/modern-nav'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { 
  Home, 
  User, 
@@ -32,6 +33,10 @@ export default function PlayerLayout({
  const [player, setPlayer] = useState<any>(null)
  const [loading, setLoading] = useState(true)
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+ 
+ // Get user ID for unread messages hook
+ const [userId, setUserId] = useState<string | null>(null)
+ const { unreadCount: unreadMessagesCount } = useUnreadMessages(userId)
 
  useEffect(() => {
  checkUser()
@@ -50,6 +55,8 @@ export default function PlayerLayout({
  router.push('/auth/login')
  return
  }
+ 
+ setUserId(user.id)
 
  // Get user details
  const { data: userData } = await supabase
@@ -90,7 +97,7 @@ export default function PlayerLayout({
  { name: 'Profile', href: '/dashboard/player/profile', icon: User },
  { name: 'KYC', href: '/kyc/upload', icon: Shield },
  { name: 'Contracts', href: '/dashboard/player/contracts', icon: FileText },
- { name: 'Messages', href: '/dashboard/player/messages', icon: Mail },
+ { name: 'Messages', href: '/dashboard/player/messages', icon: Mail, badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
  { name: 'Matches', href: '/dashboard/player/matches', icon: Trophy },
  ]
 
@@ -98,7 +105,7 @@ export default function PlayerLayout({
  const bottomNavItems = [
  { name: 'Home', href: '/dashboard/player', icon: Home },
  { name: 'Contracts', href: '/dashboard/player/contracts', icon: FileText },
- { name: 'Messages', href: '/dashboard/player/messages', icon: Mail },
+ { name: 'Messages', href: '/dashboard/player/messages', icon: Mail, badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
  { name: 'Matches', href: '/dashboard/player/matches', icon: Trophy },
  { name: 'Profile', href: '/dashboard/player/profile', icon: User },
  ]

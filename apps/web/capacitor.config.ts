@@ -1,14 +1,12 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-// Use production URL for the app (loads from web, not static files)
-// This is the recommended approach for Next.js apps with dynamic routes
+// Hybrid approach: Load from web but with native plugins
+// This allows us to use Next.js API routes while having native push notifications
 const config: CapacitorConfig = {
   appId: 'com.pcl.fdscoop',
   appName: 'PCL - Professional Club League',
-  webDir: 'public', // Fallback directory (not used when server.url is set)
+  webDir: 'public',
   server: {
-    // Load from your production domain
-    // This means the app always loads the latest version from the web
     url: 'https://www.professionalclubleague.com',
     cleartext: false,
     androidScheme: 'https',

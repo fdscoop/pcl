@@ -7,9 +7,15 @@ import { createClient } from '@/lib/supabase/client'
 
 /**
  * Check if running on a native platform (Android/iOS)
+ * This checks if Capacitor runtime is available, regardless of where content is loaded from
  */
 export function isNativePlatform(): boolean {
-  return Capacitor.isNativePlatform()
+  try {
+    // Check if Capacitor is available in the global scope
+    return typeof (window as any).Capacitor !== 'undefined' && Capacitor.isNativePlatform()
+  } catch {
+    return false
+  }
 }
 
 /**

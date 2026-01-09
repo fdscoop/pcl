@@ -26,18 +26,48 @@ export default function PushNotificationPrompt() {
 
   async function checkIfShouldShowPrompt() {
     try {
-      // Check if push notifications are supported
-      if (!isPushNotificationSupported()) {
+      // Check if running in Capacitor (native app)
+      const isNativeApp = Capacitor.isNativePlatform() || 
+                          navigator.userAgent.includes('PCL-Mobile-App') ||
+                          navigator.userAgent.includes('wv') // Android WebView
+
+      console.log('📱 Running in native app:', isNativeApp)
+      console.log('📱 User agent:', navigator.userAgent)
+
+      // For native apps, always show the prompt (native push is always supported)
+      // For web, check if push notifications are supported
+      if (!isNativeApp && !isPushNotificationSupported()) {
+        console.log('❌ Web push not supported')
         return
       }
 
       // Get current user
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        console.log('❌ No user logged in')
+        return
+      }
 
       setUserId(user.id)
+      console.log('✅ User logged in:', user.id)
 
+      // For native apps, check if already registered
+      if (isNativeApp) {
+        const isSubscribed = await isSubscribedToNotifications(user.id)
+        if (isSubscribed) {
+          console.log('✅ Already subscribed to native notifications')
+          return
+        }
+        // Show prompt immediately for native app
+        console.log('⏰ Showing native push notification prompt in 500ms')
+        setTimeout(() => {
+          setShowPrompt(true)
+        }, 500)
+        return
+      }
+
+      // Web-specific checks below
       // Check current permission status
       const permission = getNotificationPermission()
 
@@ -54,18 +84,9 @@ export default function PushNotificationPrompt() {
         }
       }
 
-      // Check if running in Capacitor (native app) by checking user agent or platform
-      const isNativeApp = Capacitor.isNativePlatform() || 
-                          navigator.userAgent.includes('PCL-Mobile-App') ||
-                          navigator.userAgent.includes('wv') // Android WebView
-
-      console.log('📱 Running in native app:', isNativeApp)
-      console.log('📱 User agent:', navigator.userAgent)
-
       // Check if user dismissed the prompt recently (within last 7 days)
       const dismissedAt = localStorage.getItem('push-notification-dismissed')
-      if (dismissedAt && !isNativeApp) {
-        // On web, respect dismissal
+      if (dismissedAt) {
         const dismissedDate = new Date(dismissedAt)
         const now = new Date()
         const daysSinceDismissed = (now.getTime() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -74,13 +95,11 @@ export default function PushNotificationPrompt() {
         }
       }
 
-      // For native app, show immediately and prominently
       // For web, show after a short delay
-      const delay = isNativeApp ? 500 : 3000
-      console.log('⏰ Showing push notification prompt in', delay, 'ms')
+      console.log('⏰ Showing web push notification prompt in 3000ms')
       setTimeout(() => {
         setShowPrompt(true)
-      }, delay)
+      }, 3000)
     } catch (error) {
       console.error('Error checking notification status:', error)
     }

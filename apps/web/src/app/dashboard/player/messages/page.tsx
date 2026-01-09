@@ -311,8 +311,8 @@ export default function PlayerMessagesPage() {
  }
 
  return (
- <div className="h-[100dvh] bg-slate-50/50 flex flex-col overflow-hidden">
- <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-2 sm:py-4 overflow-hidden">
+ <div className="bg-slate-50/50 flex flex-col lg:h-[100dvh] lg:overflow-hidden">
+ <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-2 sm:py-4 lg:overflow-hidden">
  {/* Header - Compact on mobile, hidden when in chat view */}
  <div className={`shrink-0 mb-2 sm:mb-4 ${mobileView === 'chat' ? 'hidden lg:block' : ''}`}>
  <div className="flex items-center justify-between">

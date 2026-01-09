@@ -216,7 +216,7 @@ export default function ClubOwnerDashboard() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Welcome Message */}
       <div className="mb-2">
         <p className="text-teal-600 font-medium text-sm sm:text-base">Welcome back, {userData?.first_name} 👋</p>

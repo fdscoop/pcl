@@ -552,7 +552,7 @@ export default function TeamManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full max-w-full overflow-x-hidden">
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
@@ -571,7 +571,7 @@ export default function TeamManagementPage() {
       `}</style>
 
       {/* Main Content - No extra nav needed since layout provides it */}
-      <main className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+      <main className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">

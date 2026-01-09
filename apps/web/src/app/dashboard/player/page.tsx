@@ -362,9 +362,9 @@ export default function PlayerDashboard() {
  }
 
  return (
- <div className="p-4 sm:p-6 lg:p-8">
+ <div className="p-4 sm:p-6 lg:p-8 w-full max-w-full overflow-x-hidden">
  {/* Main Content */}
- <div className="max-w-7xl mx-auto">
+ <div className="max-w-7xl mx-auto w-full overflow-x-hidden">
  {/* Welcome Section with Photo */}
  <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
  {/* Player Photo */}

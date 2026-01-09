@@ -213,19 +213,19 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
  </div>
  </aside>
 
- {/* Main Content */}
- <main className="flex-1 lg:ml-72">
- {/* Mobile spacing for fixed header and bottom nav */}
- <div className="pt-16 pb-20 lg:pt-0 lg:pb-0">
- <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
- {children}
- </div>
- </div>
- </main>
- </div>
+        {/* Main Content */}
+        <main className="flex-1 lg:ml-72 w-full max-w-full overflow-x-hidden">
+          {/* Mobile spacing for fixed header and bottom nav */}
+          <div className="pt-16 pb-20 lg:pt-0 lg:pb-0 w-full max-w-full overflow-x-hidden">
+            <div className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto overflow-x-hidden">
+              {children}
+            </div>
+          </div>
+        </main>
+      </div>
 
- {/* Bottom Navigation for Mobile */}
- <BottomNav items={bottomNavItems} />
- </div>
- )
+      {/* Bottom Navigation for Mobile */}
+      <BottomNav items={bottomNavItems} />
+    </div>
+  )
 }

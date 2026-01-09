@@ -234,7 +234,7 @@ export default function StaffCertifications() {
  }
 
  return (
- <div className="space-y-6 pb-20 md:pb-6">
+ <div className="space-y-6 pb-20 md:pb-6 w-full max-w-full overflow-x-hidden">
  {/* Header */}
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
  <div className="flex items-center gap-3">

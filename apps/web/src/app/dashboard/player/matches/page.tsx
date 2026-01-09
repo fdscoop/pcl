@@ -327,7 +327,7 @@ export default function PlayerMatches() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 p-4 sm:p-6 lg:p-8 w-full max-w-full overflow-x-hidden">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">

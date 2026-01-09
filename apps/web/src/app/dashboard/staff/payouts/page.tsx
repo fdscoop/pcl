@@ -181,7 +181,7 @@ export default function StaffPayouts() {
  }
 
  return (
- <div className="space-y-6 pb-20 md:pb-6">
+ <div className="space-y-6 pb-20 md:pb-6 w-full max-w-full overflow-x-hidden">
  {/* Header */}
  <div className="flex items-center gap-3">
  <Link href="/dashboard/staff">

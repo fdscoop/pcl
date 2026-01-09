@@ -105,7 +105,7 @@ export default function RefereeDashboard() {
  }
 
  return (
- <div className="space-y-6 sm:space-y-8">
+ <div className="space-y-6 sm:space-y-8 w-full max-w-full overflow-x-hidden">
  {/* Header */}
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
  <div>

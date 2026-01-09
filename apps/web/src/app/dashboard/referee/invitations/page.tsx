@@ -224,7 +224,7 @@ export default function RefereeInvitations() {
  }
 
  return (
- <div className="space-y-6 sm:space-y-8">
+ <div className="space-y-6 sm:space-y-8 w-full max-w-full overflow-x-hidden">
  {/* Header */}
  <div className="flex items-center gap-4">
  <Link href="/dashboard/referee">

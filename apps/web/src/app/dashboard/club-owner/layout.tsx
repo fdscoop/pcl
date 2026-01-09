@@ -270,10 +270,10 @@ export default function ClubOwnerLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-72">
+        <main className="flex-1 lg:ml-72 w-full max-w-full overflow-x-hidden">
           {/* Mobile spacing for fixed header and bottom nav */}
-          <div className="pt-16 pb-20 lg:pt-0 lg:pb-0">
-            <div className="max-w-7xl mx-auto">
+          <div className="pt-16 pb-20 lg:pt-0 lg:pb-0 w-full max-w-full overflow-x-hidden">
+            <div className="w-full max-w-7xl mx-auto overflow-x-hidden">
               {children}
             </div>
           </div>

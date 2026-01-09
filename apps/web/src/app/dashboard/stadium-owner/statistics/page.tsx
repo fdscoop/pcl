@@ -218,7 +218,7 @@ export default function StatisticsPage() {
  }
 
  return (
- <div className="space-y-5">
+ <div className="space-y-5 w-full max-w-full overflow-x-hidden">
  {/* Header */}
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
  <div>

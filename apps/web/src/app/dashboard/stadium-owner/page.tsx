@@ -300,7 +300,7 @@ export default function StadiumOwnerDashboard() {
  const kycComplete = kycProgress === 3
 
  return (
- <div className="space-y-5 sm:space-y-6">
+ <div className="space-y-5 sm:space-y-6 w-full max-w-full overflow-x-hidden">
  {/* Welcome Header */}
  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-500 to-amber-500 p-5 sm:p-6 text-white shadow-xl shadow-orange-500/25">
  <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />

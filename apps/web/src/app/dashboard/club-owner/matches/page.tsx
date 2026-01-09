@@ -592,7 +592,7 @@ export default function MatchesPage() {
 
   if (contractedPlayersCount < 8) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8 w-full max-w-full overflow-x-hidden">
         <Alert className="bg-gradient-to-br from-orange-50 via-orange-100 to-orange-50 border-orange-300 shadow-lg rounded-xl">
           <Info className="h-4 w-4" />
           <AlertTitle className="text-orange-800 text-sm sm:text-base">Not Enough Players</AlertTitle>
@@ -614,7 +614,7 @@ export default function MatchesPage() {
 
   if (activeView === 'create-friendly') {
     return (
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-8 w-full max-w-full overflow-x-hidden">
         <div className="mb-4 sm:mb-6">
           <Button
             onClick={() => setActiveView('overview')}
@@ -644,7 +644,7 @@ export default function MatchesPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Header - Mobile optimized */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

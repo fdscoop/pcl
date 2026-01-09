@@ -65,7 +65,7 @@ export default function RefereeMatches() {
  }
 
  return (
- <div className="max-w-6xl mx-auto space-y-6">
+ <div className="max-w-6xl mx-auto space-y-6 w-full overflow-x-hidden">
  <div className="flex items-center gap-4">
  <Link href="/dashboard/referee">
  <Button variant="outline" size="icon">

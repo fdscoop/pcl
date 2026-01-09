@@ -191,7 +191,7 @@ const ClubSidebarNav = ({ items, userInfo, clubInfo, title, subtitle, icon: Head
 }
 
 interface BottomNavProps {
-  items: { name: string; href: string; icon: LucideIcon }[]
+  items: { name: string; href: string; icon: LucideIcon; badge?: string | number }[]
 }
 
 const ClubBottomNav = ({ items }: BottomNavProps) => {
@@ -219,10 +219,15 @@ const ClubBottomNav = ({ items }: BottomNavProps) => {
                 )}
               >
                 <div className={cn(
-                  "p-1.5 rounded-lg transition-all",
+                  "relative p-1.5 rounded-lg transition-all",
                   isActive && "bg-teal-100"
                 )}>
                   <Icon className="w-5 h-5" />
+                  {item.badge && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full animate-pulse">
+                      {typeof item.badge === 'number' && item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
                 </div>
                 <span className="text-[10px] font-medium">{item.name}</span>
               </Link>

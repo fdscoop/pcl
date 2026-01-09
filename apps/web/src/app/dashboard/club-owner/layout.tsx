@@ -128,7 +128,7 @@ export default function ClubOwnerLayout({
     { name: 'Home', href: '/dashboard/club-owner', icon: Home },
     { name: 'Squad', href: '/dashboard/club-owner/team-management', icon: Users },
     { name: 'Matches', href: '/dashboard/club-owner/matches', icon: Calendar },
-    { name: 'Messages', href: '/dashboard/club-owner/messages', icon: MessageCircle },
+    { name: 'Messages', href: '/dashboard/club-owner/messages', icon: MessageCircle, badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
     { name: 'Contracts', href: '/dashboard/club-owner/contracts', icon: FileText },
   ]
 

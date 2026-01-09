@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "605135281202",
+    "project_id": "pcl-professional-club-league",
+    "storage_bucket": "pcl-professional-club-league.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:605135281202:android:eac97e4ace09317a95702b",
+        "android_client_info": {
+          "package_name": "com.pcl.fdscoop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCR95bDVUC9MTq746hJRYJWyd3889_mXGw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

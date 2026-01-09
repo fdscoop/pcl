@@ -1,4 +1,4 @@
-package com.pcl.app;
+package com.pcl.fdscoop;
 
 import android.os.Bundle;
 import android.webkit.WebView;

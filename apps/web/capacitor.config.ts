@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // Use production URL for the app (loads from web, not static files)
 // This is the recommended approach for Next.js apps with dynamic routes
 const config: CapacitorConfig = {
-  appId: 'com.pcl.app',
+  appId: 'com.pcl.fdscoop',
   appName: 'PCL - Professional Club League',
   webDir: 'public', // Fallback directory (not used when server.url is set)
   server: {

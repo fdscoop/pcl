@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
 
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   
   images: {
     remotePatterns: [
@@ -14,12 +14,12 @@ const nextConfig = {
     // Required for mobile compatibility
     unoptimized: true,
   },
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': require('path').resolve(__dirname, 'src/'),
-    };
-    return config;
+  
+  // Turbopack configuration for Next.js 16+
+  turbopack: {
+    resolveAlias: {
+      '@': path.resolve(__dirname, 'src/'),
+    },
   },
 };
 

@@ -1,42 +1,74 @@
 // Firebase Cloud Messaging Service Worker
 // This file runs in the background to receive push notifications
 
-// Import Firebase scripts
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js')
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js')
+console.log('[firebase-messaging-sw.js] Service worker script loaded')
+
+// Import Firebase scripts with error handling
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js')
+  importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js')
+  console.log('[firebase-messaging-sw.js] Firebase scripts imported successfully')
+} catch (error) {
+  console.error('[firebase-messaging-sw.js] Failed to import Firebase scripts:', error)
+  throw error
+}
 
 // Initialize Firebase in service worker
-// Note: These values will be loaded from environment at build time
-firebase.initializeApp({
-  apiKey: "AIzaSyARrEFN63VRJEJBVtNVEibqziegEQta7gQ",
-  authDomain: "pcl-professional-club-league.firebaseapp.com",
-  projectId: "pcl-professional-club-league",
-  storageBucket: "pcl-professional-club-league.firebasestorage.app",
-  messagingSenderId: "605135281202",
-  appId: "1:605135281202:web:1ba4184f4057b13495702b"
-})
+try {
+  const firebaseConfig = {
+    apiKey: "AIzaSyARrEFN63VRJEJBVtNVEibqziegEQta7gQ",
+    authDomain: "pcl-professional-club-league.firebaseapp.com",
+    projectId: "pcl-professional-club-league",
+    storageBucket: "pcl-professional-club-league.firebasestorage.app",
+    messagingSenderId: "605135281202",
+    appId: "1:605135281202:web:1ba4184f4057b13495702b"
+  }
+  
+  console.log('[firebase-messaging-sw.js] Initializing Firebase with config:', {
+    ...firebaseConfig,
+    apiKey: '***' // Hide API key in logs
+  })
+  
+  firebase.initializeApp(firebaseConfig)
+  console.log('[firebase-messaging-sw.js] Firebase initialized successfully')
+} catch (error) {
+  console.error('[firebase-messaging-sw.js] Failed to initialize Firebase:', error)
+  throw error
+}
 
-const messaging = firebase.messaging()
+// Get messaging instance with error handling
+let messaging
+try {
+  messaging = firebase.messaging()
+  console.log('[firebase-messaging-sw.js] Messaging instance created')
+} catch (error) {
+  console.error('[firebase-messaging-sw.js] Failed to get messaging instance:', error)
+  // Don't throw here, as this will prevent the service worker from installing
+}
 
 // Handle background messages (when app is closed or in background)
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message:', payload)
+if (messaging) {
+  messaging.onBackgroundMessage((payload) => {
+    console.log('[firebase-messaging-sw.js] Received background message:', payload)
 
-  const notificationTitle = payload.notification?.title || 'PCL Notification'
-  const notificationOptions = {
-    body: payload.notification?.body || 'You have a new notification',
-    icon: payload.notification?.icon || '/logo.png',
-    badge: '/badge.png',
-    tag: payload.data?.tag || 'pcl-notification',
-    requireInteraction: false,
-    data: {
-      url: payload.data?.url || payload.notification?.click_action || '/',
-      ...payload.data
+    const notificationTitle = payload.notification?.title || 'PCL Notification'
+    const notificationOptions = {
+      body: payload.notification?.body || 'You have a new notification',
+      icon: payload.notification?.icon || '/logo.png',
+      badge: '/badge.png',
+      tag: payload.data?.tag || 'pcl-notification',
+      requireInteraction: false,
+      data: {
+        url: payload.data?.url || payload.notification?.click_action || '/',
+        ...payload.data
+      }
     }
-  }
 
-  return self.registration.showNotification(notificationTitle, notificationOptions)
-})
+    return self.registration.showNotification(notificationTitle, notificationOptions)
+  })
+} else {
+  console.warn('[firebase-messaging-sw.js] Messaging instance not available, background messages will not work')
+}
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {

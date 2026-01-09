@@ -79,20 +79,42 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 }
 
 /**
- * Unregister old service workers to ensure clean slate
+ * Unregister ALL service workers to ensure clean slate
+ * This helps fix "Registration failed - push service error"
  */
-async function unregisterOldServiceWorkers(): Promise<void> {
+async function unregisterAllServiceWorkers(): Promise<void> {
   try {
     const registrations = await navigator.serviceWorker.getRegistrations()
+    console.log(`Found ${registrations.length} service worker(s) to unregister`)
+    
     for (const registration of registrations) {
-      if (registration.active?.scriptURL.includes('firebase-messaging-sw.js')) {
-        await registration.unregister()
-        console.log('Unregistered old service worker:', registration.active.scriptURL)
-      }
+      const scriptURL = registration.active?.scriptURL || 'unknown'
+      await registration.unregister()
+      console.log('✓ Unregistered service worker:', scriptURL)
     }
+    
+    // Wait a bit for cleanup
+    await new Promise(resolve => setTimeout(resolve, 100))
   } catch (error) {
-    console.warn('Failed to unregister old service workers:', error)
+    console.warn('Failed to unregister service workers:', error)
   }
+}
+
+/**
+ * Wait for service worker to be fully ready
+ */
+async function waitForServiceWorkerReady(registration: ServiceWorkerRegistration, timeout = 10000): Promise<void> {
+  const start = Date.now()
+  
+  while (!registration.active) {
+    if (Date.now() - start > timeout) {
+      throw new Error('Service worker activation timeout')
+    }
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  
+  // Extra wait to ensure service worker is truly ready
+  await new Promise(resolve => setTimeout(resolve, 500))
 }
 
 /**
@@ -129,31 +151,67 @@ export async function subscribeToNotifications(userId: string): Promise<{
       return { success: false, error: 'VAPID key not configured' }
     }
 
-    // Unregister old service workers first
-    await unregisterOldServiceWorkers()
+    // Unregister ALL service workers first for clean slate
+    console.log('🔄 Cleaning up old service workers...')
+    await unregisterAllServiceWorkers()
 
-    // Register service worker
+    // Register service worker with better error handling
     let registration
     try {
-      registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-      await navigator.serviceWorker.ready
-      console.log('Service worker registered successfully')
+      console.log('📝 Registering new service worker...')
+      registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        scope: '/',
+        updateViaCache: 'none' // Prevent caching issues
+      })
+      
+      // Wait for service worker to be truly ready
+      await waitForServiceWorkerReady(registration)
+      console.log('✅ Service worker registered and ready')
     } catch (swError) {
-      console.error('Service worker registration failed:', swError)
-      return { success: false, error: `Service worker registration failed: ${swError}` }
+      console.error('❌ Service worker registration failed:', swError)
+      return { 
+        success: false, 
+        error: `Service worker registration failed: ${swError instanceof Error ? swError.message : String(swError)}` 
+      }
     }
 
-    // Get FCM token
+    // Get FCM token with retry logic
     let token
     try {
+      console.log('🔑 Requesting FCM token...')
+      
+      // Try to get token
       token = await getToken(messaging, {
         vapidKey: VAPID_KEY,
         serviceWorkerRegistration: registration
       })
-      console.log('FCM token obtained:', token ? 'success' : 'failed')
+      
+      if (token) {
+        console.log('✅ FCM token obtained successfully')
+      } else {
+        console.warn('⚠️ FCM token is empty')
+      }
     } catch (tokenError) {
-      console.error('Failed to get FCM token:', tokenError)
-      return { success: false, error: `Failed to get FCM token: ${tokenError}` }
+      const error = tokenError as Error
+      console.error('❌ Failed to get FCM token:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to get FCM token'
+      if (error.name === 'AbortError') {
+        errorMessage = 'Push service registration failed. Please check your internet connection and try again.'
+      } else if (error.message.includes('messaging/permission-blocked')) {
+        errorMessage = 'Notification permission is blocked. Please enable notifications in your browser settings.'
+      } else if (error.message.includes('messaging/unsupported-browser')) {
+        errorMessage = 'Push notifications are not supported in this browser.'
+      } else {
+        errorMessage = `${error.name}: ${error.message}`
+      }
+      
+      return { success: false, error: errorMessage }
     }
 
     if (!token) {

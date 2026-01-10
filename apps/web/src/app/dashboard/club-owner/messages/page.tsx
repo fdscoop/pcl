@@ -500,11 +500,11 @@ export default function ClubOwnerMessagesPage() {
  ))}
  </div>
 
- {/* Reply Input - Compact on mobile */}
- <div className="shrink-0 pt-2 sm:pt-3 border-t border-slate-100 mt-2">
+ {/* Reply Input - Fixed at bottom on mobile with proper z-index */}
+ <div className="shrink-0 pt-2 sm:pt-3 border-t border-slate-100 mt-2 sticky bottom-0 lg:static bg-white z-[60] -mx-2 sm:mx-0 px-2 sm:px-0 pb-2 sm:pb-0">
  <div className="flex gap-2 items-end">
  <textarea
- className="flex-1 min-h-[40px] max-h-[100px] rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all resize-none"
+ className="flex-1 min-h-[40px] max-h-[100px] rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all resize-none bg-white"
  placeholder="Type a message..."
  value={replyContent}
  onChange={(event) => setReplyContent(event.target.value)}

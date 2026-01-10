@@ -443,8 +443,10 @@ export default function ContractViewerPage() {
  </Button>
  <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
  <div className="flex items-center gap-2 sm:gap-3">
- <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30 text-lg sm:text-xl">
- 📋
+ <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+ </svg>
  </div>
  <div>
  <h1 className="text-sm sm:text-lg font-bold text-slate-900">
@@ -463,37 +465,24 @@ export default function ContractViewerPage() {
  size="sm"
  className="group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl hover:bg-slate-50 transition-all duration-200 font-semibold text-slate-700 hover:text-slate-900"
  >
- 🖨️ <span className="hidden sm:inline">Print</span>
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+ </svg>
+ <span className="hidden sm:inline">Print</span>
  </Button>
  <Button
  onClick={() => router.push('/dashboard/player/contracts')}
  className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-200"
  >
- 📋 <span className="hidden sm:inline">All Contracts</span>
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+ </svg>
+ <span className="hidden sm:inline">All Contracts</span>
  </Button>
  </div>
  </div>
  </div>
  </nav>
-
- {/* Main Content */}
- <div className="p-3 sm:p-6 lg:p-8">
- {/* Contract Header Card - Enhanced */}
- <div className="max-w-4xl mx-auto mb-4 sm:mb-6">
- <Card className="p-4 sm:p-6 bg-white shadow-lg border-2 border-orange-200 rounded-xl sm:rounded-2xl hover:shadow-xl transition-shadow">
- <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
- <div className="flex items-center gap-3 sm:gap-4">
- <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-2xl sm:text-3xl shadow-lg">
- 🏟️
- </div>
- <div>
- <h2 className="text-base sm:text-xl font-extrabold text-slate-900 break-words">{contract.clubs.club_name}</h2>
- <p className="text-xs sm:text-sm text-slate-600 font-medium">Professional Player Contract</p>
- </div>
- </div>
- </div>
- </Card>
- </div>
 
  {/* Main Content */}
  <div className="p-3 sm:p-6 lg:p-8">
@@ -507,78 +496,129 @@ export default function ContractViewerPage() {
  </div>
  )}
 
- {/* Contract Overview - Enhanced Design */}
+ {/* Contract Overview - Modern Mobile-Optimized Design */}
  <div className="w-full max-w-4xl mx-auto mb-6 sm:mb-8">
- <Card className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 border-2 border-orange-300 shadow-2xl shadow-orange-500/40 p-5 sm:p-8 md:p-10 relative overflow-hidden">
- {/* Decorative elements */}
- <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
- <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"></div>
- 
- <div className="relative z-10">
- <div className="text-center mb-5 sm:mb-6">
- <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight drop-shadow-md">Contract Overview</h2>
+ <Card className="rounded-2xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 border-0 shadow-xl overflow-hidden">
+ {/* Decorative background patterns */}
+ <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 bg-white/10 rounded-full -mr-16 sm:-mr-24 -mt-16 sm:-mt-24"></div>
+ <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-36 sm:h-36 bg-white/10 rounded-full -ml-12 sm:-ml-18 -mb-12 sm:-mb-18"></div>
+
+ <div className="relative z-10 p-4 sm:p-6 md:p-8">
+ {/* Header Section */}
+ <div className="text-center mb-5 sm:mb-7">
+ <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-3 sm:mb-4 tracking-tight drop-shadow-lg">
+ Contract Overview
+ </h2>
  {contract.status === 'pending' && (
- <span className="inline-flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-amber-100 text-amber-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-amber-200">
- ⚠️ <span className="hidden sm:inline">Action Required - Review & Sign</span><span className="sm:hidden">Review & Sign</span>
+ <span className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-amber-100 text-amber-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-amber-200">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+ <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+ </svg>
+ <span className="hidden sm:inline">Action Required - Review & Sign</span>
+ <span className="sm:hidden">Review & Sign</span>
  </span>
  )}
  {contract.status === 'active' && (
- <span className="inline-flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-emerald-200">
- ✅ <span className="hidden sm:inline">Contract Active & Signed</span><span className="sm:hidden">Active</span>
+ <span className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-emerald-200">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+ <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+ </svg>
+ <span className="hidden sm:inline">Contract Active & Signed</span>
+ <span className="sm:hidden">Active</span>
  </span>
  )}
  </div>
- 
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 w-full">
- <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
- <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
- 🏟️ <span>Club</span>
+
+ {/* Info Cards Grid */}
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+ {/* Club Info */}
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-orange-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+ </svg>
+ <span>Club</span>
  </div>
- <div className="text-lg sm:text-xl font-bold text-slate-900 break-words mb-1">{contract.clubs.club_name}</div>
+ <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 break-words leading-tight mb-1">
+ {contract.clubs.club_name}
+ </div>
  {contract.clubs.city && contract.clubs.state && (
- <div className="text-xs sm:text-sm text-slate-600 mt-1 flex items-center gap-1">
- 📍 <span className="truncate">{contract.clubs.city}, {contract.clubs.state}</span>
+ <div className="text-xs sm:text-sm text-slate-600 mt-2 flex items-center gap-1.5">
+ <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+ <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+ </svg>
+ <span className="truncate">{contract.clubs.city}, {contract.clubs.state}</span>
  </div>
  )}
  </Card>
- 
- <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
- <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
- 📅 <span>Contract Period</span>
+
+ {/* Contract Period */}
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-orange-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+ </svg>
+ <span>Contract Period</span>
  </div>
- <div className="text-lg sm:text-xl font-bold text-slate-900">
+ <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 leading-tight">
  {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
  </div>
- <div className="text-xs sm:text-sm text-slate-600 mt-1">
+ <div className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium">
  to {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
  </div>
  </Card>
- 
- <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
- <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
- ⚽ <span>Position</span>
+
+ {/* Position */}
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-orange-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+ </svg>
+ <span>Position</span>
  </div>
- <div className="text-lg sm:text-xl font-bold text-slate-900 capitalize truncate">{contract.position_assigned || 'Not Assigned'}</div>
+ <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 capitalize leading-tight">
+ {contract.position_assigned || 'Not Assigned'}
+ </div>
  {contract.jersey_number && (
- <div className="text-xs sm:text-sm text-slate-600 mt-1">Jersey #{contract.jersey_number}</div>
+ <div className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium">
+ Jersey #{contract.jersey_number}
+ </div>
  )}
  </Card>
- 
+
+ {/* Contact Info */}
  {(contract.clubs.email || contract.clubs.phone) && (
- <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
- <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
- 📞 <span>Contact Club</span>
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-orange-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+ </svg>
+ <span>Contact Club</span>
  </div>
+ <div className="space-y-2">
  {contract.clubs.email && (
- <a href={`mailto:${contract.clubs.email}`} className="block text-slate-900 hover:text-orange-600 text-sm sm:text-base mb-1 transition-colors truncate font-semibold">
- 📧 {contract.clubs.email}
+ <a
+ href={`mailto:${contract.clubs.email}`}
+ className="flex items-center gap-2 text-slate-900 hover:text-orange-600 text-xs sm:text-sm transition-colors truncate font-semibold group"
+ >
+ <svg className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+ </svg>
+ <span className="truncate">{contract.clubs.email}</span>
  </a>
  )}
  {contract.clubs.phone && (
- <a href={`tel:${contract.clubs.phone}`} className="block text-slate-900 hover:text-orange-600 text-sm sm:text-base transition-colors font-semibold">
- 📱 {contract.clubs.phone}
+ <a
+ href={`tel:${contract.clubs.phone}`}
+ className="flex items-center gap-2 text-slate-900 hover:text-orange-600 text-xs sm:text-sm transition-colors font-semibold group"
+ >
+ <svg className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+ </svg>
+ <span>{contract.clubs.phone}</span>
  </a>
  )}
+ </div>
  </Card>
  )}
  </div>
@@ -589,14 +629,27 @@ export default function ContractViewerPage() {
  {/* Contract Viewer */}
  {contractHtml ? (
  <div className="w-full max-w-4xl mx-auto">
- {/* Display stored HTML contract */}
- <Card className="bg-white rounded-xl sm:rounded-2xl shadow-2xl shadow-orange-500/10 overflow-hidden border-2 border-slate-200 hover:shadow-3xl transition-shadow p-6 sm:p-8 md:p-10 mb-6 sm:mb-8">
+ {/* Display stored HTML contract - Mobile Optimized */}
+ <Card className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden mb-6 sm:mb-8">
+ <div className="p-4 sm:p-6 md:p-8 lg:p-10">
  <div
- className="contract-content prose prose-sm sm:prose-base max-w-none"
+ className="contract-content prose prose-sm sm:prose-base lg:prose-lg max-w-none
+ [&>h1]:text-lg [&>h1]:sm:text-xl [&>h1]:md:text-2xl [&>h1]:lg:text-3xl [&>h1]:mb-3 [&>h1]:sm:mb-4 [&>h1]:leading-tight
+ [&>h2]:text-base [&>h2]:sm:text-lg [&>h2]:md:text-xl [&>h2]:lg:text-2xl [&>h2]:mb-2 [&>h2]:sm:mb-3 [&>h2]:leading-snug [&>h2]:mt-4 [&>h2]:sm:mt-6
+ [&>h3]:text-sm [&>h3]:sm:text-base [&>h3]:md:text-lg [&>h3]:mb-2 [&>h3]:leading-snug [&>h3]:mt-3 [&>h3]:sm:mt-4
+ [&>p]:text-xs [&>p]:sm:text-sm [&>p]:md:text-base [&>p]:leading-relaxed [&>p]:mb-2 [&>p]:sm:mb-3 [&>p]:break-words
+ [&>ul]:text-xs [&>ul]:sm:text-sm [&>ul]:md:text-base [&>ul]:space-y-1 [&>ul]:sm:space-y-1.5 [&>ul]:mb-3 [&>ul]:sm:mb-4
+ [&>ol]:text-xs [&>ol]:sm:text-sm [&>ol]:md:text-base [&>ol]:space-y-1 [&>ol]:sm:space-y-1.5 [&>ol]:mb-3 [&>ol]:sm:mb-4
+ [&>li]:leading-relaxed [&>li]:break-words
+ [&_table]:text-xs [&_table]:sm:text-sm [&_table]:md:text-base [&_table]:overflow-x-auto [&_table]:block [&_table]:sm:table
+ [&_td]:px-2 [&_td]:sm:px-3 [&_td]:py-1.5 [&_td]:sm:py-2 [&_td]:break-words
+ [&_th]:px-2 [&_th]:sm:px-3 [&_th]:py-1.5 [&_th]:sm:py-2 [&_th]:text-xs [&_th]:sm:text-sm
+ [&>*]:overflow-wrap-anywhere"
  dangerouslySetInnerHTML={{ __html: contractHtml }}
  />
+ </div>
  </Card>
- 
+
  {/* Signing Panel - PROMINENT AND ATTENTION-GRABBING */}
  {contract.signing_status === 'unsigned' && (
  <div className="w-full max-w-4xl mx-auto mt-6 sm:mt-8 mb-6 sm:mb-8">
@@ -856,7 +909,6 @@ export default function ContractViewerPage() {
  isFullPage={true}
  />
  )}
- </div>
  </div>
  </div>
  )

@@ -343,15 +343,137 @@ export default function ClubOwnerContractViewPage() {
 
  {/* Main Content */}
  <div className="py-5 sm:py-8 px-4 sm:px-6">
+ {/* Contract Overview - Modern Mobile-Optimized Design */}
+ <div className="w-full max-w-4xl mx-auto mb-6 sm:mb-8">
+ <Card className="rounded-2xl bg-gradient-to-br from-teal-500 via-teal-400 to-cyan-500 border-0 shadow-xl overflow-hidden">
+ {/* Decorative background patterns */}
+ <div className="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 bg-white/10 rounded-full -mr-16 sm:-mr-24 -mt-16 sm:-mt-24"></div>
+ <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-36 sm:h-36 bg-white/10 rounded-full -ml-12 sm:-ml-18 -mb-12 sm:-mb-18"></div>
+
+ <div className="relative z-10 p-4 sm:p-6 md:p-8">
+ {/* Header Section */}
+ <div className="text-center mb-5 sm:mb-7">
+ <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white mb-3 sm:mb-4 tracking-tight drop-shadow-lg">
+ Contract Overview
+ </h2>
+ {contract.status === 'pending' && (
+ <span className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-amber-100 text-amber-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-amber-200">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+ <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+ </svg>
+ <span className="hidden sm:inline">Awaiting Player Signature</span>
+ <span className="sm:hidden">Pending</span>
+ </span>
+ )}
+ {contract.status === 'active' && (
+ <span className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-emerald-200">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
+ <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+ </svg>
+ <span className="hidden sm:inline">Contract Active & Signed</span>
+ <span className="sm:hidden">Active</span>
+ </span>
+ )}
+ </div>
+
+ {/* Info Cards Grid */}
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+ {/* Player Info */}
+ {player && player.users && (
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-teal-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+ </svg>
+ <span>Player</span>
+ </div>
+ <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 break-words leading-tight mb-1">
+ {player.users.first_name} {player.users.last_name}
+ </div>
+ </Card>
+ )}
+
+ {/* Contract Period */}
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-teal-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+ </svg>
+ <span>Contract Period</span>
+ </div>
+ <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 leading-tight">
+ {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+ </div>
+ <div className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium">
+ to {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+ </div>
+ </Card>
+
+ {/* Position */}
+ {contract.position_assigned && (
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-teal-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+ </svg>
+ <span>Position</span>
+ </div>
+ <div className="text-base sm:text-lg md:text-xl font-bold text-slate-900 capitalize leading-tight">
+ {contract.position_assigned}
+ </div>
+ {contract.jersey_number && (
+ <div className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium">
+ Jersey #{contract.jersey_number}
+ </div>
+ )}
+ </Card>
+ )}
+
+ {/* Status */}
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 border-0 shadow-md hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+ <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-teal-600 uppercase mb-2 sm:mb-3">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+ </svg>
+ <span>Contract Status</span>
+ </div>
+ <div className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm shadow-md ${
+ contract.status === 'active'
+ ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300'
+ : contract.status === 'pending'
+ ? 'bg-amber-100 text-amber-800 border-2 border-amber-300'
+ : 'bg-slate-100 text-slate-800 border-2 border-slate-300'
+ }`}>
+ {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
+ </div>
+ </Card>
+ </div>
+ </div>
+ </Card>
+ </div>
+
  {/* Contract Viewer */}
  {contractHtml ? (
  <div className="max-w-4xl mx-auto">
- {/* Display stored HTML contract */}
- <Card className="bg-white rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden border-2 border-slate-200 hover:shadow-3xl transition-shadow p-6 sm:p-8 md:p-10 mb-6 sm:mb-8">
+ {/* Display stored HTML contract - Mobile Optimized */}
+ <Card className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden mb-6 sm:mb-8">
+ <div className="p-4 sm:p-6 md:p-8 lg:p-10">
  <div
- className="contract-content prose prose-sm sm:prose-base max-w-none"
+ className="contract-content prose prose-sm sm:prose-base lg:prose-lg max-w-none
+ [&>h1]:text-lg [&>h1]:sm:text-xl [&>h1]:md:text-2xl [&>h1]:lg:text-3xl [&>h1]:mb-3 [&>h1]:sm:mb-4 [&>h1]:leading-tight
+ [&>h2]:text-base [&>h2]:sm:text-lg [&>h2]:md:text-xl [&>h2]:lg:text-2xl [&>h2]:mb-2 [&>h2]:sm:mb-3 [&>h2]:leading-snug [&>h2]:mt-4 [&>h2]:sm:mt-6
+ [&>h3]:text-sm [&>h3]:sm:text-base [&>h3]:md:text-lg [&>h3]:mb-2 [&>h3]:leading-snug [&>h3]:mt-3 [&>h3]:sm:mt-4
+ [&>p]:text-xs [&>p]:sm:text-sm [&>p]:md:text-base [&>p]:leading-relaxed [&>p]:mb-2 [&>p]:sm:mb-3 [&>p]:break-words
+ [&>ul]:text-xs [&>ul]:sm:text-sm [&>ul]:md:text-base [&>ul]:space-y-1 [&>ul]:sm:space-y-1.5 [&>ul]:mb-3 [&>ul]:sm:mb-4
+ [&>ol]:text-xs [&>ol]:sm:text-sm [&>ol]:md:text-base [&>ol]:space-y-1 [&>ol]:sm:space-y-1.5 [&>ol]:mb-3 [&>ol]:sm:mb-4
+ [&>li]:leading-relaxed [&>li]:break-words
+ [&_table]:text-xs [&_table]:sm:text-sm [&_table]:md:text-base [&_table]:overflow-x-auto [&_table]:block [&_table]:sm:table
+ [&_td]:px-2 [&_td]:sm:px-3 [&_td]:py-1.5 [&_td]:sm:py-2 [&_td]:break-words
+ [&_th]:px-2 [&_th]:sm:px-3 [&_th]:py-1.5 [&_th]:sm:py-2 [&_th]:text-xs [&_th]:sm:text-sm
+ [&>*]:overflow-wrap-anywhere"
  dangerouslySetInnerHTML={{ __html: contractHtml }}
  />
+ </div>
  </Card>
 
  {/* Contract Status Info */}

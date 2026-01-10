@@ -177,12 +177,12 @@ export default function RefereeLayout({
  {mobileMenuOpen && (
  <>
  <div 
- className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70]"
+ className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110]"
  onClick={() => setMobileMenuOpen(false)}
  style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
  />
  <div 
- className="fixed left-0 right-0 bottom-0 bg-white z-[80] overflow-y-auto animate-in slide-in-from-top-2 duration-200"
+ className="fixed left-0 right-0 bottom-0 bg-white z-[120] overflow-y-auto animate-in slide-in-from-top-2 duration-200"
  style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
  >
  {/* User Info */}

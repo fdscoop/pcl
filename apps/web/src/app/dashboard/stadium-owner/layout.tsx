@@ -193,7 +193,7 @@ export default function StadiumOwnerLayout({
  {/* Mobile Sidebar Overlay */}
  {sidebarOpen && (
  <div 
- className="lg:hidden fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm"
+ className="lg:hidden fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm"
  onClick={() => setSidebarOpen(false)}
  style={{ top: 'max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px))' }}
  />
@@ -202,7 +202,7 @@ export default function StadiumOwnerLayout({
  {/* Sidebar */}
  <aside 
  className={`
- fixed top-0 left-0 z-[80] h-full w-[280px] 
+ fixed top-0 left-0 z-[120] h-full w-[280px] 
  bg-white/95 backdrop-blur-xl 
  border-r border-orange-100 
  transform transition-transform duration-300 ease-out

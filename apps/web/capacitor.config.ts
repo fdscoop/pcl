@@ -41,8 +41,7 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: false, // Set to true for debugging
-    // Enable safe area support for status bar and navigation bar
+    webContentsDebuggingEnabled: true, // Enable debugging to see errors
     appendUserAgent: 'PCL-Mobile-App',
   },
 };

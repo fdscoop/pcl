@@ -121,7 +121,7 @@ export function NotificationCenter({
 
  {/* Notification Dropdown */}
  {isOpen && (
- <div className={`absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-md ${theme === 'light' ? 'bg-white' : 'bg-slate-900'} rounded-xl shadow-2xl border-2 ${currentColors.border} z-[100] max-h-[70vh] sm:max-h-96 overflow-hidden flex flex-col`}>
+ <div className={`fixed sm:absolute left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 sm:right-0 top-[60px] sm:top-auto mt-0 sm:mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-md ${theme === 'light' ? 'bg-white' : 'bg-slate-900'} rounded-xl shadow-2xl border-2 ${currentColors.border} z-[100] max-h-[70vh] sm:max-h-96 overflow-hidden flex flex-col`}>
  {/* Header */}
  <div className={`sticky top-0 ${currentColors.headerBg} p-3 sm:p-4 flex items-center justify-between border-b-2 ${currentColors.border}`}>
  <h3 className="font-bold text-white flex items-center gap-2">

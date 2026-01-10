@@ -281,8 +281,8 @@ export default function ClubOwnerContractViewPage() {
 
  return (
  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
- {/* Top Navigation */}
- <nav className="sticky-nav-mobile-safe bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+ {/* Top Navigation - Sticky with Status Bar Fix */}
+ <nav className="sticky-nav-mobile-safe bg-white border-b border-slate-200 shadow-md sticky top-0 z-50">
  <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
  <div className="flex justify-between items-center h-14 sm:h-16">
  <div className="flex items-center gap-2 sm:gap-3">
@@ -290,32 +290,34 @@ export default function ClubOwnerContractViewPage() {
  onClick={() => router.push('/dashboard/club-owner/contracts')}
  variant="outline"
  size="sm"
- className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+ className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 border-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
  >
- ← Back
+ ← <span className="hidden sm:inline ml-1">Back</span>
  </Button>
  <span className="text-slate-400 hidden sm:inline">|</span>
- <h1 className="text-sm sm:text-lg font-semibold text-slate-900 truncate">
- {club?.club_name} - Contract Details
+ <div className="flex items-center gap-2">
+ <span className="text-lg sm:text-xl">📋</span>
+ <h1 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
+ {club?.club_name ? `${club.club_name} - Contract` : 'Contract Preview'}
  </h1>
  </div>
- <div className="flex items-center gap-2 sm:gap-4">
+ </div>
+ <div className="flex items-center gap-2 sm:gap-3">
  <Button
  onClick={() => window.print()}
  variant="outline"
  size="sm"
- className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+ className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 border-2 hover:bg-slate-50 transition-all"
  >
- 🖨️ <span className="hidden sm:inline">Print</span>
+ 🖨️ <span className="hidden sm:inline ml-1">Print</span>
  </Button>
  <Button
  onClick={() => router.push('/dashboard/club-owner/contracts')}
  variant="outline"
  size="sm"
- className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
+ className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 border-2 bg-blue-500 text-white hover:bg-blue-600 transition-all"
  >
- <span className="hidden sm:inline">All Contracts</span>
- <span className="sm:hidden">📋</span>
+ 📋 <span className="hidden sm:inline ml-1">All Contracts</span>
  </Button>
  </div>
  </div>
@@ -323,37 +325,39 @@ export default function ClubOwnerContractViewPage() {
  </nav>
 
  {/* Main Content */}
- <div className="py-4 sm:py-8">
+ <div className="py-5 sm:py-8 px-3 sm:px-6">
  {/* Contract Viewer */}
  {contractHtml ? (
- <div className="max-w-4xl mx-auto px-2 sm:px-4">
+ <div className="max-w-4xl mx-auto">
  {/* Display stored HTML contract */}
+ <Card className="bg-white rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden border-2 border-slate-200 hover:shadow-3xl transition-shadow p-6 sm:p-8 md:p-10 mb-6 sm:mb-8">
  <div
- className="bg-white rounded-xl sm:rounded-lg shadow-lg overflow-hidden"
+ className="contract-content prose prose-sm sm:prose-base max-w-none"
  dangerouslySetInnerHTML={{ __html: contractHtml }}
  />
+ </Card>
 
  {/* Contract Status Info */}
- <div className="max-w-4xl mx-auto px-2 sm:px-4 mt-4 sm:mt-8">
- <Card className={`p-3 sm:p-6 border-2 ${
+ <div className="max-w-4xl mx-auto">
+ <Card className={`p-4 sm:p-6 md:p-8 border-3 shadow-lg rounded-xl sm:rounded-2xl ${
  contract.signing_status === 'fully_signed'
- ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+ ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300'
  : contract.signing_status === 'unsigned'
- ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200'
- : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+ ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
+ : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300'
  }`}>
- <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
  {/* Contract Status */}
  <div>
- <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-1 sm:mb-2">Contract Status</h3>
- <div className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-full font-medium text-xs sm:text-sm ${
+ <h3 className="text-xs sm:text-sm font-bold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">Contract Status</h3>
+ <div className={`inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm shadow-md ${
  contract.status === 'active'
- ? 'bg-green-100 text-green-800'
+ ? 'bg-green-100 text-green-800 border-2 border-green-300'
  : contract.status === 'pending'
- ? 'bg-yellow-100 text-yellow-800'
+ ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
  : contract.status === 'rejected'
- ? 'bg-red-100 text-red-800'
- : 'bg-gray-100 text-gray-800'
+ ? 'bg-red-100 text-red-800 border-2 border-red-300'
+ : 'bg-gray-100 text-gray-800 border-2 border-gray-300'
  }`}>
  {contract.status === 'active' && '✓'}
  {contract.status === 'pending' && '⏳'}
@@ -365,11 +369,11 @@ export default function ClubOwnerContractViewPage() {
 
  {/* Signing Status */}
  <div>
- <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-1 sm:mb-2">Signing Status</h3>
- <div className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-full font-medium text-xs sm:text-sm ${
+ <h3 className="text-xs sm:text-sm font-bold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">Signing Status</h3>
+ <div className={`inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm shadow-md ${
  contract.signing_status === 'fully_signed'
- ? 'bg-green-100 text-green-800'
- : 'bg-yellow-100 text-yellow-800'
+ ? 'bg-green-100 text-green-800 border-2 border-green-300'
+ : 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
  }`}>
  {contract.signing_status === 'fully_signed' ? '✓' : '⏳'}
  {' '}{contract.signing_status?.toUpperCase() || 'UNSIGNED'}
@@ -379,8 +383,8 @@ export default function ClubOwnerContractViewPage() {
  {/* Signed Date */}
  {contract.player_signature_timestamp && (
  <div>
- <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-1 sm:mb-2">Signed On</h3>
- <p className="text-slate-900 font-medium text-xs sm:text-base break-words">
+ <h3 className="text-xs sm:text-sm font-bold text-slate-700 mb-2 sm:mb-3 uppercase tracking-wide">Signed On</h3>
+ <p className="text-slate-900 font-semibold text-xs sm:text-sm md:text-base break-words">
  {new Date(contract.player_signature_timestamp).toLocaleString('en-IN')}
  </p>
  </div>
@@ -389,22 +393,22 @@ export default function ClubOwnerContractViewPage() {
 
  {/* Player Signature Info */}
  {contract.player_signature_data && (
- <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-slate-200">
- <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3">Player Signature Information</h3>
- <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
- <div>
- <span className="text-xs sm:text-sm text-slate-600">Signed By:</span>
- <p className="font-medium text-slate-900 text-sm sm:text-base break-words">{contract.player_signature_data.name}</p>
- </div>
- <div>
- <span className="text-xs sm:text-sm text-slate-600">Method:</span>
- <p className="font-medium text-slate-900 capitalize text-sm sm:text-base">{contract.player_signature_data.method}</p>
- </div>
+ <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t-2 border-slate-200">
+ <h3 className="text-sm sm:text-base font-bold text-slate-700 mb-3 sm:mb-4 uppercase tracking-wide">Player Signature Information</h3>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+ <Card className="p-3 sm:p-4 bg-slate-50 border-2 border-slate-200 rounded-lg shadow-sm">
+ <span className="text-xs sm:text-sm text-slate-600 font-semibold block mb-1">Signed By:</span>
+ <p className="font-bold text-slate-900 text-sm sm:text-base break-words">{contract.player_signature_data.name}</p>
+ </Card>
+ <Card className="p-3 sm:p-4 bg-slate-50 border-2 border-slate-200 rounded-lg shadow-sm">
+ <span className="text-xs sm:text-sm text-slate-600 font-semibold block mb-1">Method:</span>
+ <p className="font-bold text-slate-900 capitalize text-sm sm:text-base">{contract.player_signature_data.method}</p>
+ </Card>
  {contract.player_signature_data.signedAt && (
- <div>
- <span className="text-xs sm:text-sm text-slate-600">Date:</span>
- <p className="font-medium text-slate-900 text-sm sm:text-base">{contract.player_signature_data.signedAt}</p>
- </div>
+ <Card className="p-3 sm:p-4 bg-slate-50 border-2 border-slate-200 rounded-lg shadow-sm md:col-span-2">
+ <span className="text-xs sm:text-sm text-slate-600 font-semibold block mb-1">Date:</span>
+ <p className="font-bold text-slate-900 text-sm sm:text-base">{contract.player_signature_data.signedAt}</p>
+ </Card>
  )}
  </div>
  </div>
@@ -413,9 +417,9 @@ export default function ClubOwnerContractViewPage() {
  </div>
  </div>
  ) : (
- <div className="max-w-4xl mx-auto px-2 sm:px-4">
- <Card className="p-4 sm:p-8 text-center border-yellow-200 bg-yellow-50">
- <p className="text-yellow-800 text-sm sm:text-base">
+ <div className="max-w-4xl mx-auto">
+ <Card className="p-6 sm:p-8 text-center border-2 border-yellow-300 bg-yellow-50 rounded-xl shadow-lg">
+ <p className="text-yellow-800 text-sm sm:text-base font-medium">
  <strong>Note:</strong> Contract HTML is not available for this contract.
  </p>
  </Card>

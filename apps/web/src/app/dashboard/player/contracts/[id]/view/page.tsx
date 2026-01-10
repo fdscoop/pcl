@@ -426,141 +426,193 @@ export default function ContractViewerPage() {
  const playerName = `${player.first_name} ${player.last_name}`
 
  return (
- <div className="p-2 sm:p-4 lg:p-8">
- {/* Contract Header */}
- <div className="max-w-4xl mx-auto mb-4 sm:mb-6">
- <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
- <div className="flex items-center gap-3 sm:gap-4">
- <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg sm:shadow-xl shadow-orange-500/30">
- 📋
- </div>
- <div>
- <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 break-words">{contract.clubs.club_name}</h1>
- <p className="text-xs sm:text-base text-slate-600">Contract Details & Signing</p>
+ <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+ {/* Top Navigation - Sticky with Status Bar Fix */}
+ <nav className="sticky-nav-mobile-safe bg-white border-b border-slate-200 shadow-md sticky top-0 z-50">
+ <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+ <div className="flex justify-between items-center h-14 sm:h-16">
+ <div className="flex items-center gap-2 sm:gap-3">
+ <Button
+ onClick={() => router.push('/dashboard/player/contracts')}
+ variant="outline"
+ size="sm"
+ className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 border-2 hover:bg-orange-50 hover:border-orange-300 transition-all"
+ >
+ ← <span className="hidden sm:inline ml-1">Back</span>
+ </Button>
+ <span className="text-slate-400 hidden sm:inline">|</span>
+ <div className="flex items-center gap-2">
+ <span className="text-lg sm:text-xl">📋</span>
+ <h1 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
+ Contract Preview
+ </h1>
  </div>
  </div>
  <div className="flex items-center gap-2 sm:gap-3">
  <Button
  onClick={() => window.print()}
  variant="outline"
- className="border-2 border-slate-200 font-bold rounded-lg sm:rounded-xl hover:bg-slate-50 text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
+ size="sm"
+ className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 border-2 hover:bg-slate-50 transition-all"
  >
- 🖨️ <span className="hidden sm:inline">Print</span>
+ 🖨️ <span className="hidden sm:inline ml-1">Print</span>
  </Button>
  <Button
  onClick={() => router.push('/dashboard/player/contracts')}
- className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg rounded-lg sm:rounded-xl text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
+ className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 transition-all"
  >
- 📋 <span className="hidden sm:inline">All Contracts</span>
+ 📋 <span className="hidden sm:inline ml-1">All Contracts</span>
  </Button>
  </div>
  </div>
  </div>
+ </nav>
 
  {/* Main Content */}
- <div className="pb-4 sm:pb-8 flex flex-col items-center">
+ <div className="p-3 sm:p-6 lg:p-8">
+ {/* Contract Header Card - Enhanced */}
+ <div className="max-w-4xl mx-auto mb-4 sm:mb-6">
+ <Card className="p-4 sm:p-6 bg-white shadow-lg border-2 border-orange-200 rounded-xl sm:rounded-2xl hover:shadow-xl transition-shadow">
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+ <div className="flex items-center gap-3 sm:gap-4">
+ <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-2xl sm:text-3xl shadow-lg">
+ 🏟️
+ </div>
+ <div>
+ <h2 className="text-base sm:text-xl font-extrabold text-slate-900 break-words">{contract.clubs.club_name}</h2>
+ <p className="text-xs sm:text-sm text-slate-600 font-medium">Professional Player Contract</p>
+ </div>
+ </div>
+ </div>
+ </Card>
+ </div>
+
+ {/* Main Content */}
+ <div className="p-3 sm:p-6 lg:p-8">
  {error && !loading && (
- <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 mb-4 sm:mb-6">
- <Card className="p-3 sm:p-4 border-red-200 bg-red-50 rounded-lg sm:rounded-xl">
- <p className="text-red-800 text-sm sm:text-base">
+ <div className="w-full max-w-4xl mx-auto mb-4 sm:mb-6">
+ <Card className="p-4 sm:p-5 border-2 border-red-300 bg-red-50 rounded-xl shadow-lg">
+ <p className="text-red-800 text-sm sm:text-base font-medium">
  <strong>Error:</strong> {error}
  </p>
  </Card>
  </div>
  )}
 
- {/* Contract Overview - Modern Optimized */}
- <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 mt-0 mb-6 sm:mb-10">
- <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 border border-orange-400 shadow-xl sm:shadow-2xl shadow-orange-500/30 p-4 sm:p-8 md:p-10 flex flex-col items-center text-center relative overflow-hidden">
- <div className="absolute inset-0 opacity-10 bg-grid-pattern"></div>
- <div className="relative z-10 w-full">
- <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 tracking-tight">Contract Overview</h2>
+ {/* Contract Overview - Enhanced Design */}
+ <div className="w-full max-w-4xl mx-auto mb-6 sm:mb-8">
+ <Card className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 via-orange-400 to-amber-500 border-2 border-orange-300 shadow-2xl shadow-orange-500/40 p-5 sm:p-8 md:p-10 relative overflow-hidden">
+ {/* Decorative elements */}
+ <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
+ <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"></div>
+ 
+ <div className="relative z-10">
+ <div className="text-center mb-5 sm:mb-6">
+ <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight drop-shadow-md">Contract Overview</h2>
  {contract.status === 'pending' && (
- <span className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2 mb-3 sm:mb-5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs sm:text-base shadow-md sm:shadow-lg">
+ <span className="inline-flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-amber-100 text-amber-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-amber-200">
  ⚠️ <span className="hidden sm:inline">Action Required - Review & Sign</span><span className="sm:hidden">Review & Sign</span>
  </span>
  )}
  {contract.status === 'active' && (
- <span className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2 mb-3 sm:mb-5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs sm:text-base shadow-md sm:shadow-lg">
+ <span className="inline-flex items-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs sm:text-sm shadow-lg border-2 border-emerald-200">
  ✅ <span className="hidden sm:inline">Contract Active & Signed</span><span className="sm:hidden">Active</span>
  </span>
  )}
- <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 w-full mt-3 sm:mt-4">
- <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">🏟️ Club</div>
- <div className="text-base sm:text-xl font-bold text-white break-words">{contract.clubs.club_name}</div>
- {contract.clubs.city && contract.clubs.state && (
- <div className="text-xs sm:text-sm text-white/80 mt-1 truncate">📍 {contract.clubs.city}, {contract.clubs.state}</div>
- )}
  </div>
- <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">📅 Contract Period</div>
- <div className="text-base sm:text-xl font-bold text-white">
+ 
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 w-full">
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
+ <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
+ 🏟️ <span>Club</span>
+ </div>
+ <div className="text-lg sm:text-xl font-bold text-slate-900 break-words mb-1">{contract.clubs.club_name}</div>
+ {contract.clubs.city && contract.clubs.state && (
+ <div className="text-xs sm:text-sm text-slate-600 mt-1 flex items-center gap-1">
+ 📍 <span className="truncate">{contract.clubs.city}, {contract.clubs.state}</span>
+ </div>
+ )}
+ </Card>
+ 
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
+ <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
+ 📅 <span>Contract Period</span>
+ </div>
+ <div className="text-lg sm:text-xl font-bold text-slate-900">
  {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
  </div>
- <div className="text-xs sm:text-sm text-white/80 mt-1">
+ <div className="text-xs sm:text-sm text-slate-600 mt-1">
  to {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
  </div>
+ </Card>
+ 
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
+ <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
+ ⚽ <span>Position</span>
  </div>
- <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">⚽ Position</div>
- <div className="text-base sm:text-xl font-bold text-white capitalize truncate">{contract.position_assigned || 'Not Assigned'}</div>
+ <div className="text-lg sm:text-xl font-bold text-slate-900 capitalize truncate">{contract.position_assigned || 'Not Assigned'}</div>
  {contract.jersey_number && (
- <div className="text-xs sm:text-sm text-white/80 mt-1">Jersey #{contract.jersey_number}</div>
+ <div className="text-xs sm:text-sm text-slate-600 mt-1">Jersey #{contract.jersey_number}</div>
  )}
- </div>
+ </Card>
+ 
  {(contract.clubs.email || contract.clubs.phone) && (
- <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">📞 Contact Club</div>
+ <Card className="bg-white/95 backdrop-blur-sm rounded-xl p-4 sm:p-5 text-left shadow-md hover:shadow-lg transition-shadow border-2 border-white/50">
+ <div className="text-xs font-bold text-orange-600 uppercase mb-2 flex items-center gap-1">
+ 📞 <span>Contact Club</span>
+ </div>
  {contract.clubs.email && (
- <a href={`mailto:${contract.clubs.email}`} className="block text-white hover:text-amber-200 text-xs sm:text-base mb-1 transition-colors truncate">
+ <a href={`mailto:${contract.clubs.email}`} className="block text-slate-900 hover:text-orange-600 text-sm sm:text-base mb-1 transition-colors truncate font-semibold">
  📧 {contract.clubs.email}
  </a>
  )}
  {contract.clubs.phone && (
- <a href={`tel:${contract.clubs.phone}`} className="block text-white hover:text-amber-200 text-xs sm:text-base transition-colors">
+ <a href={`tel:${contract.clubs.phone}`} className="block text-slate-900 hover:text-orange-600 text-sm sm:text-base transition-colors font-semibold">
  📱 {contract.clubs.phone}
  </a>
  )}
- </div>
+ </Card>
  )}
  </div>
  </div>
- </div>
+ </Card>
  </div>
 
  {/* Contract Viewer */}
  {contractHtml ? (
- <div className="w-full max-w-4xl mx-auto px-2 sm:px-4">
+ <div className="w-full max-w-4xl mx-auto">
  {/* Display stored HTML contract */}
+ <Card className="bg-white rounded-xl sm:rounded-2xl shadow-2xl shadow-orange-500/10 overflow-hidden border-2 border-slate-200 hover:shadow-3xl transition-shadow p-6 sm:p-8 md:p-10 mb-6 sm:mb-8">
  <div
- className="bg-white rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl shadow-orange-500/10 overflow-hidden border-2 border-orange-200 hover:shadow-3xl transition-shadow duration-300"
+ className="contract-content prose prose-sm sm:prose-base max-w-none"
  dangerouslySetInnerHTML={{ __html: contractHtml }}
  />
+ </Card>
  
  {/* Signing Panel - PROMINENT AND ATTENTION-GRABBING */}
  {contract.signing_status === 'unsigned' && (
- <div className="w-full max-w-4xl mx-auto mt-6 sm:mt-12 mb-6 sm:mb-12">
+ <div className="w-full max-w-4xl mx-auto mt-6 sm:mt-8 mb-6 sm:mb-8">
  {/* Sticky Badge */}
- <div className="mb-4 sm:mb-6 text-center">
- <div className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-full font-bold text-xs sm:text-base shadow-lg sm:shadow-xl shadow-orange-500/30">
+ <div className="mb-5 sm:mb-6 text-center">
+ <div className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white px-5 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold text-sm sm:text-base shadow-xl shadow-orange-500/40 animate-pulse">
  ⭐ ACTION REQUIRED - Sign Your Contract
  </div>
  </div>
 
- <Card className="p-4 sm:p-8 md:p-10 bg-white border-2 sm:border-4 border-orange-400 shadow-xl sm:shadow-2xl shadow-orange-500/20 relative overflow-hidden rounded-xl sm:rounded-2xl">
+ <Card className="p-5 sm:p-8 md:p-10 bg-white border-3 sm:border-4 border-orange-400 shadow-2xl shadow-orange-500/30 relative overflow-hidden rounded-xl sm:rounded-2xl">
  {/* Decorative background accent */}
- <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full opacity-60 pointer-events-none"></div>
- <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-amber-100 to-orange-100 rounded-full opacity-40 pointer-events-none"></div>
+ <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full opacity-50 pointer-events-none"></div>
+ <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-amber-100 to-orange-100 rounded-full opacity-30 pointer-events-none"></div>
+ 
  <div className="relative z-10">
- <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
- <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-xl sm:text-3xl shadow-lg">
+ <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+ <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-2xl sm:text-3xl shadow-lg">
  ✍️
  </div>
  <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-slate-800">Sign This Contract</h2>
  </div>
- <p className="text-sm sm:text-lg text-slate-600 mb-4 sm:mb-8 font-medium">
- Complete the form below to digitally sign and accept this contract. This action is final.
+ <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-5 sm:mb-8 font-medium leading-relaxed">
+ Complete the form below to digitally sign and accept this contract. This action is final and legally binding.
  </p>
  
  {/* Progress indicator */}
@@ -796,6 +848,7 @@ export default function ContractViewerPage() {
  isFullPage={true}
  />
  )}
+ </div>
  </div>
  </div>
  )

@@ -280,44 +280,61 @@ export default function ClubOwnerContractViewPage() {
  }
 
  return (
- <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
- {/* Top Navigation - Sticky with Status Bar Fix */}
- <nav className="sticky-nav-mobile-safe bg-white border-b border-slate-200 shadow-md sticky top-0 z-50">
- <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
- <div className="flex justify-between items-center h-14 sm:h-16">
- <div className="flex items-center gap-2 sm:gap-3">
+ <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/20 to-slate-100">
+ {/* Top Navigation - Modern & Clean */}
+ <nav className="sticky-nav-mobile-safe bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-lg sticky top-0 z-50">
+ <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+ <div className="flex justify-between items-center h-16 sm:h-20">
+ {/* Left Section */}
+ <div className="flex items-center gap-3 sm:gap-4">
  <Button
  onClick={() => router.push('/dashboard/club-owner/contracts')}
- variant="outline"
+ variant="ghost"
  size="sm"
- className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 border-2 hover:bg-blue-50 hover:border-blue-300 transition-all"
+ className="group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl hover:bg-teal-50 transition-all duration-200"
  >
- ← <span className="hidden sm:inline ml-1">Back</span>
+ <svg className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+ </svg>
+ <span className="hidden sm:inline font-semibold text-slate-700 group-hover:text-teal-600">Back</span>
  </Button>
- <span className="text-slate-400 hidden sm:inline">|</span>
- <div className="flex items-center gap-2">
- <span className="text-lg sm:text-xl">📋</span>
- <h1 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
- {club?.club_name ? `${club.club_name} - Contract` : 'Contract Preview'}
+ <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+ <div className="flex items-center gap-2 sm:gap-3">
+ <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-teal-500/30">
+ <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+ </svg>
+ </div>
+ <div>
+ <h1 className="text-sm sm:text-lg font-bold text-slate-900 truncate max-w-[150px] sm:max-w-none">
+ {club?.club_name || 'Contract'}
  </h1>
+ <p className="text-xs text-slate-500 hidden sm:block">Player Contract Details</p>
  </div>
  </div>
+ </div>
+
+ {/* Right Section */}
  <div className="flex items-center gap-2 sm:gap-3">
  <Button
  onClick={() => window.print()}
- variant="outline"
+ variant="ghost"
  size="sm"
- className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 border-2 hover:bg-slate-50 transition-all"
+ className="group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl hover:bg-slate-50 transition-all duration-200"
  >
- 🖨️ <span className="hidden sm:inline ml-1">Print</span>
+ <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 group-hover:text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+ </svg>
+ <span className="hidden sm:inline font-semibold text-slate-700 group-hover:text-slate-900">Print</span>
  </Button>
  <Button
  onClick={() => router.push('/dashboard/club-owner/contracts')}
- variant="outline"
- size="sm"
- className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 border-2 bg-blue-500 text-white hover:bg-blue-600 transition-all"
+ className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all duration-200"
  >
- 📋 <span className="hidden sm:inline ml-1">All Contracts</span>
+ <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+ </svg>
+ <span className="hidden sm:inline">All Contracts</span>
  </Button>
  </div>
  </div>
@@ -325,7 +342,7 @@ export default function ClubOwnerContractViewPage() {
  </nav>
 
  {/* Main Content */}
- <div className="py-5 sm:py-8 px-3 sm:px-6">
+ <div className="py-5 sm:py-8 px-4 sm:px-6">
  {/* Contract Viewer */}
  {contractHtml ? (
  <div className="max-w-4xl mx-auto">

@@ -426,42 +426,50 @@ export default function ContractViewerPage() {
  const playerName = `${player.first_name} ${player.last_name}`
 
  return (
- <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
- {/* Top Navigation - Sticky with Status Bar Fix */}
- <nav className="sticky-nav-mobile-safe bg-white border-b border-slate-200 shadow-md sticky top-0 z-50">
- <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
- <div className="flex justify-between items-center h-14 sm:h-16">
- <div className="flex items-center gap-2 sm:gap-3">
+ <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100">
+ {/* Top Navigation - Modern & Clean */}
+ <nav className="sticky-nav-mobile-safe bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-lg sticky top-0 z-50">
+ <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+ <div className="flex justify-between items-center h-16 sm:h-20">
+ {/* Left Section */}
+ <div className="flex items-center gap-3 sm:gap-4">
  <Button
  onClick={() => router.push('/dashboard/player/contracts')}
- variant="outline"
+ variant="ghost"
  size="sm"
- className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 border-2 hover:bg-orange-50 hover:border-orange-300 transition-all"
+ className="group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl hover:bg-orange-50 transition-all duration-200 font-semibold text-slate-700 hover:text-orange-600"
  >
- ← <span className="hidden sm:inline ml-1">Back</span>
+ ← <span className="hidden sm:inline">Back</span>
  </Button>
- <span className="text-slate-400 hidden sm:inline">|</span>
- <div className="flex items-center gap-2">
- <span className="text-lg sm:text-xl">📋</span>
- <h1 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
+ <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+ <div className="flex items-center gap-2 sm:gap-3">
+ <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30 text-lg sm:text-xl">
+ 📋
+ </div>
+ <div>
+ <h1 className="text-sm sm:text-lg font-bold text-slate-900">
  Contract Preview
  </h1>
+ <p className="text-xs text-slate-500 hidden sm:block">Review your professional contract</p>
  </div>
  </div>
+ </div>
+
+ {/* Right Section */}
  <div className="flex items-center gap-2 sm:gap-3">
  <Button
  onClick={() => window.print()}
- variant="outline"
+ variant="ghost"
  size="sm"
- className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 border-2 hover:bg-slate-50 transition-all"
+ className="group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl hover:bg-slate-50 transition-all duration-200 font-semibold text-slate-700 hover:text-slate-900"
  >
- 🖨️ <span className="hidden sm:inline ml-1">Print</span>
+ 🖨️ <span className="hidden sm:inline">Print</span>
  </Button>
  <Button
  onClick={() => router.push('/dashboard/player/contracts')}
- className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 transition-all"
+ className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg shadow-orange-500/30 hover:shadow-xl hover:shadow-orange-500/40 transition-all duration-200"
  >
- 📋 <span className="hidden sm:inline ml-1">All Contracts</span>
+ 📋 <span className="hidden sm:inline">All Contracts</span>
  </Button>
  </div>
  </div>

@@ -260,7 +260,7 @@ export default function PlayerProfile() {
  }
 
  return (
- <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full overflow-x-hidden">
+ <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full overflow-x-hidden pb-20 lg:pb-8">
  {/* Header */}
  <div className="mb-6">
  <h1 className="text-2xl font-bold text-gray-900">Player Profile</h1>
@@ -365,8 +365,10 @@ export default function PlayerProfile() {
  type="date"
  value={formData.date_of_birth}
  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
- className="mt-2 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors duration-200"
+ className="mt-2 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
  required
+ readOnly
+ disabled
  />
  </div>
  <div>
@@ -413,6 +415,14 @@ export default function PlayerProfile() {
  </div>
  </div>
  <div className="p-4 sm:p-5 space-y-4">
+ {/* KYC Data Notice */}
+ <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+ <p className="text-sm text-blue-700 flex items-center gap-2">
+ <Info className="h-4 w-4" />
+ Address, state, district and date of birth are automatically synced from your KYC verification and cannot be edited here.
+ </p>
+ </div>
+
  <div>
  <Label htmlFor="address" className="text-gray-700 font-medium">Full Address</Label>
  <Textarea
@@ -421,7 +431,9 @@ export default function PlayerProfile() {
  value={formData.address}
  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
  rows={3}
- className="mt-2 rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors duration-200"
+ className="mt-2 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+ readOnly
+ disabled
  />
  </div>
 
@@ -439,8 +451,9 @@ export default function PlayerProfile() {
  district: '' // Reset district when state changes
  })
  }}
- className="mt-2 w-full rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors duration-200"
+ className="mt-2 w-full rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
  required
+ disabled
  >
  <option value="">Select state</option>
  {indianStates.map(state => (
@@ -462,9 +475,9 @@ export default function PlayerProfile() {
  id="district"
  value={formData.district}
  onChange={(e) => setFormData({ ...formData, district: e.target.value })}
- className="mt-2 w-full rounded-xl border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-colors duration-200"
+ className="mt-2 w-full rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
  required
- disabled={!formData.state}
+ disabled
  >
  <option value="">
  {formData.state ? 'Select district' : 'Select state first'}
@@ -503,15 +516,17 @@ export default function PlayerProfile() {
  </ModernCard>
 
  {/* Save Button */}
+ <div className="sticky bottom-0 left-0 right-0 z-[60] bg-white p-4 border-t border-gray-100 mt-6 lg:static lg:border-t-0 lg:bg-transparent lg:p-0 lg:z-auto">
  <div className="flex justify-end">
  <ModernButton
  onClick={handleSave}
  disabled={saving}
- className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+ className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 w-full lg:w-auto"
  >
  <Save className="h-4 w-4 mr-2" />
  {saving ? 'Saving...' : 'Save Profile'}
  </ModernButton>
+ </div>
  </div>
  </div>
  )

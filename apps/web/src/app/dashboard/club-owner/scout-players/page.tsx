@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import CompactPlayerCard from '@/components/CompactPlayerCard'
 import ElaboratedContractModal from '@/components/ElaboratedContractModal'
 import { useToast } from '@/context/ToastContext'
-import { Search, Filter, MapPin, Users, TrendingUp } from 'lucide-react'
+import { Search, Filter, MapPin, Users, TrendingUp, MessageCircle, X, FileText } from 'lucide-react'
 import { notifyNewContractOffer } from '@/services/matchNotificationService'
 import { sendMessageWithPush } from '@/services/messageServiceWithPush'
 
@@ -590,52 +590,80 @@ export default function ScoutPlayersPage() {
         </div>
       )}
 
- {/* Message Modal */}
+ {/* Message Modal - Mobile Optimized */}
  {messageModal.isOpen && messageModal.player && (
- <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
- <Card className="w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200">
- <CardHeader className="border-b bg-gradient-to-r from-teal-50 to-blue-50">
- <CardTitle className="text-xl flex items-center gap-2">
- <span>💬</span>
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[130] p-0 sm:p-4 animate-in fade-in duration-200">
+ <Card className="w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl rounded-b-none sm:rounded-b-2xl shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 max-h-[90vh] sm:max-h-[80vh] flex flex-col bg-white">
+ <CardHeader className="border-b bg-white pb-4 pt-6 px-6 flex-shrink-0">
+ <div className="flex items-start justify-between">
+ <div className="flex-1">
+ <CardTitle className="text-xl sm:text-2xl flex items-center gap-2 text-slate-900">
+ <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
  Send Message
  </CardTitle>
- <CardDescription>
- To: {messageModal.player.users?.first_name} {messageModal.player.users?.last_name}
+ <CardDescription className="mt-2 text-sm sm:text-base text-slate-600">
+ To: <span className="font-semibold text-slate-900">{messageModal.player.users?.first_name} {messageModal.player.users?.last_name}</span>
  </CardDescription>
+ </div>
+ <Button
+ variant="ghost"
+ size="sm"
+ onClick={() => setMessageModal({ isOpen: false, player: null })}
+ className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full -mr-2"
+ disabled={sendingMessage}
+ >
+ ✕
+ </Button>
+ </div>
  </CardHeader>
- <CardContent className="space-y-4 pt-6">
+ <CardContent className="space-y-4 pt-6 px-6 pb-6 overflow-y-auto flex-1 bg-white">
  <div>
- <label className="block text-sm font-medium text-gray-700 mb-2">
- Message
+ <label className="block text-sm font-semibold text-slate-700 mb-2">
+ Your Message
  </label>
  <textarea
  value={messageContent}
  onChange={(e) => setMessageContent(e.target.value)}
  placeholder="Write your message here... Be professional and clear about your interest."
- className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400 resize-none"
- rows={5}
+ className="w-full px-4 py-3 border-2 border-slate-200 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 disabled:bg-slate-50 disabled:text-slate-400 resize-none text-sm"
+ rows={6}
  disabled={sendingMessage}
  maxLength={500}
  />
- <p className="text-xs text-gray-500 mt-2">
+ <div className="flex items-center justify-between mt-2">
+ <p className="text-xs text-slate-500">
  {messageContent.length}/500 characters
  </p>
+ {messageContent.trim().length > 0 && (
+ <p className="text-xs text-teal-600 font-medium">✓ Ready to send</p>
+ )}
+ </div>
  </div>
  <div className="flex gap-3 pt-2">
  <Button
  variant="outline"
- className="flex-1"
+ className="flex-1 h-11 border-2 hover:bg-slate-50"
  onClick={() => setMessageModal({ isOpen: false, player: null })}
  disabled={sendingMessage}
  >
  Cancel
  </Button>
  <Button
- className="flex-1 bg-teal-600 hover:bg-teal-700 text-white"
+ className="flex-1 h-11 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg"
  onClick={handleSendMessage}
  disabled={sendingMessage || messageContent.trim().length === 0}
  >
- {sendingMessage ? 'Sending...' : 'Send Message'}
+ {sendingMessage ? (
+ <>
+ <span className="animate-spin mr-2">⏳</span>
+ Sending...
+ </>
+ ) : (
+ <>
+ <MessageCircle className="w-4 h-4 mr-2" />
+ Send Message
+ </>
+ )}
  </Button>
  </div>
  </CardContent>
@@ -643,35 +671,35 @@ export default function ScoutPlayersPage() {
  </div>
  )}
 
- {/* Player Details Modal */}
+ {/* Player Details Modal - Mobile Optimized */}
  {viewModal.isOpen && viewModal.player && (
- <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 p-4 animate-in fade-in duration-200 overflow-y-auto flex items-start justify-center pt-4">
- <Card className="w-full max-w-3xl shadow-xl animate-in zoom-in-95 duration-200 my-8">
- <CardHeader className="border-b bg-gradient-to-r from-teal-50 via-blue-50 to-purple-50">
- <div className="flex justify-between items-start">
- <div>
- <CardTitle className="text-2xl font-bold">
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130] overflow-y-auto flex items-start sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+ <Card className="w-full sm:max-w-4xl sm:rounded-2xl rounded-t-3xl rounded-b-none sm:rounded-b-2xl shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 my-0 sm:my-8 bg-white">
+ <CardHeader className="border-b bg-white sticky top-0 z-10 pb-4 pt-6 px-4 sm:px-6">
+ <div className="flex justify-between items-start gap-4">
+ <div className="flex-1 min-w-0">
+ <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900 truncate">
  {viewModal.player.users?.first_name} {viewModal.player.users?.last_name}
  </CardTitle>
- <CardDescription className="text-sm mt-1">
- Player ID: {viewModal.player.unique_player_id}
+ <CardDescription className="text-xs sm:text-sm mt-1 text-slate-600">
+ Player ID: <span className="font-mono font-semibold">{viewModal.player.unique_player_id}</span>
  </CardDescription>
  </div>
  <Button
  variant="ghost"
  size="sm"
  onClick={() => setViewModal({ isOpen: false, player: null })}
- className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+ className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full flex-shrink-0"
  >
- ✕
+ <X className="w-5 h-5" />
  </Button>
  </div>
  </CardHeader>
 
- <CardContent className="space-y-6 pt-6">
+ <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 px-4 sm:px-6 pb-6 bg-white">
  {/* Player Photo */}
  {viewModal.player.photo_url && (
- <div className="relative w-full h-72 rounded-xl overflow-hidden border-2 border-gray-200">
+ <div className="relative w-full h-48 sm:h-72 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-slate-200 shadow-lg">
  <Image
  src={viewModal.player.photo_url}
  alt={`${viewModal.player.users?.first_name} ${viewModal.player.users?.last_name}`}
@@ -683,42 +711,42 @@ export default function ScoutPlayersPage() {
 
  {/* Player Bio */}
  {viewModal.player.users?.bio && (
- <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-blue-200 rounded-xl p-4">
- <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
- <TrendingUp className="w-4 h-4" />
+ <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-xl sm:rounded-2xl p-4">
+ <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
+ <TrendingUp className="w-4 h-4 text-teal-600" />
  About Player
  </h3>
- <p className="text-sm text-gray-700 leading-relaxed">{viewModal.player.users.bio}</p>
+ <p className="text-sm text-slate-700 leading-relaxed">{viewModal.player.users.bio}</p>
  </div>
  )}
 
  {/* Basic Information */}
  <div>
- <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
- <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">Position</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.position || 'N/A'}</p>
+ <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3 sm:mb-4">Basic Information</h3>
+ <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">Position</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.position || 'N/A'}</p>
  </div>
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">Nationality</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.nationality || 'N/A'}</p>
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">Nationality</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.nationality || 'N/A'}</p>
  </div>
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">Jersey #</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.jersey_number || 'N/A'}</p>
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">Jersey #</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.jersey_number || 'N/A'}</p>
  </div>
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">Height</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.height_cm ? `${viewModal.player.height_cm} cm` : 'N/A'}</p>
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">Height</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.height_cm ? `${viewModal.player.height_cm} cm` : 'N/A'}</p>
  </div>
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">Weight</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.weight_kg ? `${viewModal.player.weight_kg} kg` : 'N/A'}</p>
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">Weight</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.weight_kg ? `${viewModal.player.weight_kg} kg` : 'N/A'}</p>
  </div>
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">Date of Birth</p>
- <p className="text-base font-semibold text-gray-900">
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">Date of Birth</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">
  {viewModal.player.date_of_birth
  ? new Date(viewModal.player.date_of_birth).toLocaleDateString('en-US', {
  year: 'numeric',
@@ -733,51 +761,51 @@ export default function ScoutPlayersPage() {
 
  {/* Performance Statistics */}
  <div>
- <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Statistics</h3>
- <div className="grid grid-cols-3 gap-4">
- <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 p-5 rounded-xl text-center">
- <p className="text-3xl font-bold text-blue-700">{viewModal.player.total_matches_played}</p>
- <p className="text-xs text-blue-600 font-medium mt-2">Matches Played</p>
+ <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3 sm:mb-4">Performance Statistics</h3>
+ <div className="grid grid-cols-3 gap-3 sm:gap-4">
+ <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center hover:scale-105 transition-transform">
+ <p className="text-2xl sm:text-3xl font-black text-blue-700">{viewModal.player.total_matches_played}</p>
+ <p className="text-xs font-semibold text-blue-600 mt-2">Matches Played</p>
  </div>
- <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 p-5 rounded-xl text-center">
- <p className="text-3xl font-bold text-green-700">{viewModal.player.total_goals_scored}</p>
- <p className="text-xs text-green-600 font-medium mt-2">Goals Scored</p>
+ <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center hover:scale-105 transition-transform">
+ <p className="text-2xl sm:text-3xl font-black text-green-700">{viewModal.player.total_goals_scored}</p>
+ <p className="text-xs font-semibold text-green-600 mt-2">Goals Scored</p>
  </div>
- <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 p-5 rounded-xl text-center">
- <p className="text-3xl font-bold text-purple-700">{viewModal.player.total_assists}</p>
- <p className="text-xs text-purple-600 font-medium mt-2">Assists</p>
+ <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center hover:scale-105 transition-transform">
+ <p className="text-2xl sm:text-3xl font-black text-purple-700">{viewModal.player.total_assists}</p>
+ <p className="text-xs font-semibold text-purple-600 mt-2">Assists</p>
  </div>
  </div>
  </div>
 
  {/* Location Information */}
  <div>
- <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+ <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
  <MapPin className="w-5 h-5 text-teal-600" />
  Location
  </h3>
- <div className="grid grid-cols-2 gap-4">
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">State</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.state || 'N/A'}</p>
+ <div className="grid grid-cols-2 gap-3 sm:gap-4">
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">State</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.state || 'N/A'}</p>
  </div>
- <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">District</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.district || 'N/A'}</p>
+ <div className="bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">District</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.district || 'N/A'}</p>
  </div>
  {viewModal.player.address && (
- <div className="col-span-2 bg-gray-50 border border-gray-200 p-4 rounded-lg">
- <p className="text-xs text-gray-500 font-medium mb-1">Address</p>
- <p className="text-base font-semibold text-gray-900">{viewModal.player.address}</p>
+ <div className="col-span-2 bg-white border-2 border-slate-200 p-3 sm:p-4 rounded-xl hover:border-teal-300 transition-colors">
+ <p className="text-xs text-slate-500 font-medium mb-1">Address</p>
+ <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.address}</p>
  </div>
  )}
  </div>
  </div>
 
- {/* Action Buttons */}
- <div className="flex gap-3 pt-4 border-t">
+ {/* Action Buttons - Sticky on mobile */}
+ <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t-2 border-slate-200 sticky bottom-0 bg-white pb-2">
  <Button
- className="flex-1 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white"
+ className="flex-1 h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg font-semibold"
  onClick={() => {
  if (viewModal.player) {
  setViewModal({ isOpen: false, player: null })
@@ -785,10 +813,11 @@ export default function ScoutPlayersPage() {
  }
  }}
  >
- 💬 Send Message
+ <MessageCircle className="w-4 h-4 mr-2" />
+ Send Message
  </Button>
  <Button
- className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+ className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg font-semibold"
  onClick={() => {
  if (viewModal.player) {
  setViewModal({ isOpen: false, player: null })
@@ -796,7 +825,8 @@ export default function ScoutPlayersPage() {
  }
  }}
  >
- 📄 Send Contract
+ <FileText className="w-4 h-4 mr-2" />
+ Send Contract
  </Button>
  </div>
  </CardContent>

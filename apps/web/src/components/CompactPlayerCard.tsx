@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { Eye, MessageCircle, FileText } from 'lucide-react'
 
 interface PlayerCardProps {
  player: {
@@ -28,6 +29,42 @@ interface PlayerCardProps {
  onContract: () => void
 }
 
+// Position-based colors
+const getPositionColors = (position?: string) => {
+ switch (position?.toLowerCase()) {
+ case 'goalkeeper':
+ return {
+ gradient: 'from-yellow-500 to-amber-600',
+ badge: 'bg-yellow-500',
+ ring: 'ring-yellow-400/50'
+ }
+ case 'defender':
+ return {
+ gradient: 'from-blue-500 to-blue-600',
+ badge: 'bg-blue-500',
+ ring: 'ring-blue-400/50'
+ }
+ case 'midfielder':
+ return {
+ gradient: 'from-green-500 to-emerald-600',
+ badge: 'bg-green-500',
+ ring: 'ring-green-400/50'
+ }
+ case 'forward':
+ return {
+ gradient: 'from-red-500 to-rose-600',
+ badge: 'bg-red-500',
+ ring: 'ring-red-400/50'
+ }
+ default:
+ return {
+ gradient: 'from-purple-500 to-indigo-600',
+ badge: 'bg-purple-500',
+ ring: 'ring-purple-400/50'
+ }
+ }
+}
+
 export default function CompactPlayerCard({
  player,
  onView,
@@ -35,9 +72,10 @@ export default function CompactPlayerCard({
  onContract
 }: PlayerCardProps) {
  const [imageError, setImageError] = useState(false)
+ const colors = getPositionColors(player.position)
 
  return (
- <div className="relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4] group cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:ring-4 hover:ring-blue-400/50">
+ <div className={`relative overflow-hidden rounded-2xl shadow-xl aspect-[3/4] group cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:ring-4 ${colors.ring}`}>
  {/* Background Image */}
  <div className="absolute inset-0">
  {player.photo_url && !imageError ? (
@@ -49,18 +87,18 @@ export default function CompactPlayerCard({
  onError={() => setImageError(true)}
  />
  ) : (
- <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+ <div className={`w-full h-full bg-gradient-to-br ${colors.gradient} flex items-center justify-center`}>
  <span className="text-6xl">⚽</span>
  </div>
  )}
 
- {/* Gradient Overlay - Position dependent */}
+ {/* Gradient Overlay */}
  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/70" />
  </div>
 
  {/* Position Badge - Top Right */}
  <div className="absolute top-3 right-3 z-20">
- <div className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transform transition-all duration-200 group-hover:scale-110 group-hover:bg-blue-700">
+ <div className={`${colors.badge} text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg transform transition-all duration-200 group-hover:scale-110`}>
  {player.position}
  </div>
  </div>
@@ -121,28 +159,31 @@ export default function CompactPlayerCard({
  <Button
  variant="outline"
  size="sm"
- className="text-xs h-8 bg-white/30 hover:bg-white/50 border-white/50 hover:border-white/70 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+ className="text-xs h-9 bg-white/90 hover:bg-white border-white/70 hover:border-white text-slate-700 font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5"
  onClick={onView}
  title="View full details"
  >
- 👁️
+ <Eye className="w-3.5 h-3.5" />
+ <span className="hidden sm:inline">View</span>
  </Button>
  <Button
- className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-xs h-8 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+ className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-xs h-9 font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5"
  size="sm"
  onClick={onMessage}
  title="Send message"
  >
- 💬
+ <MessageCircle className="w-3.5 h-3.5" />
+ <span className="hidden sm:inline">Chat</span>
  </Button>
  <Button
  variant="outline"
  size="sm"
- className="text-xs h-8 bg-white/30 hover:bg-white/50 border-white/50 hover:border-white/70 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+ className="text-xs h-9 bg-white/90 hover:bg-white border-white/70 hover:border-white text-slate-700 font-semibold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5"
  onClick={onContract}
  title="Issue contract"
  >
- 📋
+ <FileText className="w-3.5 h-3.5" />
+ <span className="hidden sm:inline">Sign</span>
  </Button>
  </div>
  </div>

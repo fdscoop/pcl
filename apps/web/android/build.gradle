@@ -21,6 +21,8 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Razorpay Maven repository
+        maven { url 'https://jitpack.io' }
     }
 }
 

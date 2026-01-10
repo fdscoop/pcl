@@ -13,6 +13,7 @@ import { DayPicker } from 'react-day-picker'
 import { format, isBefore, startOfDay, addHours, isAfter, isSameDay } from 'date-fns'
 import 'react-day-picker/dist/style.css'
 import razorpayService, { PaymentResponse, RazorpayService } from '@/services/razorpayService'
+import { Capacitor } from '@capacitor/core'
 import { 
  Users, 
  Calendar, 
@@ -867,11 +868,26 @@ export function CreateFriendlyMatch({
  const handlePayment = async () => {
  if (paymentProcessing || paymentCompleted) return
 
+ // Debug information
+ console.log('=== PAYMENT DEBUG INFO ===')
+ console.log('Platform:', {
+ isNativePlatform: Capacitor.isNativePlatform(),
+ platform: Capacitor.getPlatform(),
+ userAgent: navigator.userAgent
+ })
+ console.log('Budget:', budget)
+ console.log('Environment:', {
+ razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.substring(0, 8) + '...',
+ mode: process.env.NEXT_PUBLIC_RAZORPAY_MODE
+ })
+
  setPaymentProcessing(true)
 
  try {
  const amount = RazorpayService.rupeesToPaise(budget.totalCost)
  const receipt = RazorpayService.generateReceipt('MATCH')
+ 
+ console.log('Payment data:', { amount, receipt })
  
  const paymentData = {
  amount: amount,
@@ -892,9 +908,12 @@ export function CreateFriendlyMatch({
  }
  }
 
+ console.log('Initiating payment with razorpayService...')
+ 
  await razorpayService.processPayment(
  paymentData,
  (response: PaymentResponse) => {
+ console.log('=== PAYMENT SUCCESS ===')
  console.log('Payment successful:', response)
  setPaymentResponse(response)
  setPaymentCompleted(true)
@@ -912,6 +931,7 @@ export function CreateFriendlyMatch({
  }, 1000)
  },
  (error: any) => {
+ console.error('=== PAYMENT ERROR ===')
  console.error('Payment failed:', error)
  setPaymentProcessing(false)
  
@@ -924,6 +944,7 @@ export function CreateFriendlyMatch({
  )
 
  } catch (error: any) {
+ console.error('=== PAYMENT PROCESSING ERROR ===')
  console.error('Payment processing error:', error)
  setPaymentProcessing(false)
  
@@ -3078,6 +3099,13 @@ export function CreateFriendlyMatch({
  <Badge variant="outline" className="text-xs">PCI Compliant</Badge>
  <Badge variant="outline" className="text-xs">Razorpay Secured</Badge>
  </div>
+
+ {/* Debug Information for Mobile Testing */}
+ <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+ <div><strong>Platform:</strong> {Capacitor.getPlatform()}</div>
+ <div><strong>Is Native:</strong> {Capacitor.isNativePlatform().toString()}</div>
+ <div><strong>User Agent:</strong> {navigator.userAgent.substring(0, 50)}...</div>
+ </div>
  </div>
  </div>
  </div>
@@ -3170,7 +3198,7 @@ export function CreateFriendlyMatch({
  {/* ✅ Show loading message when matches are being fetched */}
  {isLoadingMatches && currentStep === 2 && (
  <p className="text-sm text-blue-600 flex items-center gap-2">
- <div className="animate-pulse">⏳</div>
+ <span className="animate-pulse">⏳</span>
  Loading scheduled matches to check availability...
  </p>
  )}

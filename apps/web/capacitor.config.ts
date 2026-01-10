@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-// Hybrid approach: Load from web but with native plugins
-// This allows us to use Next.js API routes while having native push notifications
+// Hybrid approach: Load from web but with enhanced native plugin support
+// This allows us to use Next.js API routes while having native plugins for payments
 const config: CapacitorConfig = {
   appId: 'com.pcl.fdscoop',
   appName: 'PCL - Professional Club League',

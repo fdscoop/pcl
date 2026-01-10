@@ -29,6 +29,7 @@ export default function RootLayout({
  <head>
  <meta name="theme-color" content="#0d1b3e" />
  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+ <meta httpEquiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com; connect-src 'self' https://api.razorpay.com https://checkout.razorpay.com; frame-src 'self' https://api.razorpay.com; style-src 'self' 'unsafe-inline'" />
  </head>
  <body className="w-full h-full min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100"
  style={{ colorScheme: 'light' }}

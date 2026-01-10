@@ -12,11 +12,15 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.graphics.Insets;
 import com.getcapacitor.BridgeActivity;
+import com.ionicframework.capacitor.Checkout;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Register Razorpay plugin
+        registerPlugin(Checkout.class);
         
         // Enable hardware acceleration for better performance
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,

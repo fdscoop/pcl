@@ -223,7 +223,7 @@ export default function PlayerDetailPage() {
  return (
  <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
  {/* Navigation */}
- <nav className="bg-card/95 backdrop-blur-sm border-b border-border shadow-sm sticky top-0 z-50">
+ <nav className="sticky-nav-mobile-safe bg-card/95 backdrop-blur-sm border-b border-border shadow-sm sticky top-0 z-50">
  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
  <div className="flex justify-between items-center h-16">
  <div className="flex items-center gap-4">

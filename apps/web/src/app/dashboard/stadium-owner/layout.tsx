@@ -134,7 +134,7 @@ export default function StadiumOwnerLayout({
  return (
  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50 ">
  {/* Mobile Header */}
- <header className="lg:hidden sticky-nav-mobile-safe fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-orange-100 shadow-sm shadow-orange-100/50 ">
+ <header className="lg:hidden sticky-nav-mobile-safe fixed top-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-orange-100 shadow-sm shadow-orange-100/50 ">
  <div className="flex items-center justify-between px-4 h-14">
  <div className="flex items-center gap-2.5">
  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
@@ -172,7 +172,7 @@ export default function StadiumOwnerLayout({
  {/* Mobile Sidebar Overlay */}
  {sidebarOpen && (
  <div 
- className="lg:hidden fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm"
+ className="lg:hidden fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm"
  onClick={() => setSidebarOpen(false)}
  style={{ top: 'max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px))' }}
  />
@@ -181,7 +181,7 @@ export default function StadiumOwnerLayout({
  {/* Sidebar */}
  <aside 
  className={`
- fixed top-0 left-0 z-50 h-full w-[280px] 
+ fixed top-0 left-0 z-[80] h-full w-[280px] 
  bg-white/95 backdrop-blur-xl 
  border-r border-orange-100 
  transform transition-transform duration-300 ease-out

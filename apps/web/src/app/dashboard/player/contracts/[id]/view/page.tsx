@@ -367,16 +367,16 @@ export default function ContractViewerPage() {
 
  if (loading) {
  return (
- <div className="min-h-screen flex items-center justify-center">
- <Card className="p-10 shadow-2xl border-2 border-orange-200 rounded-2xl">
- <div className="flex flex-col items-center gap-5">
+ <div className="min-h-screen flex items-center justify-center px-2 sm:px-4">
+ <Card className="p-6 sm:p-10 shadow-2xl border-2 border-orange-200 rounded-xl sm:rounded-2xl">
+ <div className="flex flex-col items-center gap-3 sm:gap-5">
  <div className="relative">
- <div className="w-20 h-20 rounded-full border-4 border-orange-200"></div>
- <div className="w-20 h-20 rounded-full border-4 border-orange-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
+ <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-orange-200"></div>
+ <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-orange-500 border-t-transparent animate-spin absolute top-0 left-0"></div>
  </div>
  <div className="text-center">
- <h3 className="text-2xl font-bold text-slate-800 mb-2">Loading Contract</h3>
- <p className="text-slate-500">Please wait while we fetch your contract details...</p>
+ <h3 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2">Loading Contract</h3>
+ <p className="text-slate-500 text-xs sm:text-base">Please wait while we fetch your contract details...</p>
  </div>
  </div>
  </Card>
@@ -386,25 +386,25 @@ export default function ContractViewerPage() {
 
  if (error || !contract || !player) {
  return (
- <div className="py-8 px-4 flex items-center justify-center">
+ <div className="py-4 sm:py-8 px-2 sm:px-4 flex items-center justify-center">
  <div className="max-w-2xl w-full">
- <Card className="p-10 border-4 border-red-200 bg-red-50 shadow-2xl rounded-2xl">
- <div className="flex items-center gap-4 mb-6">
- <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-3xl shadow-lg">
+ <Card className="p-6 sm:p-10 border-4 border-red-200 bg-red-50 shadow-2xl rounded-xl sm:rounded-2xl">
+ <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+ <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-red-500 flex items-center justify-center text-2xl sm:text-3xl shadow-lg">
  ⚠️
  </div>
- <h2 className="text-3xl font-bold text-red-700">Unable to Load Contract</h2>
+ <h2 className="text-2xl sm:text-3xl font-bold text-red-700">Unable to Load Contract</h2>
  </div>
- <div className="bg-white p-6 rounded-xl border-2 border-red-200 mb-6">
- <p className="text-red-700 text-lg leading-relaxed">
+ <div className="bg-white p-4 sm:p-6 rounded-lg sm:rounded-xl border-2 border-red-200 mb-4 sm:mb-6">
+ <p className="text-red-700 text-base sm:text-lg leading-relaxed">
  {error || 'The contract could not be loaded. Please try again or contact support.'}
  </p>
  </div>
- <div className="flex gap-4">
+ <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
  <Button
  onClick={() => router.push('/dashboard/player/contracts')}
  size="lg"
- className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-6 text-lg rounded-xl shadow-lg"
+ className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-4 sm:py-6 text-sm sm:text-lg rounded-lg sm:rounded-xl shadow-lg"
  >
  ← Back to Contracts
  </Button>
@@ -412,7 +412,7 @@ export default function ContractViewerPage() {
  onClick={() => window.location.reload()}
  variant="outline"
  size="lg"
- className="flex-1 font-bold py-6 text-lg border-2 rounded-xl"
+ className="flex-1 font-bold py-4 sm:py-6 text-sm sm:text-lg border-2 rounded-lg sm:rounded-xl"
  >
  🔄 Retry
  </Button>
@@ -426,43 +426,43 @@ export default function ContractViewerPage() {
  const playerName = `${player.first_name} ${player.last_name}`
 
  return (
- <div className="p-4 sm:p-6 lg:p-8">
+ <div className="p-2 sm:p-4 lg:p-8">
  {/* Contract Header */}
- <div className="max-w-4xl mx-auto mb-6">
- <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
- <div className="flex items-center gap-4">
- <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-2xl shadow-xl shadow-orange-500/30">
+ <div className="max-w-4xl mx-auto mb-4 sm:mb-6">
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+ <div className="flex items-center gap-3 sm:gap-4">
+ <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg sm:shadow-xl shadow-orange-500/30">
  📋
  </div>
  <div>
- <h1 className="text-2xl font-extrabold text-slate-900">{contract.clubs.club_name}</h1>
- <p className="text-slate-600">Contract Details & Signing</p>
+ <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 break-words">{contract.clubs.club_name}</h1>
+ <p className="text-xs sm:text-base text-slate-600">Contract Details & Signing</p>
  </div>
  </div>
- <div className="flex items-center gap-3">
+ <div className="flex items-center gap-2 sm:gap-3">
  <Button
  onClick={() => window.print()}
  variant="outline"
- className="border-2 border-slate-200 font-bold rounded-xl hover:bg-slate-50"
+ className="border-2 border-slate-200 font-bold rounded-lg sm:rounded-xl hover:bg-slate-50 text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
  >
- 🖨️ Print
+ 🖨️ <span className="hidden sm:inline">Print</span>
  </Button>
  <Button
  onClick={() => router.push('/dashboard/player/contracts')}
- className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg rounded-xl"
+ className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg rounded-lg sm:rounded-xl text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
  >
- 📋 All Contracts
+ 📋 <span className="hidden sm:inline">All Contracts</span>
  </Button>
  </div>
  </div>
  </div>
 
  {/* Main Content */}
- <div className="pb-8 flex flex-col items-center">
+ <div className="pb-4 sm:pb-8 flex flex-col items-center">
  {error && !loading && (
- <div className="w-full max-w-4xl mx-auto px-4 mb-6">
- <Card className="p-4 border-red-200 bg-red-50 rounded-xl">
- <p className="text-red-800">
+ <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 mb-4 sm:mb-6">
+ <Card className="p-3 sm:p-4 border-red-200 bg-red-50 rounded-lg sm:rounded-xl">
+ <p className="text-red-800 text-sm sm:text-base">
  <strong>Error:</strong> {error}
  </p>
  </Card>
@@ -470,55 +470,55 @@ export default function ContractViewerPage() {
  )}
 
  {/* Contract Overview - Modern Optimized */}
- <div className="w-full max-w-3xl mx-auto px-4 mt-0 mb-10">
- <div className="rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 border border-orange-400 shadow-2xl shadow-orange-500/30 p-8 md:p-10 flex flex-col items-center text-center relative overflow-hidden">
+ <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 mt-0 mb-6 sm:mb-10">
+ <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 border border-orange-400 shadow-xl sm:shadow-2xl shadow-orange-500/30 p-4 sm:p-8 md:p-10 flex flex-col items-center text-center relative overflow-hidden">
  <div className="absolute inset-0 opacity-10 bg-grid-pattern"></div>
  <div className="relative z-10 w-full">
- <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Contract Overview</h2>
+ <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white mb-2 sm:mb-3 tracking-tight">Contract Overview</h2>
  {contract.status === 'pending' && (
- <span className="inline-flex items-center gap-2 px-5 py-2 mb-5 rounded-full bg-amber-100 text-amber-800 font-bold text-base shadow-lg">
- ⚠️ Action Required - Review & Sign
+ <span className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2 mb-3 sm:mb-5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs sm:text-base shadow-md sm:shadow-lg">
+ ⚠️ <span className="hidden sm:inline">Action Required - Review & Sign</span><span className="sm:hidden">Review & Sign</span>
  </span>
  )}
  {contract.status === 'active' && (
- <span className="inline-flex items-center gap-2 px-5 py-2 mb-5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-base shadow-lg">
- ✅ Contract Active & Signed
+ <span className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2 mb-3 sm:mb-5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs sm:text-base shadow-md sm:shadow-lg">
+ ✅ <span className="hidden sm:inline">Contract Active & Signed</span><span className="sm:hidden">Active</span>
  </span>
  )}
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-4">
- <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-2">🏟️ Club</div>
- <div className="text-xl font-bold text-white">{contract.clubs.club_name}</div>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 w-full mt-3 sm:mt-4">
+ <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
+ <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">🏟️ Club</div>
+ <div className="text-base sm:text-xl font-bold text-white break-words">{contract.clubs.club_name}</div>
  {contract.clubs.city && contract.clubs.state && (
- <div className="text-sm text-white/80 mt-1">📍 {contract.clubs.city}, {contract.clubs.state}</div>
+ <div className="text-xs sm:text-sm text-white/80 mt-1 truncate">📍 {contract.clubs.city}, {contract.clubs.state}</div>
  )}
  </div>
- <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-2">📅 Contract Period</div>
- <div className="text-xl font-bold text-white">
+ <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
+ <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">📅 Contract Period</div>
+ <div className="text-base sm:text-xl font-bold text-white">
  {new Date(contract.contract_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
  </div>
- <div className="text-sm text-white/80 mt-1">
+ <div className="text-xs sm:text-sm text-white/80 mt-1">
  to {new Date(contract.contract_end_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
  </div>
  </div>
- <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-2">⚽ Position</div>
- <div className="text-xl font-bold text-white capitalize">{contract.position_assigned || 'Not Assigned'}</div>
+ <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
+ <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">⚽ Position</div>
+ <div className="text-base sm:text-xl font-bold text-white capitalize truncate">{contract.position_assigned || 'Not Assigned'}</div>
  {contract.jersey_number && (
- <div className="text-sm text-white/80 mt-1">Jersey #{contract.jersey_number}</div>
+ <div className="text-xs sm:text-sm text-white/80 mt-1">Jersey #{contract.jersey_number}</div>
  )}
  </div>
  {(contract.clubs.email || contract.clubs.phone) && (
- <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-left">
- <div className="text-xs font-bold text-white/70 uppercase mb-2">📞 Contact Club</div>
+ <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-left">
+ <div className="text-xs font-bold text-white/70 uppercase mb-1 sm:mb-2">📞 Contact Club</div>
  {contract.clubs.email && (
- <a href={`mailto:${contract.clubs.email}`} className="block text-white hover:text-amber-200 text-base mb-1 transition-colors">
+ <a href={`mailto:${contract.clubs.email}`} className="block text-white hover:text-amber-200 text-xs sm:text-base mb-1 transition-colors truncate">
  📧 {contract.clubs.email}
  </a>
  )}
  {contract.clubs.phone && (
- <a href={`tel:${contract.clubs.phone}`} className="block text-white hover:text-amber-200 text-base transition-colors">
+ <a href={`tel:${contract.clubs.phone}`} className="block text-white hover:text-amber-200 text-xs sm:text-base transition-colors">
  📱 {contract.clubs.phone}
  </a>
  )}
@@ -531,63 +531,63 @@ export default function ContractViewerPage() {
 
  {/* Contract Viewer */}
  {contractHtml ? (
- <div className="w-full max-w-4xl mx-auto px-4">
+ <div className="w-full max-w-4xl mx-auto px-2 sm:px-4">
  {/* Display stored HTML contract */}
  <div
- className="bg-white rounded-2xl shadow-2xl shadow-orange-500/10 overflow-hidden border-2 border-orange-200 hover:shadow-3xl transition-shadow duration-300"
+ className="bg-white rounded-xl sm:rounded-2xl shadow-xl sm:shadow-2xl shadow-orange-500/10 overflow-hidden border-2 border-orange-200 hover:shadow-3xl transition-shadow duration-300"
  dangerouslySetInnerHTML={{ __html: contractHtml }}
  />
  
  {/* Signing Panel - PROMINENT AND ATTENTION-GRABBING */}
  {contract.signing_status === 'unsigned' && (
- <div className="w-full max-w-4xl mx-auto mt-12 mb-12">
+ <div className="w-full max-w-4xl mx-auto mt-6 sm:mt-12 mb-6 sm:mb-12">
  {/* Sticky Badge */}
- <div className="mb-6 text-center">
- <div className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white px-8 py-3 rounded-full font-bold text-base shadow-xl shadow-orange-500/30">
+ <div className="mb-4 sm:mb-6 text-center">
+ <div className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 sm:px-8 py-2 sm:py-3 rounded-full font-bold text-xs sm:text-base shadow-lg sm:shadow-xl shadow-orange-500/30">
  ⭐ ACTION REQUIRED - Sign Your Contract
  </div>
  </div>
 
- <Card className="p-8 md:p-10 bg-white border-4 border-orange-400 shadow-2xl shadow-orange-500/20 relative overflow-hidden rounded-2xl">
+ <Card className="p-4 sm:p-8 md:p-10 bg-white border-2 sm:border-4 border-orange-400 shadow-xl sm:shadow-2xl shadow-orange-500/20 relative overflow-hidden rounded-xl sm:rounded-2xl">
  {/* Decorative background accent */}
  <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full opacity-60 pointer-events-none"></div>
  <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-amber-100 to-orange-100 rounded-full opacity-40 pointer-events-none"></div>
  <div className="relative z-10">
- <div className="flex items-center gap-4 mb-3">
- <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-3xl shadow-lg">
+ <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-3">
+ <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-xl sm:text-3xl shadow-lg">
  ✍️
  </div>
- <h2 className="text-3xl md:text-4xl font-extrabold text-slate-800">Sign This Contract</h2>
+ <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-slate-800">Sign This Contract</h2>
  </div>
- <p className="text-lg text-slate-600 mb-8 font-medium">
+ <p className="text-sm sm:text-lg text-slate-600 mb-4 sm:mb-8 font-medium">
  Complete the form below to digitally sign and accept this contract. This action is final.
  </p>
  
  {/* Progress indicator */}
- <div className="mb-8 p-5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200">
- <p className="text-base font-bold text-orange-900 mb-4">📋 Signing Progress:</p>
- <div className="space-y-3">
- <div className="flex items-center gap-4">
- <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-all ${signature.trim() ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+ <div className="mb-4 sm:mb-8 p-3 sm:p-5 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg sm:rounded-xl border-2 border-orange-200">
+ <p className="text-sm sm:text-base font-bold text-orange-900 mb-3 sm:mb-4">📋 Signing Progress:</p>
+ <div className="space-y-2 sm:space-y-3">
+ <div className="flex items-center gap-3 sm:gap-4">
+ <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-md transition-all ${signature.trim() ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
  {signature.trim() ? '✓' : '1'}
  </div>
- <span className={`text-base ${signature.trim() ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+ <span className={`text-xs sm:text-base ${signature.trim() ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
  Your name provided {signature.trim() && <span className="text-emerald-500">✓</span>}
  </span>
  </div>
- <div className="flex items-center gap-4">
- <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-all ${signingDate ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+ <div className="flex items-center gap-3 sm:gap-4">
+ <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-md transition-all ${signingDate ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
  {signingDate ? '✓' : '2'}
  </div>
- <span className={`text-base ${signingDate ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+ <span className={`text-xs sm:text-base ${signingDate ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
  Signing date selected {signingDate && <span className="text-emerald-500">✓</span>}
  </span>
  </div>
- <div className="flex items-center gap-4">
- <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-md transition-all ${agreedToTerms ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
+ <div className="flex items-center gap-3 sm:gap-4">
+ <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold shadow-md transition-all ${agreedToTerms ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-slate-200 text-slate-500'}`}>
  {agreedToTerms ? '✓' : '3'}
  </div>
- <span className={`text-base ${agreedToTerms ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+ <span className={`text-xs sm:text-base ${agreedToTerms ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
  Terms agreed & confirmed {agreedToTerms && <span className="text-emerald-500">✓</span>}
  </span>
  </div>
@@ -596,13 +596,13 @@ export default function ContractViewerPage() {
  
  {/* Validation Errors - PROMINENT */}
  {validationErrors.length > 0 && (
- <div className="mb-8 p-6 bg-red-50 border-l-8 border-red-500 rounded-r-xl shadow-lg">
- <h3 className="font-bold text-red-900 mb-3 text-lg flex items-center gap-3">
- <span className="text-2xl">🚨</span> Please Fix These Issues
+ <div className="mb-4 sm:mb-8 p-4 sm:p-6 bg-red-50 border-l-4 sm:border-l-8 border-red-500 rounded-r-lg sm:rounded-r-xl shadow-lg">
+ <h3 className="font-bold text-red-900 mb-2 sm:mb-3 text-base sm:text-lg flex items-center gap-2 sm:gap-3">
+ <span className="text-xl sm:text-2xl">🚨</span> Please Fix These Issues
  </h3>
- <ul className="space-y-2">
+ <ul className="space-y-1 sm:space-y-2">
  {validationErrors.map((errorMsg, idx) => (
- <li key={idx} className="text-red-800 font-medium flex items-start gap-3 text-base">
+ <li key={idx} className="text-red-800 font-medium flex items-start gap-2 sm:gap-3 text-xs sm:text-base">
  <span className="text-red-500 font-bold mt-0.5">▸</span>
  <span>{errorMsg}</span>
  </li>
@@ -612,10 +612,10 @@ export default function ContractViewerPage() {
  )}
  
  {/* Form Fields - Larger and More Prominent */}
- <div className="space-y-6 mb-8 bg-gradient-to-b from-slate-50 to-white p-6 md:p-8 rounded-2xl border-2 border-slate-200">
+ <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-8 bg-gradient-to-b from-slate-50 to-white p-3 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border-2 border-slate-200">
  <div>
- <label className="block text-lg font-bold text-slate-900 mb-3">
- 👤 Your Full Name (for signature) <span className="text-red-500 text-xl">*</span>
+ <label className="block text-sm sm:text-lg font-bold text-slate-900 mb-2 sm:mb-3">
+ 👤 Your Full Name (for signature) <span className="text-red-500 text-base sm:text-xl">*</span>
  </label>
  <input
  type="text"
@@ -625,7 +625,7 @@ export default function ContractViewerPage() {
  setSignature(e.target.value)
  setValidationErrors([])
  }}
- className={`w-full px-6 py-5 border-2 rounded-xl text-lg font-semibold focus:outline-none focus:ring-4 transition-all ${
+ className={`w-full px-3 sm:px-6 py-3 sm:py-5 border-2 rounded-lg sm:rounded-xl text-sm sm:text-lg font-semibold focus:outline-none focus:ring-4 transition-all ${
  validationErrors.some(e => e.includes('Signature'))
  ? 'border-red-400 bg-red-50 focus:ring-red-200'
  : 'border-slate-300 focus:border-orange-500 focus:ring-orange-200'
@@ -633,14 +633,14 @@ export default function ContractViewerPage() {
  autoFocus
  />
  {signature.trim() && (
- <p className="text-emerald-600 text-base font-semibold mt-3 flex items-center gap-2">
+ <p className="text-emerald-600 text-xs sm:text-base font-semibold mt-2 sm:mt-3 flex items-center gap-2">
  <span>✓</span> Signature name entered
  </p>
  )}
  </div>
  <div>
- <label className="block text-lg font-bold text-slate-900 mb-3">
- 📅 Signing Date <span className="text-red-500 text-xl">*</span>
+ <label className="block text-sm sm:text-lg font-bold text-slate-900 mb-2 sm:mb-3">
+ 📅 Signing Date <span className="text-red-500 text-base sm:text-xl">*</span>
  </label>
  <input
  type="date"
@@ -649,14 +649,14 @@ export default function ContractViewerPage() {
  setSigningDate(e.target.value)
  setValidationErrors([])
  }}
- className={`w-full px-6 py-5 border-2 rounded-xl text-lg font-semibold focus:outline-none focus:ring-4 transition-all ${
+ className={`w-full px-3 sm:px-6 py-3 sm:py-5 border-2 rounded-lg sm:rounded-xl text-sm sm:text-lg font-semibold focus:outline-none focus:ring-4 transition-all ${
  validationErrors.some(e => e.includes('date'))
  ? 'border-red-400 bg-red-50 focus:ring-red-200'
  : 'border-slate-300 focus:border-orange-500 focus:ring-orange-200'
  }`}
  />
  {signingDate && (
- <p className="text-emerald-600 text-base font-semibold mt-3 flex items-center gap-2">
+ <p className="text-emerald-600 text-xs sm:text-base font-semibold mt-2 sm:mt-3 flex items-center gap-2">
  <span>✓</span> Date selected: {new Date(signingDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
  </p>
  )}
@@ -664,12 +664,12 @@ export default function ContractViewerPage() {
  </div>
 
  {/* Terms Agreement - HIGHLY PROMINENT */}
- <div className={`p-6 md:p-8 mb-8 rounded-2xl border-3 transition-all ${
+ <div className={`p-3 sm:p-6 md:p-8 mb-4 sm:mb-8 rounded-xl sm:rounded-2xl border-2 sm:border-3 transition-all ${
  agreedToTerms 
  ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-400 shadow-lg shadow-emerald-500/10' 
  : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-400 border-dashed'
  }`}>
- <label className="flex items-start gap-5 cursor-pointer group">
+ <label className="flex items-start gap-3 sm:gap-5 cursor-pointer group">
  <div className="relative mt-1">
  <input
  type="checkbox"
@@ -678,14 +678,14 @@ export default function ContractViewerPage() {
  setAgreedToTerms(e.target.checked)
  setValidationErrors([])
  }}
- className="w-7 h-7 accent-emerald-600 cursor-pointer rounded-lg"
+ className="w-5 h-5 sm:w-7 sm:h-7 accent-emerald-600 cursor-pointer rounded-lg"
  />
  </div>
  <div className="flex-1">
- <p className={`text-xl font-bold mb-3 ${agreedToTerms ? 'text-emerald-800' : 'text-amber-900'}`}>
+ <p className={`text-base sm:text-xl font-bold mb-2 sm:mb-3 ${agreedToTerms ? 'text-emerald-800' : 'text-amber-900'}`}>
  🔒 I Understand & Accept All Terms
  </p>
- <p className={`text-base leading-relaxed ${agreedToTerms ? 'text-emerald-800' : 'text-amber-900'}`}>
+ <p className={`text-xs sm:text-base leading-relaxed ${agreedToTerms ? 'text-emerald-800' : 'text-amber-900'}`}>
  I have fully read and reviewed the entire contract including:
  <br />
  <strong>• Anti-Drug Policy</strong> - Zero tolerance enforcement
@@ -698,19 +698,19 @@ export default function ContractViewerPage() {
  </div>
  </label>
  {agreedToTerms && (
- <p className="text-emerald-700 text-base font-bold mt-4 flex items-center gap-2">
- <span className="text-xl">✅</span> All terms accepted - Ready to sign
+ <p className="text-emerald-700 text-xs sm:text-base font-bold mt-3 sm:mt-4 flex items-center gap-2">
+ <span className="text-lg sm:text-xl">✅</span> All terms accepted - Ready to sign
  </p>
  )}
  {validationErrors.some(e => e.includes('agree')) && (
- <p className="text-red-600 text-base font-bold mt-4 flex items-center gap-2">
- <span className="text-xl">⚠️</span> You must agree to all terms to proceed
+ <p className="text-red-600 text-xs sm:text-base font-bold mt-3 sm:mt-4 flex items-center gap-2">
+ <span className="text-lg sm:text-xl">⚠️</span> You must agree to all terms to proceed
  </p>
  )}
  </div>
 
  {/* Action Buttons - PROMINENT */}
- <div className="flex flex-col md:flex-row gap-4">
+ <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
  <Button
  onClick={() => handleSignContract(contract.id)}
  disabled={
@@ -719,35 +719,35 @@ export default function ContractViewerPage() {
  !signingDate || 
  !agreedToTerms
  }
- className={`flex-1 font-bold py-6 md:py-5 text-lg md:text-xl rounded-xl transition-all shadow-xl ${
+ className={`flex-1 font-bold py-4 sm:py-6 md:py-5 text-base sm:text-lg md:text-xl rounded-lg sm:rounded-xl transition-all shadow-lg sm:shadow-xl ${
  isSigning || !signature.trim() || !signingDate || !agreedToTerms
  ? 'bg-slate-400 cursor-not-allowed opacity-60'
  : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-emerald-500/30 hover:shadow-2xl transform hover:scale-[1.02]'
  }`}
  >
  {isSigning ? (
- <span className="flex items-center justify-center gap-3">
- <span className="animate-spin text-2xl">⏳</span> Processing Signature...
+ <span className="flex items-center justify-center gap-2 sm:gap-3">
+ <span className="animate-spin text-xl sm:text-2xl">⏳</span> <span className="text-sm sm:text-base">Processing...</span>
  </span>
  ) : (
- <span className="flex items-center justify-center gap-3">
- <span className="text-2xl">✓</span> Sign & Accept Contract
+ <span className="flex items-center justify-center gap-2 sm:gap-3">
+ <span className="text-xl sm:text-2xl">✓</span> <span className="text-sm sm:text-base">Sign & Accept Contract</span>
  </span>
  )}
  </Button>
  <Button
  onClick={() => router.push('/dashboard/player/contracts')}
  variant="outline"
- className="flex-1 text-lg font-bold py-6 md:py-5 rounded-xl border-3 border-slate-300 hover:bg-red-50 hover:border-red-400 hover:text-red-700 transition-all"
+ className="flex-1 text-sm sm:text-lg font-bold py-4 sm:py-6 md:py-5 rounded-lg sm:rounded-xl border-2 sm:border-3 border-slate-300 hover:bg-red-50 hover:border-red-400 hover:text-red-700 transition-all"
  >
- ❌ Decline & Exit
+ ❌ <span className="hidden sm:inline">Decline & Exit</span><span className="sm:hidden">Decline</span>
  </Button>
  </div>
 
  {/* Warning message */}
- <div className="mt-8 p-5 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-500 rounded-xl text-purple-900">
- <p className="font-bold text-base">⚡ Important: This is a legally binding digital signature.</p>
- <p className="mt-2 text-base">Once signed, you cannot undo this action. Please review all terms carefully before proceeding.</p>
+ <div className="mt-4 sm:mt-8 p-3 sm:p-5 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-500 rounded-xl text-purple-900">
+ <p className="font-bold text-xs sm:text-base">⚡ Important: This is a legally binding digital signature.</p>
+ <p className="mt-2 text-xs sm:text-base">Once signed, you cannot undo this action. Please review all terms carefully before proceeding.</p>
  </div>
  </div>
  </Card>
@@ -756,25 +756,25 @@ export default function ContractViewerPage() {
 
  {/* Signed Contract Info */}
  {contract.signing_status === 'fully_signed' && contract.player_signature_timestamp && (
- <div className="max-w-4xl mx-auto mt-10 mb-10">
- <Card className="p-8 md:p-10 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 border-4 border-emerald-400 shadow-2xl shadow-emerald-500/20 rounded-2xl">
- <div className="flex items-center gap-5 mb-6">
- <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-4xl shadow-xl">
+ <div className="max-w-4xl mx-auto mt-6 sm:mt-10 mb-6 sm:mb-10 px-2 sm:px-0">
+ <Card className="p-4 sm:p-8 md:p-10 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 border-2 sm:border-4 border-emerald-400 shadow-xl sm:shadow-2xl shadow-emerald-500/20 rounded-xl sm:rounded-2xl">
+ <div className="flex items-center gap-3 sm:gap-5 mb-4 sm:mb-6">
+ <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-2xl sm:text-4xl shadow-xl">
  ✅
  </div>
  <div>
- <h3 className="text-3xl font-extrabold text-emerald-900">Contract Successfully Signed!</h3>
- <p className="text-base text-emerald-700 mt-1">This contract is now active and legally binding</p>
+ <h3 className="text-xl sm:text-3xl font-extrabold text-emerald-900">Contract Successfully Signed!</h3>
+ <p className="text-xs sm:text-base text-emerald-700 mt-1">This contract is now active and legally binding</p>
  </div>
  </div>
- <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-6 bg-white rounded-xl border-2 border-emerald-200">
- <div className="p-4 bg-emerald-50 rounded-xl">
- <p className="text-xs text-emerald-700 font-bold uppercase mb-2">👤 Signed By</p>
- <p className="text-xl font-bold text-emerald-900">{playerName}</p>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-5 p-3 sm:p-6 bg-white rounded-lg sm:rounded-xl border-2 border-emerald-200">
+ <div className="p-3 sm:p-4 bg-emerald-50 rounded-lg sm:rounded-xl">
+ <p className="text-xs text-emerald-700 font-bold uppercase mb-1 sm:mb-2">👤 Signed By</p>
+ <p className="text-base sm:text-xl font-bold text-emerald-900 break-words">{playerName}</p>
  </div>
- <div className="p-4 bg-emerald-50 rounded-xl">
- <p className="text-xs text-emerald-700 font-bold uppercase mb-2">📅 Signed On</p>
- <p className="text-xl font-bold text-emerald-900">
+ <div className="p-3 sm:p-4 bg-emerald-50 rounded-lg sm:rounded-xl">
+ <p className="text-xs text-emerald-700 font-bold uppercase mb-1 sm:mb-2">📅 Signed On</p>
+ <p className="text-base sm:text-xl font-bold text-emerald-900">
  {new Date(contract.player_signature_timestamp).toLocaleString('en-IN', {
  dateStyle: 'long',
  timeStyle: 'short'

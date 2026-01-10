@@ -251,8 +251,8 @@ export default function ClubOwnerContractViewPage() {
 
  if (loading) {
  return (
- <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
- <div className="text-slate-600">Loading contract...</div>
+ <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-2 sm:px-4">
+ <div className="text-slate-600 text-sm sm:text-base">Loading contract...</div>
  </div>
  )
  }
@@ -260,16 +260,16 @@ export default function ClubOwnerContractViewPage() {
  if (error || !contract) {
  console.log('Rendering error state:', { error, hasContract: !!contract, loading })
  return (
- <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+ <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-4 sm:py-8 px-2 sm:px-4">
  <div className="max-w-4xl mx-auto">
- <Card className="p-8 border-red-200 bg-red-50">
- <h2 className="text-2xl font-bold text-red-900 mb-4">Unable to Load Contract</h2>
- <p className="text-red-800 mb-6">
+ <Card className="p-4 sm:p-8 border-red-200 bg-red-50 rounded-lg sm:rounded-xl">
+ <h2 className="text-xl sm:text-2xl font-bold text-red-900 mb-3 sm:mb-4">Unable to Load Contract</h2>
+ <p className="text-red-800 mb-4 sm:mb-6 text-sm sm:text-base">
  {error || 'The contract could not be loaded. Please try again or contact support.'}
  </p>
  <Button
  onClick={() => router.push('/dashboard/club-owner/contracts')}
- className="bg-red-600 hover:bg-red-700"
+ className="bg-red-600 hover:bg-red-700 text-sm sm:text-base px-4 py-2"
  >
  Back to Contracts
  </Button>
@@ -283,35 +283,39 @@ export default function ClubOwnerContractViewPage() {
  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
  {/* Top Navigation */}
  <nav className="sticky-nav-mobile-safe bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
- <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
- <div className="flex justify-between items-center h-16">
- <div className="flex items-center gap-3">
+ <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+ <div className="flex justify-between items-center h-14 sm:h-16">
+ <div className="flex items-center gap-2 sm:gap-3">
  <Button
  onClick={() => router.push('/dashboard/club-owner/contracts')}
  variant="outline"
  size="sm"
+ className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
  >
  ← Back
  </Button>
- <span className="text-slate-400">|</span>
- <h1 className="text-lg font-semibold text-slate-900">
+ <span className="text-slate-400 hidden sm:inline">|</span>
+ <h1 className="text-sm sm:text-lg font-semibold text-slate-900 truncate">
  {club?.club_name} - Contract Details
  </h1>
  </div>
- <div className="flex items-center gap-4">
+ <div className="flex items-center gap-2 sm:gap-4">
  <Button
  onClick={() => window.print()}
  variant="outline"
  size="sm"
+ className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
  >
- 🖨️ Print
+ 🖨️ <span className="hidden sm:inline">Print</span>
  </Button>
  <Button
  onClick={() => router.push('/dashboard/club-owner/contracts')}
  variant="outline"
  size="sm"
+ className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
  >
- All Contracts
+ <span className="hidden sm:inline">All Contracts</span>
+ <span className="sm:hidden">📋</span>
  </Button>
  </div>
  </div>
@@ -319,30 +323,30 @@ export default function ClubOwnerContractViewPage() {
  </nav>
 
  {/* Main Content */}
- <div className="py-8">
+ <div className="py-4 sm:py-8">
  {/* Contract Viewer */}
  {contractHtml ? (
- <div className="max-w-4xl mx-auto px-4">
+ <div className="max-w-4xl mx-auto px-2 sm:px-4">
  {/* Display stored HTML contract */}
  <div
- className="bg-white rounded-lg shadow-lg overflow-hidden"
+ className="bg-white rounded-xl sm:rounded-lg shadow-lg overflow-hidden"
  dangerouslySetInnerHTML={{ __html: contractHtml }}
  />
 
  {/* Contract Status Info */}
- <div className="max-w-4xl mx-auto px-4 mt-8">
- <Card className={`p-6 border-2 ${
+ <div className="max-w-4xl mx-auto px-2 sm:px-4 mt-4 sm:mt-8">
+ <Card className={`p-3 sm:p-6 border-2 ${
  contract.signing_status === 'fully_signed'
  ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
  : contract.signing_status === 'unsigned'
  ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200'
  : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
  }`}>
- <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
  {/* Contract Status */}
  <div>
- <h3 className="text-sm font-semibold text-slate-700 mb-2">Contract Status</h3>
- <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full font-medium ${
+ <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-1 sm:mb-2">Contract Status</h3>
+ <div className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-full font-medium text-xs sm:text-sm ${
  contract.status === 'active'
  ? 'bg-green-100 text-green-800'
  : contract.status === 'pending'
@@ -361,8 +365,8 @@ export default function ClubOwnerContractViewPage() {
 
  {/* Signing Status */}
  <div>
- <h3 className="text-sm font-semibold text-slate-700 mb-2">Signing Status</h3>
- <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full font-medium ${
+ <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-1 sm:mb-2">Signing Status</h3>
+ <div className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-full font-medium text-xs sm:text-sm ${
  contract.signing_status === 'fully_signed'
  ? 'bg-green-100 text-green-800'
  : 'bg-yellow-100 text-yellow-800'
@@ -375,8 +379,8 @@ export default function ClubOwnerContractViewPage() {
  {/* Signed Date */}
  {contract.player_signature_timestamp && (
  <div>
- <h3 className="text-sm font-semibold text-slate-700 mb-2">Signed On</h3>
- <p className="text-slate-900 font-medium">
+ <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-1 sm:mb-2">Signed On</h3>
+ <p className="text-slate-900 font-medium text-xs sm:text-base break-words">
  {new Date(contract.player_signature_timestamp).toLocaleString('en-IN')}
  </p>
  </div>
@@ -385,21 +389,21 @@ export default function ClubOwnerContractViewPage() {
 
  {/* Player Signature Info */}
  {contract.player_signature_data && (
- <div className="mt-6 pt-6 border-t border-slate-200">
- <h3 className="text-sm font-semibold text-slate-700 mb-3">Player Signature Information</h3>
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+ <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-slate-200">
+ <h3 className="text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3">Player Signature Information</h3>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
  <div>
- <span className="text-sm text-slate-600">Signed By:</span>
- <p className="font-medium text-slate-900">{contract.player_signature_data.name}</p>
+ <span className="text-xs sm:text-sm text-slate-600">Signed By:</span>
+ <p className="font-medium text-slate-900 text-sm sm:text-base break-words">{contract.player_signature_data.name}</p>
  </div>
  <div>
- <span className="text-sm text-slate-600">Method:</span>
- <p className="font-medium text-slate-900 capitalize">{contract.player_signature_data.method}</p>
+ <span className="text-xs sm:text-sm text-slate-600">Method:</span>
+ <p className="font-medium text-slate-900 capitalize text-sm sm:text-base">{contract.player_signature_data.method}</p>
  </div>
  {contract.player_signature_data.signedAt && (
  <div>
- <span className="text-sm text-slate-600">Date:</span>
- <p className="font-medium text-slate-900">{contract.player_signature_data.signedAt}</p>
+ <span className="text-xs sm:text-sm text-slate-600">Date:</span>
+ <p className="font-medium text-slate-900 text-sm sm:text-base">{contract.player_signature_data.signedAt}</p>
  </div>
  )}
  </div>
@@ -409,9 +413,9 @@ export default function ClubOwnerContractViewPage() {
  </div>
  </div>
  ) : (
- <div className="max-w-4xl mx-auto px-4">
- <Card className="p-8 text-center border-yellow-200 bg-yellow-50">
- <p className="text-yellow-800">
+ <div className="max-w-4xl mx-auto px-2 sm:px-4">
+ <Card className="p-4 sm:p-8 text-center border-yellow-200 bg-yellow-50">
+ <p className="text-yellow-800 text-sm sm:text-base">
  <strong>Note:</strong> Contract HTML is not available for this contract.
  </p>
  </Card>

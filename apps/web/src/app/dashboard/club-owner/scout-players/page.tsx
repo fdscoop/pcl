@@ -671,10 +671,11 @@ export default function ScoutPlayersPage() {
  </div>
  )}
 
- {/* Player Details Modal - Mobile Optimized */}
+ {/* Player Details Modal - Responsive Layout with proper viewport containment */}
  {viewModal.isOpen && viewModal.player && (
- <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130] overflow-y-auto flex items-start sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
- <Card className="w-full sm:max-w-4xl sm:rounded-2xl rounded-t-3xl rounded-b-none sm:rounded-b-2xl shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 my-0 sm:my-8 bg-white">
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130] flex items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+ <div className="w-full h-full sm:h-auto sm:max-w-6xl lg:max-w-7xl sm:max-h-[90vh] overflow-y-auto">
+ <Card className="w-full h-full sm:h-auto sm:rounded-2xl rounded-none shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 bg-white">
  <CardHeader className="border-b bg-white sticky top-0 z-10 pb-4 pt-6 px-4 sm:px-6">
  <div className="flex justify-between items-start gap-4">
  <div className="flex-1 min-w-0">
@@ -697,11 +698,13 @@ export default function ScoutPlayersPage() {
  </CardHeader>
 
  <CardContent className="space-y-4 sm:space-y-6 pt-0 px-0 sm:px-6 pb-6 bg-white">
- {/* Player Photo - Hero Section */}
+ {/* Player Photo Section - Responsive: Hero on mobile, Side-by-side on desktop */}
+ <div className="lg:grid lg:grid-cols-[400px_1fr] lg:gap-6 lg:px-6 lg:pt-6">
+ {/* Player Photo */}
  {viewModal.player.photo_url && (
  <div className="relative w-full">
- {/* Mobile: Full-width hero image */}
- <div className="relative w-full h-[400px] sm:h-[450px] md:h-[500px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+ {/* Full-width hero image */}
+ <div className="relative w-full h-[400px] sm:h-[450px] lg:h-[500px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden lg:rounded-2xl">
  <Image
  src={viewModal.player.photo_url}
  alt={`${viewModal.player.users?.first_name} ${viewModal.player.users?.last_name}`}
@@ -712,8 +715,8 @@ export default function ScoutPlayersPage() {
  {/* Gradient overlay for text readability */}
  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
  
- {/* Player info overlay on image */}
- <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
+ {/* Player info overlay on image - Only on mobile/tablet */}
+ <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white lg:hidden">
  <div className="flex items-end justify-between gap-4">
  <div className="flex-1">
  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-2 drop-shadow-lg">
@@ -741,10 +744,52 @@ export default function ScoutPlayersPage() {
  </div>
  )}
 
+ {/* Desktop: Info cards next to image */}
+ <div className="hidden lg:block space-y-6">
+ {/* Player Name & Basic Info - Desktop only */}
+ <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-2xl p-6">
+ <h2 className="text-3xl font-black text-slate-900 mb-3">
+ {viewModal.player.users?.first_name} {viewModal.player.users?.last_name}
+ </h2>
+ <div className="flex flex-wrap items-center gap-3">
+ <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-teal-600 text-white shadow-md">
+ {viewModal.player.position || 'Player'}
+ </span>
+ {viewModal.player.jersey_number && (
+ <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-blue-600 text-white shadow-md">
+ #{viewModal.player.jersey_number}
+ </span>
+ )}
+ {viewModal.player.nationality && (
+ <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-purple-600 text-white shadow-md">
+ {viewModal.player.nationality}
+ </span>
+ )}
+ </div>
+ </div>
+
+ {/* Performance Statistics - Desktop */}
+ <div className="grid grid-cols-3 gap-4">
+ <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-5 rounded-2xl text-center shadow-xl hover:scale-105 transition-transform">
+ <p className="text-4xl font-black">{viewModal.player.total_matches_played}</p>
+ <p className="text-sm font-semibold mt-2 opacity-90">Matches</p>
+ </div>
+ <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-5 rounded-2xl text-center shadow-xl hover:scale-105 transition-transform">
+ <p className="text-4xl font-black">{viewModal.player.total_goals_scored}</p>
+ <p className="text-sm font-semibold mt-2 opacity-90">Goals</p>
+ </div>
+ <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-5 rounded-2xl text-center shadow-xl hover:scale-105 transition-transform">
+ <p className="text-4xl font-black">{viewModal.player.total_assists}</p>
+ <p className="text-sm font-semibold mt-2 opacity-90">Assists</p>
+ </div>
+ </div>
+ </div>
+ </div>
+
  {/* Content Section - Now with padding */}
  <div className="px-4 sm:px-6 space-y-4 sm:space-y-6">
- {/* Performance Statistics - Prominent placement */}
- <div className="grid grid-cols-3 gap-3 sm:gap-4 -mt-8 sm:-mt-10 relative z-10">
+ {/* Performance Statistics - Mobile/Tablet only (floating above image) */}
+ <div className="grid grid-cols-3 gap-3 sm:gap-4 -mt-8 sm:-mt-10 relative z-10 lg:hidden">
  <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center shadow-xl hover:scale-105 transition-transform">
  <p className="text-3xl sm:text-4xl font-black">{viewModal.player.total_matches_played}</p>
  <p className="text-xs sm:text-sm font-semibold mt-2 opacity-90">Matches</p>
@@ -834,8 +879,8 @@ export default function ScoutPlayersPage() {
  </div>
  </div>
 
- {/* Action Buttons - Sticky on mobile */}
- <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t-2 border-slate-200 sticky bottom-0 bg-white pb-2">
+ {/* Action Buttons */}
+ <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t-2 border-slate-200 bg-white pb-2">
  <Button
  className="flex-1 h-12 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg font-semibold"
  onClick={() => {
@@ -863,6 +908,7 @@ export default function ScoutPlayersPage() {
  </div>
  </CardContent>
  </Card>
+ </div>
  </div>
  )}
 

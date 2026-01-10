@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
 import { useToast } from '@/context/ToastContext'
-import { Edit2, X } from 'lucide-react'
+import { Edit2, X, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Player {
  id: string
@@ -43,6 +43,7 @@ export default function TeamManagementPage() {
  const [editingJerseyNumber, setEditingJerseyNumber] = useState<string>('')
  const [updatingJersey, setUpdatingJersey] = useState(false)
  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
+ const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null) // For mobile expand/collapse
  const { addToast } = useToast()
  const {
  notifications,
@@ -814,20 +815,26 @@ export default function TeamManagementPage() {
 
  const colors = getPositionColor(player.players?.position || '')
  const isSelected = selectedPlayer?.id === player.id
+ const isExpanded = expandedPlayerId === player.id
 
  return (
  <div
  key={player.id}
  className={`relative overflow-hidden rounded-xl sm:rounded-2xl bg-white border-2 ${
  isSelected ? 'border-teal-500 shadow-lg shadow-teal-200' : colors.border
- } shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer`}
+ } shadow-md hover:shadow-xl transition-all duration-300 group`}
  >
  <div 
- className="flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-3"
+ className="flex items-center gap-2.5 sm:gap-4 p-2.5 sm:p-3 cursor-pointer"
  onClick={(e) => {
  // Don't trigger if clicking on jersey edit area
  if (editingJerseyPlayerId !== player.id) {
+ // On mobile: toggle expand, on desktop: select player for right panel
+ if (window.innerWidth < 1024) {
+ setExpandedPlayerId(isExpanded ? null : player.id)
+ } else {
  setSelectedPlayer(player)
+ }
  }
  }}
  >
@@ -929,7 +936,158 @@ export default function TeamManagementPage() {
  </Button>
  )}
  </div>
+ 
+ {/* Expand/Collapse Arrow - Mobile only */}
+ <div className="flex-shrink-0 lg:hidden">
+ {isExpanded ? (
+ <ChevronUp className="w-5 h-5 text-teal-600" />
+ ) : (
+ <ChevronDown className="w-5 h-5 text-gray-400" />
+ )}
  </div>
+ </div>
+
+ {/* Expanded Player Details - Mobile only - Matches Desktop View */}
+ {isExpanded && (
+ <div className="lg:hidden border-t border-gray-200 bg-gradient-to-br from-teal-500 to-teal-700 animate-in slide-in-from-top duration-200">
+ {/* Player Image Section */}
+ <div className="relative">
+ <div className="aspect-[4/3] relative overflow-hidden">
+ {player.players?.photo_url ? (
+ <img
+ src={player.players.photo_url}
+ alt={`${player.players.users?.first_name} ${player.players.users?.last_name}`}
+ className="w-full h-full object-cover"
+ />
+ ) : (
+ <div className="w-full h-full bg-gradient-to-br from-teal-600 to-teal-800 flex items-center justify-center">
+ <span className="text-6xl text-white/30 font-bold">
+ {player.players?.users?.first_name?.[0]}{player.players?.users?.last_name?.[0]}
+ </span>
+ </div>
+ )}
+ {/* Gradient Overlay */}
+ <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+ </div>
+ {/* Position Badge */}
+ <div className="absolute top-4 left-4">
+ <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg border border-white/30">
+ {player.players?.position?.toUpperCase()}
+ </div>
+ </div>
+ </div>
+
+ {/* Player Details Section */}
+ <div className="p-5 relative">
+ {/* Player Name */}
+ <div className="mb-6">
+ <h3 className="text-2xl font-black text-white mb-2">
+ {player.players?.users?.first_name}<br />
+ {player.players?.users?.last_name}
+ </h3>
+ <div className="flex flex-wrap items-center gap-1.5 mt-3">
+ <Badge className="bg-white text-teal-700 text-[10px] font-semibold px-2 py-0.5">
+ AGE: {player.players?.date_of_birth ? (() => {
+ const birthDate = new Date(player.players.date_of_birth)
+ const today = new Date()
+ let age = today.getFullYear() - birthDate.getFullYear()
+ const monthDiff = today.getMonth() - birthDate.getMonth()
+ if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+ age--
+ }
+ return age
+ })() : 'N/A'}
+ </Badge>
+ <Badge className="bg-white text-teal-700 text-[10px] font-semibold px-2 py-0.5">
+ {player.players?.nationality || 'N/A'}
+ </Badge>
+ <Badge className="bg-white text-teal-700 text-[10px] font-semibold px-2 py-0.5">
+ {player.players?.position === 'Midfielder' ? 'CAM' : player.players?.position?.toUpperCase()}
+ </Badge>
+ </div>
+ <div className="mt-4">
+ <button
+ onClick={() => router.push(`/dashboard/club-owner/players/${player.players?.id}`)}
+ className="px-4 py-2 bg-white text-teal-700 rounded-lg font-semibold hover:bg-teal-50 transition-all shadow-lg flex items-center gap-2 text-sm"
+ >
+ <span className="text-base">👤</span>
+ View Full Profile
+ </button>
+ </div>
+ </div>
+
+ {/* Stats - Simulated */}
+ <div className="space-y-3 px-5 pb-5">
+ <div>
+ <div className="flex items-center justify-between mb-1.5">
+ <span className="text-white font-semibold text-xs">Athleticism</span>
+ <span className="text-white font-bold text-xs">86</span>
+ </div>
+ <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+ <div className="h-full bg-gradient-to-r from-green-400 to-green-500" style={{ width: '86%' }}></div>
+ </div>
+ </div>
+
+ <div>
+ <div className="flex items-center justify-between mb-1.5">
+ <span className="text-white font-semibold text-xs">Shooting</span>
+ <span className="text-white font-bold text-xs">60</span>
+ </div>
+ <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+ <div className="h-full bg-gradient-to-r from-pink-400 to-pink-500" style={{ width: '60%' }}></div>
+ </div>
+ </div>
+
+ <div>
+ <div className="flex items-center justify-between mb-1.5">
+ <span className="text-white font-semibold text-xs">Technical</span>
+ <span className="text-white font-bold text-xs">85</span>
+ </div>
+ <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+ <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: '85%' }}></div>
+ </div>
+ </div>
+
+ <div>
+ <div className="flex items-center justify-between mb-1.5">
+ <span className="text-white font-semibold text-xs">Defending</span>
+ <span className="text-white font-bold text-xs">40</span>
+ </div>
+ <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+ <div className="h-full bg-gradient-to-r from-red-400 to-red-500" style={{ width: '40%' }}></div>
+ </div>
+ </div>
+
+ <div>
+ <div className="flex items-center justify-between mb-1.5">
+ <span className="text-white font-semibold text-xs">Mentality</span>
+ <span className="text-white font-bold text-xs">72</span>
+ </div>
+ <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+ <div className="h-full bg-gradient-to-r from-purple-400 to-purple-500" style={{ width: '72%' }}></div>
+ </div>
+ </div>
+
+ <div>
+ <div className="flex items-center justify-between mb-1.5">
+ <span className="text-white font-semibold text-xs">Passing</span>
+ <span className="text-white font-bold text-xs">86</span>
+ </div>
+ <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+ <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: '86%' }}></div>
+ </div>
+ </div>
+ </div>
+
+ {/* Jersey Number - Large Display */}
+ <div className="absolute bottom-4 right-4 opacity-10">
+ <span className="text-[80px] font-black text-white leading-none">
+ {player.jersey_number || '?'}
+ </span>
+ </div>
+ </div>
+ </div>
+ )}
 
  {/* Hover effect indicator */}
  <div className={`absolute left-0 top-0 bottom-0 w-1 ${
@@ -940,8 +1098,8 @@ export default function TeamManagementPage() {
  })}
  </div>
 
- {/* Right Column - Selected Player Details */}
- <div className="lg:col-span-3">
+ {/* Right Column - Selected Player Details - Desktop Only */}
+ <div className="hidden lg:block lg:col-span-3">
  {selectedPlayer ? (
  <div className="sticky top-4 lg:top-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-xl sm:shadow-2xl bg-gradient-to-br from-teal-500 to-teal-700">
  <div className="flex flex-col lg:flex-row">

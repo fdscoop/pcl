@@ -696,19 +696,68 @@ export default function ScoutPlayersPage() {
  </div>
  </CardHeader>
 
- <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 px-4 sm:px-6 pb-6 bg-white">
- {/* Player Photo - Larger and mobile-friendly */}
+ <CardContent className="space-y-4 sm:space-y-6 pt-0 px-0 sm:px-6 pb-6 bg-white">
+ {/* Player Photo - Hero Section */}
  {viewModal.player.photo_url && (
- <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-xl sm:rounded-2xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 shadow-lg">
+ <div className="relative w-full">
+ {/* Mobile: Full-width hero image */}
+ <div className="relative w-full h-[400px] sm:h-[450px] md:h-[500px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
  <Image
  src={viewModal.player.photo_url}
  alt={`${viewModal.player.users?.first_name} ${viewModal.player.users?.last_name}`}
  fill
- className="object-contain p-2"
+ className="object-cover opacity-90"
  priority
  />
+ {/* Gradient overlay for text readability */}
+ <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+ 
+ {/* Player info overlay on image */}
+ <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
+ <div className="flex items-end justify-between gap-4">
+ <div className="flex-1">
+ <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-2 drop-shadow-lg">
+ {viewModal.player.users?.first_name} {viewModal.player.users?.last_name}
+ </h2>
+ <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+ <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-white/20 backdrop-blur-md border border-white/30">
+ {viewModal.player.position || 'Player'}
+ </span>
+ {viewModal.player.jersey_number && (
+ <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-white/20 backdrop-blur-md border border-white/30">
+ #{viewModal.player.jersey_number}
+ </span>
+ )}
+ {viewModal.player.nationality && (
+ <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs sm:text-sm font-bold bg-white/20 backdrop-blur-md border border-white/30">
+ {viewModal.player.nationality}
+ </span>
+ )}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
  </div>
  )}
+
+ {/* Content Section - Now with padding */}
+ <div className="px-4 sm:px-6 space-y-4 sm:space-y-6">
+ {/* Performance Statistics - Prominent placement */}
+ <div className="grid grid-cols-3 gap-3 sm:gap-4 -mt-8 sm:-mt-10 relative z-10">
+ <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center shadow-xl hover:scale-105 transition-transform">
+ <p className="text-3xl sm:text-4xl font-black">{viewModal.player.total_matches_played}</p>
+ <p className="text-xs sm:text-sm font-semibold mt-2 opacity-90">Matches</p>
+ </div>
+ <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center shadow-xl hover:scale-105 transition-transform">
+ <p className="text-3xl sm:text-4xl font-black">{viewModal.player.total_goals_scored}</p>
+ <p className="text-xs sm:text-sm font-semibold mt-2 opacity-90">Goals</p>
+ </div>
+ <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center shadow-xl hover:scale-105 transition-transform">
+ <p className="text-3xl sm:text-4xl font-black">{viewModal.player.total_assists}</p>
+ <p className="text-xs sm:text-sm font-semibold mt-2 opacity-90">Assists</p>
+ </div>
+ </div>
 
  {/* Player Bio */}
  {viewModal.player.users?.bio && (
@@ -760,25 +809,6 @@ export default function ScoutPlayersPage() {
  </div>
  </div>
 
- {/* Performance Statistics */}
- <div>
- <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3 sm:mb-4">Performance Statistics</h3>
- <div className="grid grid-cols-3 gap-3 sm:gap-4">
- <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center hover:scale-105 transition-transform">
- <p className="text-2xl sm:text-3xl font-black text-blue-700">{viewModal.player.total_matches_played}</p>
- <p className="text-xs font-semibold text-blue-600 mt-2">Matches Played</p>
- </div>
- <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center hover:scale-105 transition-transform">
- <p className="text-2xl sm:text-3xl font-black text-green-700">{viewModal.player.total_goals_scored}</p>
- <p className="text-xs font-semibold text-green-600 mt-2">Goals Scored</p>
- </div>
- <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 p-4 sm:p-5 rounded-xl sm:rounded-2xl text-center hover:scale-105 transition-transform">
- <p className="text-2xl sm:text-3xl font-black text-purple-700">{viewModal.player.total_assists}</p>
- <p className="text-xs font-semibold text-purple-600 mt-2">Assists</p>
- </div>
- </div>
- </div>
-
  {/* Location Information */}
  <div>
  <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
@@ -800,6 +830,7 @@ export default function ScoutPlayersPage() {
  <p className="text-sm sm:text-base font-bold text-slate-900">{viewModal.player.address}</p>
  </div>
  )}
+ </div>
  </div>
  </div>
 

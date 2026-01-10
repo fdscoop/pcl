@@ -42,3 +42,7 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# APK files - should not be in public folder or committed to repo
+*.apk
+apps/web/public/*.apk

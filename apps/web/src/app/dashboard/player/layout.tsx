@@ -113,7 +113,7 @@ export default function PlayerLayout({
  { name: 'Profile', href: '/dashboard/player/profile', icon: User },
  { name: 'Statistics', href: '/dashboard/player/statistics', icon: BarChart3 },
  { name: 'Training', href: '/dashboard/player/training', icon: Dumbbell },
- { name: 'KYC', href: '/kyc/upload', icon: Shield },
+ { name: 'KYC', href: '/kyc/verify', icon: Shield },
  { name: 'Contracts', href: '/dashboard/player/contracts', icon: FileText },
  { name: 'Messages', href: '/dashboard/player/messages', icon: Mail, badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
  { name: 'Matches', href: '/dashboard/player/matches', icon: Trophy },

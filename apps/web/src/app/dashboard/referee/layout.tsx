@@ -122,7 +122,7 @@ export default function RefereeLayout({
  return (
  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 ">
  {/* Mobile Header */}
- <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200 ">
+ <header className="lg:hidden sticky-nav-mobile-safe fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200 ">
  <div className="flex items-center justify-between px-4 h-16">
  <div className="flex items-center gap-3">
  <div className="p-2 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25">

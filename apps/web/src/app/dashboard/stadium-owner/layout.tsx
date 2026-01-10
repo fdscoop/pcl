@@ -134,7 +134,7 @@ export default function StadiumOwnerLayout({
  return (
  <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/30 to-slate-50 ">
  {/* Mobile Header */}
- <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-orange-100 shadow-sm shadow-orange-100/50 ">
+ <header className="lg:hidden sticky-nav-mobile-safe fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-orange-100 shadow-sm shadow-orange-100/50 ">
  <div className="flex items-center justify-between px-4 h-14">
  <div className="flex items-center gap-2.5">
  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">

@@ -159,7 +159,7 @@ export default function ClubOwnerLayout({
       <PushNotificationPrompt />
       
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b-2 border-teal-200 shadow-lg">
+      <header className="lg:hidden sticky-nav-mobile-safe fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b-2 border-teal-200 shadow-lg">
         <div className="flex items-center justify-between px-4 h-16">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25">

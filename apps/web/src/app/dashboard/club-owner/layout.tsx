@@ -195,66 +195,66 @@ export default function ClubOwnerLayout({
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Menu Overlay */}
-        {mobileMenuOpen && (
-          <>
-            <div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110]"
-              onClick={() => setMobileMenuOpen(false)}
-              style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
-            />
-            <div 
-              className="fixed left-0 right-0 bottom-0 bg-white z-[120] overflow-y-auto animate-in slide-in-from-top-2 duration-200"
-              style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
-            >
-              {/* Club Info */}
-              <div className="sticky top-0 bg-white z-10 p-4 border-b border-teal-100 shadow-sm">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-200">
-                  {club?.logo_url ? (
-                    <img
-                      src={club.logo_url}
-                      alt={club?.club_name || 'Club'}
-                      className="w-12 h-12 rounded-xl object-cover border-2 border-teal-300 shadow-lg"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-teal-500/25">
-                      {club?.club_name?.charAt(0) || 'C'}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-900 truncate">
-                      {club?.club_name}
-                    </p>
-                    <p className="text-sm text-slate-500 truncate">{userData?.email}</p>
+      {/* Mobile Menu Overlay - Outside header for proper z-index */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[110]"
+            onClick={() => setMobileMenuOpen(false)}
+            style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
+          />
+          <div 
+            className="lg:hidden fixed left-0 right-0 bottom-0 bg-white z-[120] overflow-y-auto animate-in slide-in-from-top-2 duration-200"
+            style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
+          >
+            {/* Club Info */}
+            <div className="sticky top-0 bg-white z-10 p-4 border-b border-teal-100 shadow-sm">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-200">
+                {club?.logo_url ? (
+                  <img
+                    src={club.logo_url}
+                    alt={club?.club_name || 'Club'}
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-teal-300 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-teal-500/25">
+                    {club?.club_name?.charAt(0) || 'C'}
                   </div>
-                  {club?.kyc_verified && (
-                    <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-teal-100 text-teal-700 border border-teal-200">
-                      ✓ Verified
-                    </span>
-                  )}
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 truncate">
+                    {club?.club_name}
+                  </p>
+                  <p className="text-sm text-slate-500 truncate">{userData?.email}</p>
                 </div>
-              </div>
-
-              {/* Navigation List - Scrollable */}
-              <div className="pb-20">
-                <ClubMobileNavList items={navigation} onItemClick={() => setMobileMenuOpen(false)} />
-              </div>
-
-              {/* Sign Out - Fixed at bottom */}
-              <div className="sticky bottom-0 bg-white p-4 border-t-2 border-slate-200 shadow-lg">
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center justify-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium border-2 border-red-200"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Sign Out</span>
-                </button>
+                {club?.kyc_verified && (
+                  <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-teal-100 text-teal-700 border border-teal-200">
+                    ✓ Verified
+                  </span>
+                )}
               </div>
             </div>
-          </>
-        )}
-      </header>
+
+            {/* Navigation List - Scrollable */}
+            <div className="pb-20">
+              <ClubMobileNavList items={navigation} onItemClick={() => setMobileMenuOpen(false)} />
+            </div>
+
+            {/* Sign Out - Fixed at bottom */}
+            <div className="sticky bottom-0 bg-white p-4 border-t-2 border-slate-200 shadow-lg">
+              <button
+                onClick={handleSignOut}
+                className="flex items-center justify-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium border-2 border-red-200"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Desktop Layout */}
       <div className="flex">

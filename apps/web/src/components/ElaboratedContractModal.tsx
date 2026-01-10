@@ -242,125 +242,131 @@ export default function ElaboratedContractModal({
  }
 
  return (
- <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto pt-20">
- <Card className="w-full max-w-5xl shadow-2xl my-8 flex-shrink-0">
- {/* Header */}
- <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10">
- <div className="flex justify-between items-start">
- <div>
- <CardTitle className="text-3xl font-bold">Professional Player Contract</CardTitle>
- <p className="text-blue-100 mt-2 text-sm">Professional Club League (PCL)</p>
+ <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130] flex items-center justify-center p-0 sm:p-4">
+ <Card className="w-full h-full sm:h-auto sm:max-w-5xl sm:max-h-[90vh] shadow-2xl sm:rounded-2xl rounded-none flex flex-col bg-white">
+ {/* Header - Sticky on mobile */}
+ <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0 z-10 flex-shrink-0 sm:rounded-t-2xl rounded-none">
+ <div className="flex justify-between items-center">
+ <div className="flex-1">
+ <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold">Professional Player Contract</CardTitle>
+ <p className="text-blue-100 mt-1 text-xs sm:text-sm">Professional Club League (PCL)</p>
  </div>
  <Button
  variant="ghost"
- size="lg"
+ size="sm"
  onClick={onClose}
- className="text-white hover:bg-blue-500"
+ className="text-white hover:bg-blue-500 flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 p-0"
  >
- ✕
+ <span className="text-xl sm:text-2xl">✕</span>
  </Button>
  </div>
  </CardHeader>
 
- <CardContent className="p-8 space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto">
- {/* Tabs Navigation */}
- <div className="flex gap-2 border-b-2">
+ <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 overflow-y-auto flex-1">
+ {/* Tabs Navigation - Mobile Optimized */}
+ <div className="flex gap-2 border-b-2 -mx-4 sm:mx-0 px-4 sm:px-0">
  <button
  onClick={() => setActiveTab('form')}
- className={`flex-1 py-3 px-4 rounded-t-lg font-semibold transition-all ${
+ className={`flex-1 py-2 sm:py-3 px-2 sm:px-4 rounded-t-lg font-semibold text-xs sm:text-base transition-all ${
  activeTab === 'form'
  ? 'bg-blue-600 text-white shadow-lg'
  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
  }`}
  >
- 📝 Contract Form
+ <span className="hidden sm:inline">📝 </span>Contract Form
  </button>
  <button
  onClick={() => setActiveTab('policies')}
- className={`flex-1 py-3 px-4 rounded-t-lg font-semibold transition-all ${
+ className={`flex-1 py-2 sm:py-3 px-2 sm:px-4 rounded-t-lg font-semibold text-xs sm:text-base transition-all ${
  activeTab === 'policies'
  ? 'bg-blue-600 text-white shadow-lg'
  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
  }`}
  >
- 📋 PCL Policies
+ <span className="hidden sm:inline">📋 </span>PCL Policies
  </button>
  </div>
 
  {/* CONTRACT FORM TAB */}
  {activeTab === 'form' && (
- <div className="space-y-8 pt-4">
- {/* Club Information Section */}
- <div className="border-2 border-blue-300 rounded-lg p-6 bg-blue-50">
- <h3 className="text-xl font-bold text-blue-900 mb-4">🏢 Club Information (Employer)</h3>
- <div className="grid grid-cols-2 gap-4">
+ <div className="space-y-4 sm:space-y-6 lg:space-y-8 pt-2 sm:pt-4">
+ {/* Club Information Section - Mobile Optimized */}
+ <div className="border-2 border-blue-300 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 bg-blue-50">
+ <h3 className="text-base sm:text-lg lg:text-xl font-bold text-blue-900 mb-3 sm:mb-4 flex items-center gap-2">
+ <span className="text-lg sm:text-xl">🏢</span>
+ <span>Club Information</span>
+ </h3>
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div>
  <p className="text-xs text-slate-600 font-semibold">CLUB NAME</p>
- <p className="text-lg font-bold text-slate-900">{clubName}</p>
+ <p className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 mt-1">{clubName}</p>
  </div>
  <div>
  <p className="text-xs text-slate-600 font-semibold">CLUB ID</p>
- <p className="text-sm font-mono text-slate-700">{clubId}</p>
+ <p className="text-xs sm:text-sm font-mono text-slate-700 mt-1">{clubId}</p>
  </div>
- <div className="col-span-2">
+ <div className="sm:col-span-2">
  <p className="text-xs text-slate-600 font-semibold">LOCATION</p>
- <p className="text-sm text-slate-700">📍 {clubLocation}</p>
+ <p className="text-xs sm:text-sm text-slate-700 mt-1">📍 {clubLocation}</p>
  </div>
- <div className="col-span-2">
+ <div className="sm:col-span-2">
  <p className="text-xs text-slate-600 font-semibold">CONTACT</p>
- <p className="text-sm text-slate-700">📧 {clubContact}</p>
+ <p className="text-xs sm:text-sm text-slate-700 mt-1 break-all">📧 {clubContact}</p>
  </div>
  </div>
  </div>
 
- {/* Player Information Section */}
- <div className="border-2 border-green-300 rounded-lg p-6 bg-green-50">
- <h3 className="text-xl font-bold text-green-900 mb-4">⚽ Player Information (Employee)</h3>
- <div className="grid grid-cols-2 gap-4">
+ {/* Player Information Section - Mobile Optimized */}
+ <div className="border-2 border-green-300 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 bg-green-50">
+ <h3 className="text-base sm:text-lg lg:text-xl font-bold text-green-900 mb-3 sm:mb-4 flex items-center gap-2">
+ <span className="text-lg sm:text-xl">⚽</span>
+ <span>Player Information</span>
+ </h3>
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div>
  <p className="text-xs text-slate-600 font-semibold">PLAYER NAME</p>
- <p className="text-lg font-bold text-slate-900">
+ <p className="text-sm sm:text-base lg:text-lg font-bold text-slate-900 mt-1">
  {player.users?.first_name} {player.users?.last_name}
  </p>
  </div>
  <div>
  <p className="text-xs text-slate-600 font-semibold">PLAYER ID</p>
- <p className="text-sm font-mono text-slate-700">{player.unique_player_id}</p>
+ <p className="text-xs sm:text-sm font-mono text-slate-700 mt-1">{player.unique_player_id}</p>
  </div>
- <div>
+ <div className="sm:col-span-2">
  <p className="text-xs text-slate-600 font-semibold">EMAIL</p>
- <p className="text-sm text-slate-700">{player.users?.email || 'Not provided'}</p>
+ <p className="text-xs sm:text-sm text-slate-700 mt-1 break-all">{player.users?.email || 'Not provided'}</p>
  </div>
  <div>
  <p className="text-xs text-slate-600 font-semibold">STATE</p>
- <p className="text-sm text-slate-700">{player.state || 'Not provided'}</p>
+ <p className="text-xs sm:text-sm text-slate-700 mt-1">{player.state || 'Not provided'}</p>
  </div>
  <div>
  <p className="text-xs text-slate-600 font-semibold">DISTRICT</p>
- <p className="text-sm text-slate-700">{player.district || 'Not provided'}</p>
+ <p className="text-xs sm:text-sm text-slate-700 mt-1">{player.district || 'Not provided'}</p>
  </div>
- <div>
+ <div className="sm:col-span-2">
  <p className="text-xs text-slate-600 font-semibold">ADDRESS</p>
- <p className="text-sm text-slate-700">{player.address || 'Not provided'}</p>
+ <p className="text-xs sm:text-sm text-slate-700 mt-1">{player.address || 'Not provided'}</p>
  </div>
  </div>
  </div>
 
- {/* Contract Details Form */}
- <div className="border-2 border-slate-300 rounded-lg p-6 bg-slate-50 space-y-6">
+ {/* Contract Details Form - Mobile Optimized */}
+ <div className="border-2 border-slate-300 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 bg-slate-50 space-y-4 sm:space-y-6">
  <div>
- <h3 className="text-xl font-bold text-slate-900">CONTRACT TERMS TO BE FILLED</h3>
- <p className="text-xs text-slate-600 mt-2">
+ <h3 className="text-base sm:text-lg lg:text-xl font-bold text-slate-900">CONTRACT TERMS</h3>
+ <p className="text-xs text-slate-600 mt-1 sm:mt-2">
  <span className="text-red-500">*</span> indicates required field
  </p>
  </div>
 
- {/* Employment Period */}
- <div className="bg-white p-4 rounded-lg border border-slate-200">
- <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
- 📅 Employment Period
+ {/* Employment Period - Mobile Optimized */}
+ <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200">
+ <h4 className="font-bold text-sm sm:text-base text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+ <span>📅</span> Employment Period
  </h4>
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div>
  <label className="text-xs font-semibold text-slate-600 block mb-2">
  CONTRACT TYPE <span className="text-red-500">*</span>
@@ -433,12 +439,12 @@ export default function ElaboratedContractModal({
  </div>
  </div>
 
- {/* Financial Terms */}
- <div className="bg-white p-4 rounded-lg border border-slate-200">
- <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
- 💰 Financial Terms
+ {/* Financial Terms - Mobile Optimized */}
+ <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200">
+ <h4 className="font-bold text-sm sm:text-base text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+ <span>💰</span> Financial Terms
  </h4>
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div>
  <label className="text-xs font-semibold text-slate-600 block mb-2">
  ANNUAL SALARY (₹) <span className="text-red-500">*</span>
@@ -512,12 +518,12 @@ export default function ElaboratedContractModal({
  </div>
  </div>
 
- {/* Player Contract Details */}
- <div className="bg-white p-4 rounded-lg border border-slate-200">
- <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
- 🏆 Player Contract Details
+ {/* Player Contract Details - Mobile Optimized */}
+ <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200">
+ <h4 className="font-bold text-sm sm:text-base text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+ <span>🏆</span> Player Contract Details
  </h4>
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div>
  <label className="text-xs font-semibold text-slate-600 block mb-2">
  POSITION
@@ -577,12 +583,12 @@ export default function ElaboratedContractModal({
  </div>
  </div>
 
- {/* Benefits & Allowances */}
- <div className="bg-white p-4 rounded-lg border border-slate-200">
- <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
- 🏥 Benefits & Allowances
+ {/* Benefits & Allowances - Mobile Optimized */}
+ <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200">
+ <h4 className="font-bold text-sm sm:text-base text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+ <span>🏥</span> Benefits & Allowances
  </h4>
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div>
  <label className="text-xs font-semibold text-slate-600 block mb-2">
  MEDICAL INSURANCE (₹ per year)
@@ -612,12 +618,12 @@ export default function ElaboratedContractModal({
  </div>
  </div>
 
- {/* Agent Details */}
- <div className="bg-white p-4 rounded-lg border border-slate-200">
- <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
- 👤 Player Agent/Representative (Optional)
+ {/* Agent Details - Mobile Optimized */}
+ <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200">
+ <h4 className="font-bold text-sm sm:text-base text-slate-900 mb-3 sm:mb-4 flex items-center gap-2">
+ <span>👤</span> Player Agent (Optional)
  </h4>
- <div className="grid grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <div>
  <label className="text-xs font-semibold text-slate-600 block mb-2">
  AGENT NAME
@@ -647,8 +653,8 @@ export default function ElaboratedContractModal({
  </div>
  </div>
 
- {/* Additional Terms & Conditions */}
- <div className="bg-white p-4 rounded-lg border border-slate-200">
+ {/* Additional Terms & Conditions - Mobile Optimized */}
+ <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200">
  <label className="text-xs font-semibold text-slate-600 block mb-2">
  ADDITIONAL TERMS & CONDITIONS
  </label>
@@ -657,21 +663,26 @@ export default function ElaboratedContractModal({
  value={formData.termsAndConditions}
  onChange={handleInputChange}
  placeholder="Enter any additional terms, conditions, special clauses, bonuses, incentives, performance metrics, etc..."
- rows={6}
- className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-sans"
+ rows={4}
+ className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm font-sans"
  />
  </div>
  </div>
 
- {/* Signature Areas - AT THE BOTTOM OF FORM */}
- <div className="border-2 border-purple-300 rounded-lg p-6 bg-purple-50">
- <h3 className="text-xl font-bold text-purple-900 mb-6">✍️ SIGNATURES & AUTHORIZATION</h3>
+ {/* Signature Areas - Mobile Optimized */}
+ <div className="border-2 border-purple-300 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 bg-purple-50">
+ <h3 className="text-base sm:text-lg lg:text-xl font-bold text-purple-900 mb-4 sm:mb-6 flex items-center gap-2">
+ <span className="text-lg sm:text-xl">✍️</span>
+ <span>SIGNATURES & AUTHORIZATION</span>
+ </h3>
 
- <div className="grid grid-cols-2 gap-8">
- {/* Club Signature */}
- <div className="border-2 border-blue-200 rounded-lg p-6 bg-white">
- <h4 className="font-bold text-blue-900 mb-4">Club Authorized Signatory <span className="text-red-500">*</span></h4>
- <div className="space-y-4">
+ <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+ {/* Club Signature - Mobile Optimized */}
+ <div className="border-2 border-blue-200 rounded-lg p-3 sm:p-4 lg:p-6 bg-white">
+ <h4 className="font-bold text-sm sm:text-base text-blue-900 mb-3 sm:mb-4">
+ Club Authorized Signatory <span className="text-red-500">*</span>
+ </h4>
+ <div className="space-y-3 sm:space-y-4">
  <div>
  <p className="text-xs text-slate-600 font-semibold mb-2">SIGNATURE</p>
  <div className="h-20 border-2 border-dashed border-blue-300 rounded flex items-center justify-center text-slate-400 bg-blue-50">
@@ -723,10 +734,12 @@ export default function ElaboratedContractModal({
  </div>
  </div>
 
- {/* Player Signature */}
- <div className="border-2 border-green-200 rounded-lg p-6 bg-white">
- <h4 className="font-bold text-green-900 mb-4">Player Signature & Acceptance</h4>
- <div className="space-y-4">
+ {/* Player Signature - Mobile Optimized */}
+ <div className="border-2 border-green-200 rounded-lg p-3 sm:p-4 lg:p-6 bg-white">
+ <h4 className="font-bold text-sm sm:text-base text-green-900 mb-3 sm:mb-4">
+ Player Signature & Acceptance
+ </h4>
+ <div className="space-y-3 sm:space-y-4">
  <div>
  <p className="text-xs text-slate-600 font-semibold mb-2">SIGNATURE</p>
  <div className="h-20 border-2 border-dashed border-green-300 rounded flex items-center justify-center text-slate-400 bg-green-50">
@@ -759,25 +772,25 @@ export default function ElaboratedContractModal({
 
  {error && (
  <Alert className="border-red-200 bg-red-50">
- <AlertDescription className="text-red-700">
+ <AlertDescription className="text-red-700 text-xs sm:text-sm">
  {error}
  </AlertDescription>
  </Alert>
  )}
 
- {/* Action Buttons */}
- <div className="flex gap-3 border-t-2 pt-6">
+ {/* Action Buttons - Sticky on mobile */}
+ <div className="flex flex-col sm:flex-row gap-3 border-t-2 pt-4 sm:pt-6 sticky bottom-0 bg-white pb-2 -mx-4 sm:mx-0 px-4 sm:px-0">
  <Button
  onClick={handleSubmit}
  disabled={loading}
- className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2"
+ className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 sm:py-2 text-sm sm:text-base"
  >
  {loading ? '⏳ Creating Contract...' : '✓ Create & Issue Contract'}
  </Button>
  <Button
  variant="outline"
  onClick={onClose}
- className="flex-1 font-bold py-2"
+ className="flex-1 font-bold py-3 sm:py-2 text-sm sm:text-base"
  >
  Cancel
  </Button>
@@ -785,13 +798,13 @@ export default function ElaboratedContractModal({
  </div>
  )}
 
- {/* PCL POLICIES TAB */}
+ {/* PCL POLICIES TAB - Mobile Optimized */}
  {activeTab === 'policies' && (
- <div className="space-y-6 pt-4">
- <h3 className="text-2xl font-bold text-slate-900">PCL STANDARD POLICIES & REGULATIONS</h3>
- <p className="text-slate-700">All players and clubs must comply with the following PCL policies:</p>
+ <div className="space-y-4 sm:space-y-6 pt-2 sm:pt-4">
+ <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">PCL STANDARD POLICIES & REGULATIONS</h3>
+ <p className="text-xs sm:text-sm text-slate-700">All players and clubs must comply with the following PCL policies:</p>
 
- <div className="space-y-4">
+ <div className="space-y-3 sm:space-y-4">
  <PolicyCard
  number="1"
  title="No Dual Membership"
@@ -829,17 +842,17 @@ export default function ElaboratedContractModal({
  />
  </div>
 
- <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mt-6">
- <p className="text-sm text-yellow-900 font-semibold">
+ <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3 sm:p-4 mt-4 sm:mt-6">
+ <p className="text-xs sm:text-sm text-yellow-900 font-semibold">
  ⚠️ By signing this contract, both club and player acknowledge that they have read, understood, and agree to comply with all PCL Standard Policies and Regulations.
  </p>
  </div>
 
- {/* Back Button */}
- <div className="flex gap-3 border-t-2 pt-6">
+ {/* Back Button - Mobile Optimized */}
+ <div className="flex gap-3 border-t-2 pt-4 sm:pt-6 sticky bottom-0 bg-white pb-2 -mx-4 sm:mx-0 px-4 sm:px-0">
  <Button
  onClick={() => setActiveTab('form')}
- className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2"
+ className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-2 text-sm sm:text-base"
  >
  ← Back to Contract Form
  </Button>
@@ -847,11 +860,11 @@ export default function ElaboratedContractModal({
  </div>
  )}
 
- {/* PCL Watermark Footer */}
- <div className="text-center pt-4 border-t text-xs text-slate-500">
+ {/* PCL Watermark Footer - Mobile Optimized */}
+ <div className="text-center pt-3 sm:pt-4 border-t text-[10px] sm:text-xs text-slate-500 space-y-1">
  <p>This contract is issued under the authority of Professional Club League (PCL)</p>
  <p>All disputes shall be resolved as per PCL Regulations and applicable laws</p>
- <p className="text-[10px] mt-2 text-slate-400">Contract ID will be generated upon submission</p>
+ <p className="text-[9px] sm:text-[10px] mt-1 sm:mt-2 text-slate-400">Contract ID will be generated upon submission</p>
  </div>
  </CardContent>
  </Card>
@@ -861,14 +874,14 @@ export default function ElaboratedContractModal({
 
 function PolicyCard({ number, title, description }: { number: string; title: string; description: string }) {
  return (
- <div className="border-l-4 border-blue-600 bg-blue-50 p-4 rounded-r-lg">
- <div className="flex gap-3">
- <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+ <div className="border-l-4 border-blue-600 bg-blue-50 p-3 sm:p-4 rounded-r-lg">
+ <div className="flex gap-2 sm:gap-3">
+ <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">
  {number}
  </div>
- <div>
- <h4 className="font-bold text-blue-900 text-sm">{title}</h4>
- <p className="text-slate-700 text-sm mt-1">{description}</p>
+ <div className="flex-1 min-w-0">
+ <h4 className="font-bold text-blue-900 text-xs sm:text-sm">{title}</h4>
+ <p className="text-slate-700 text-xs sm:text-sm mt-1">{description}</p>
  </div>
  </div>
  </div>

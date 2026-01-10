@@ -396,7 +396,7 @@ export default function PlayerContractsPage() {
  {filteredContracts.map((contract) => (
  <div
  key={contract.id}
- className={`border-2 rounded-2xl p-6 md:p-8 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+ className={`border-2 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
  contract.status === 'pending'
  ? 'border-amber-300 bg-gradient-to-br from-amber-50/50 to-yellow-50/50 hover:border-amber-400 hover:ring-2 hover:ring-amber-200 shadow-lg shadow-amber-500/10'
  : contract.status === 'active'
@@ -406,174 +406,179 @@ export default function PlayerContractsPage() {
  : 'border-slate-200 bg-gradient-to-br from-slate-50/30 to-slate-100/30 hover:border-slate-300'
  }`}
  >
- <div className="flex items-start gap-5">
- {/* Club Logo */}
+ {/* Mobile Optimized Layout */}
+ <div className="p-4 sm:p-6 md:p-8">
+ {/* Header Section - Mobile Optimized */}
+ <div className="flex items-start gap-3 sm:gap-5 mb-4">
+ {/* Club Logo - Smaller on mobile */}
  <div className="flex-shrink-0">
  {contract.clubs?.logo_url ? (
  <img
  src={contract.clubs.logo_url}
  alt={contract.clubs.club_name}
- className="h-20 w-20 rounded-2xl object-cover border-2 border-orange-200 shadow-lg"
+ className="h-14 w-14 sm:h-20 sm:w-20 rounded-xl sm:rounded-2xl object-cover border-2 border-orange-200 shadow-lg"
  />
  ) : (
- <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-200 flex items-center justify-center shadow-lg">
- <span className="text-3xl">🏆</span>
+ <div className="h-14 w-14 sm:h-20 sm:w-20 rounded-xl sm:rounded-2xl bg-gradient-to-br from-orange-100 to-amber-200 flex items-center justify-center shadow-lg">
+ <span className="text-2xl sm:text-3xl">🏆</span>
  </div>
  )}
  </div>
 
- {/* Contract Details */}
- <div className="flex-1">
- <div className="flex items-start justify-between mb-4">
- <div className="flex-1">
- <div className="flex items-center gap-3 mb-2">
- <h3 className="text-2xl font-extrabold text-slate-900">
- 📋 {contract.contract_type.charAt(0).toUpperCase() + contract.contract_type.slice(1)} Contract
+ {/* Contract Title & Status */}
+ <div className="flex-1 min-w-0">
+ <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+ <div className="flex-1 min-w-0">
+ <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 truncate">
+ 📋 {contract.contract_type.charAt(0).toUpperCase() + contract.contract_type.slice(1)}
  </h3>
- </div>
- <h4 className="text-xl font-bold text-orange-600 mb-1">
+ <h4 className="text-base sm:text-xl font-bold text-orange-600 truncate">
  {contract.clubs?.club_name}
  </h4>
- <p className="text-base text-slate-600">
- 📍 {contract.clubs?.city}, {contract.clubs?.state} • {contract.clubs?.club_type}
+ <p className="text-xs sm:text-base text-slate-600 truncate">
+ 📍 {contract.clubs?.city}, {contract.clubs?.state}
  </p>
  </div>
+ <div className="flex-shrink-0">
  {getStatusBadge(contract.status)}
  </div>
+ </div>
+ </div>
+ </div>
 
- {/* Primary Contract Info - Grid Layout */}
- <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">
- <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl border-2 border-orange-200">
- <span className="text-xs text-orange-700 font-bold uppercase">📋 Type</span>
- <p className="font-bold text-orange-900 text-lg capitalize mt-1">{contract.contract_type}</p>
+ {/* Primary Contract Info - Responsive Grid */}
+ <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mt-4">
+ <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-orange-200">
+ <span className="text-[10px] sm:text-xs text-orange-700 font-bold uppercase block">📋 Type</span>
+ <p className="font-bold text-orange-900 text-sm sm:text-lg capitalize mt-1 truncate">{contract.contract_type}</p>
  </div>
- <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border-2 border-purple-200">
- <span className="text-xs text-purple-700 font-bold uppercase">⚽ Position</span>
- <p className="font-bold text-purple-900 text-lg mt-1">{contract.position_assigned || 'TBD'}</p>
+ <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-purple-200">
+ <span className="text-[10px] sm:text-xs text-purple-700 font-bold uppercase block">⚽ Position</span>
+ <p className="font-bold text-purple-900 text-sm sm:text-lg mt-1 truncate">{contract.position_assigned || 'TBD'}</p>
  </div>
- <div className="bg-gradient-to-br from-amber-50 to-yellow-50 p-4 rounded-xl border-2 border-amber-200">
- <span className="text-xs text-amber-700 font-bold uppercase">#️⃣ Jersey</span>
- <p className="font-bold text-amber-900 text-lg mt-1">#{contract.jersey_number || 'N/A'}</p>
+ <div className="bg-gradient-to-br from-amber-50 to-yellow-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-amber-200">
+ <span className="text-[10px] sm:text-xs text-amber-700 font-bold uppercase block">#️⃣ Jersey</span>
+ <p className="font-bold text-amber-900 text-sm sm:text-lg mt-1">#{contract.jersey_number || 'N/A'}</p>
  </div>
- <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-xl border-2 border-emerald-200">
- <span className="text-xs text-emerald-700 font-bold uppercase">💰 Annual</span>
- <p className="font-bold text-emerald-700 text-lg mt-1">
+ <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-emerald-200">
+ <span className="text-[10px] sm:text-xs text-emerald-700 font-bold uppercase block">💰 Salary</span>
+ <p className="font-bold text-emerald-700 text-xs sm:text-lg mt-1 break-words">
  {contract.annual_salary ? formatCurrency(contract.annual_salary) : 'N/A'}
  </p>
  </div>
  </div>
 
- {/* Secondary Contract Info */}
- <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
- <div className="bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
- <span className="text-xs text-slate-600 font-bold uppercase">📅 Start</span>
- <p className="font-bold text-slate-900 text-base mt-1">{formatDate(contract.contract_start_date)}</p>
+ {/* Secondary Contract Info - Simplified for Mobile */}
+ <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mt-3 sm:mt-4">
+ <div className="bg-slate-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200">
+ <span className="text-[10px] sm:text-xs text-slate-600 font-bold uppercase block">📅 Start</span>
+ <p className="font-bold text-slate-900 text-xs sm:text-base mt-1">{formatDate(contract.contract_start_date)}</p>
  </div>
- <div className="bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
- <span className="text-xs text-slate-600 font-bold uppercase">🏁 End</span>
- <p className="font-bold text-slate-900 text-base mt-1">{formatDate(contract.contract_end_date)}</p>
+ <div className="bg-slate-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200">
+ <span className="text-[10px] sm:text-xs text-slate-600 font-bold uppercase block">🏁 End</span>
+ <p className="font-bold text-slate-900 text-xs sm:text-base mt-1">{formatDate(contract.contract_end_date)}</p>
  </div>
- <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-xl border-2 border-amber-200">
- <span className="text-xs text-amber-700 font-bold uppercase">🎁 Bonus</span>
- <p className="font-bold text-amber-700 text-base mt-1">
+ <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-amber-200">
+ <span className="text-[10px] sm:text-xs text-amber-700 font-bold uppercase block">🎁 Bonus</span>
+ <p className="font-bold text-amber-700 text-xs sm:text-base mt-1 truncate">
  {contract.signing_bonus ? formatCurrency(contract.signing_bonus) : 'N/A'}
  </p>
  </div>
- <div className="bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
- <span className="text-xs text-slate-600 font-bold uppercase">🕒 Created</span>
- <p className="font-bold text-slate-900 text-base mt-1">{formatDate(contract.created_at)}</p>
+ <div className="bg-slate-50 p-3 sm:p-4 rounded-lg sm:rounded-xl border border-slate-200">
+ <span className="text-[10px] sm:text-xs text-slate-600 font-bold uppercase block">🕒 Created</span>
+ <p className="font-bold text-slate-900 text-xs sm:text-base mt-1">{formatDate(contract.created_at)}</p>
  </div>
  </div>
 
  {/* Expandable Full Details */}
  {expandedContract === contract.id && (
- <div className="mt-6 p-6 md:p-8 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border-2 border-orange-200 shadow-inner">
+ <div className="mt-4 sm:mt-6 p-4 sm:p-6 md:p-8 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl sm:rounded-2xl border-2 border-orange-200 shadow-inner">
  <div className="flex items-center gap-3 mb-5">
- <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white text-sm shadow-md">📄</div>
- <h4 className="font-bold text-slate-900 text-xl">Complete Contract Details</h4>
+ <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white text-xs sm:text-sm shadow-md">📄</div>
+ <h4 className="font-bold text-slate-900 text-base sm:text-xl">Complete Contract Details</h4>
  </div>
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
  {contract.goal_bonus && (
- <div className="bg-white p-4 rounded-xl border-2 border-emerald-200 shadow-md">
- <span className="text-xs text-emerald-700 font-bold uppercase">⚽ Goal Bonus</span>
- <p className="font-bold text-emerald-600 text-xl mt-1">{formatCurrency(contract.goal_bonus)}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-emerald-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-emerald-700 font-bold uppercase block">⚽ Goal Bonus</span>
+ <p className="font-bold text-emerald-600 text-base sm:text-xl mt-1 break-words">{formatCurrency(contract.goal_bonus)}</p>
  </div>
  )}
  {contract.appearance_bonus && (
- <div className="bg-white p-4 rounded-xl border-2 border-blue-200 shadow-md">
- <span className="text-xs text-blue-700 font-bold uppercase">👕 Appearance</span>
- <p className="font-bold text-blue-600 text-xl mt-1">{formatCurrency(contract.appearance_bonus)}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-blue-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-blue-700 font-bold uppercase block">👕 Appearance</span>
+ <p className="font-bold text-blue-600 text-base sm:text-xl mt-1 break-words">{formatCurrency(contract.appearance_bonus)}</p>
  </div>
  )}
  {contract.medical_insurance && (
- <div className="bg-white p-4 rounded-xl border-2 border-purple-200 shadow-md">
- <span className="text-xs text-purple-700 font-bold uppercase">🏥 Medical</span>
- <p className="font-bold text-purple-600 text-xl mt-1">{formatCurrency(contract.medical_insurance)}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-purple-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-purple-700 font-bold uppercase block">🏥 Medical</span>
+ <p className="font-bold text-purple-600 text-base sm:text-xl mt-1 break-words">{formatCurrency(contract.medical_insurance)}</p>
  </div>
  )}
  {contract.housing_allowance && (
- <div className="bg-white p-4 rounded-xl border-2 border-orange-200 shadow-md">
- <span className="text-xs text-orange-700 font-bold uppercase">🏠 Housing</span>
- <p className="font-bold text-orange-600 text-xl mt-1">{formatCurrency(contract.housing_allowance)}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-orange-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-orange-700 font-bold uppercase block">🏠 Housing</span>
+ <p className="font-bold text-orange-600 text-base sm:text-xl mt-1 break-words">{formatCurrency(contract.housing_allowance)}</p>
  </div>
  )}
  {contract.release_clause && (
- <div className="bg-white p-4 rounded-xl border-2 border-red-200 shadow-md">
- <span className="text-xs text-red-700 font-bold uppercase">💰 Release</span>
- <p className="font-bold text-red-600 text-xl mt-1">{formatCurrency(contract.release_clause)}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-red-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-red-700 font-bold uppercase block">💰 Release</span>
+ <p className="font-bold text-red-600 text-base sm:text-xl mt-1 break-words">{formatCurrency(contract.release_clause)}</p>
  </div>
  )}
  {contract.notice_period && (
- <div className="bg-white p-4 rounded-xl border-2 border-slate-200 shadow-md">
- <span className="text-xs text-slate-600 font-bold uppercase">📅 Notice</span>
- <p className="font-bold text-slate-900 text-xl mt-1">{contract.notice_period} days</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-slate-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-slate-600 font-bold uppercase block">📅 Notice</span>
+ <p className="font-bold text-slate-900 text-base sm:text-xl mt-1">{contract.notice_period} days</p>
  </div>
  )}
  {contract.training_days_per_week && (
- <div className="bg-white p-4 rounded-xl border-2 border-indigo-200 shadow-md">
- <span className="text-xs text-indigo-700 font-bold uppercase">🏋️ Training</span>
- <p className="font-bold text-indigo-600 text-xl mt-1">{contract.training_days_per_week} days/week</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-indigo-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-indigo-700 font-bold uppercase block">🏋️ Training</span>
+ <p className="font-bold text-indigo-600 text-base sm:text-xl mt-1">{contract.training_days_per_week} days/week</p>
  </div>
  )}
  {contract.image_rights && (
- <div className="bg-white p-4 rounded-xl border-2 border-pink-200 shadow-md">
- <span className="text-xs text-pink-700 font-bold uppercase">📸 Image Rights</span>
- <p className="font-bold text-pink-600 text-lg mt-1 capitalize">{contract.image_rights}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-pink-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-pink-700 font-bold uppercase block">📸 Image Rights</span>
+ <p className="font-bold text-pink-600 text-sm sm:text-lg mt-1 capitalize">{contract.image_rights}</p>
  </div>
  )}
  {contract.agent_name && (
- <div className="bg-white p-4 rounded-xl border-2 border-teal-200 shadow-md">
- <span className="text-xs text-teal-700 font-bold uppercase">👤 Agent</span>
- <p className="font-bold text-teal-600 text-lg mt-1">{contract.agent_name}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-teal-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-teal-700 font-bold uppercase block">👤 Agent</span>
+ <p className="font-bold text-teal-600 text-sm sm:text-lg mt-1">{contract.agent_name}</p>
  </div>
  )}
  {contract.agent_contact && (
- <div className="bg-white p-4 rounded-xl border-2 border-cyan-200 shadow-md">
- <span className="text-xs text-cyan-700 font-bold uppercase">📞 Agent Contact</span>
- <p className="font-bold text-cyan-600 text-lg mt-1">{contract.agent_contact}</p>
+ <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 border-cyan-200 shadow-md">
+ <span className="text-[10px] sm:text-xs text-cyan-700 font-bold uppercase block">📞 Agent Contact</span>
+ <p className="font-bold text-cyan-600 text-sm sm:text-lg mt-1 break-all">{contract.agent_contact}</p>
  </div>
  )}
  </div>
  {contract.terms_conditions && (
- <div className="mt-6 bg-white p-5 rounded-xl border-2 border-amber-200 shadow-md">
+ <div className="mt-4 sm:mt-6 bg-white p-4 sm:p-5 rounded-xl border-2 border-amber-200 shadow-md">
  <div className="flex items-center gap-2 mb-3">
- <span className="text-amber-700 font-bold">📜 Terms & Conditions</span>
+ <span className="text-amber-700 font-bold text-sm sm:text-base">📜 Terms & Conditions</span>
  </div>
- <p className="text-base text-slate-700 leading-relaxed whitespace-pre-wrap">{contract.terms_conditions}</p>
+ <p className="text-xs sm:text-base text-slate-700 leading-relaxed whitespace-pre-wrap">{contract.terms_conditions}</p>
  </div>
  )}
- <div className="mt-5 bg-white p-5 rounded-xl border-2 border-orange-200 shadow-md">
+ <div className="mt-4 sm:mt-5 bg-white p-4 sm:p-5 rounded-xl border-2 border-orange-200 shadow-md">
  <div className="flex items-center gap-2 mb-3">
- <span className="text-orange-700 font-bold">📧 Club Contact</span>
+ <span className="text-orange-700 font-bold text-sm sm:text-base">📧 Club Contact</span>
  </div>
- <div className="flex flex-col md:flex-row gap-4 text-base">
- <div className="flex items-center gap-2">
- <span className="text-orange-500">✉️</span>
+ <div className="flex flex-col gap-3 text-xs sm:text-base">
+ <div className="flex items-start gap-2">
+ <span className="text-orange-500 flex-shrink-0">✉️</span>
  <span className="text-slate-600">Email:</span>
- <span className="font-bold text-slate-900">{contract.clubs?.email || 'N/A'}</span>
+ <span className="font-bold text-slate-900 break-all">{contract.clubs?.email || 'N/A'}</span>
  </div>
  <div className="flex items-center gap-2">
- <span className="text-orange-500">📱</span>
+ <span className="text-orange-500 flex-shrink-0">📱</span>
  <span className="text-slate-600">Phone:</span>
  <span className="font-bold text-slate-900">{contract.clubs?.phone || 'N/A'}</span>
  </div>
@@ -582,33 +587,33 @@ export default function PlayerContractsPage() {
  </div>
  )}
 
- {/* Action buttons */}
- <div className="mt-6 flex gap-3 flex-wrap">
+ {/* Action buttons - Mobile Optimized */}
+ <div className="mt-4 sm:mt-6 flex gap-2 sm:gap-3 flex-wrap">
  <Button
  variant="outline"
- className="border-2 border-slate-300 hover:border-orange-400 hover:bg-orange-50 font-bold rounded-xl px-5 py-3"
+ className="border-2 border-slate-300 hover:border-orange-400 hover:bg-orange-50 font-bold rounded-lg sm:rounded-xl px-3 py-2 sm:px-5 sm:py-3 text-xs sm:text-base"
  onClick={() => setExpandedContract(expandedContract === contract.id ? null : contract.id)}
  >
- {expandedContract === contract.id ? '⬆️ Hide Details' : '⬇️ View Details'}
+ {expandedContract === contract.id ? '⬆️ Hide' : '⬇️ Details'}
  </Button>
  <Button
- className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg shadow-orange-500/30 rounded-xl px-5 py-3"
+ className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg shadow-orange-500/30 rounded-lg sm:rounded-xl px-3 py-2 sm:px-5 sm:py-3 text-xs sm:text-base"
  onClick={() => router.push(`/dashboard/player/contracts/${contract.id}/view`)}
  >
- 📋 View Document
+ 📋 View
  </Button>
  {contract.status === 'pending' && (
  <>
  <Button
- className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg shadow-emerald-500/30 rounded-xl px-5 py-3"
+ className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg shadow-emerald-500/30 rounded-lg sm:rounded-xl px-3 py-2 sm:px-5 sm:py-3 text-xs sm:text-base"
  onClick={() => handleAcceptContract(contract.id)}
  disabled={processing === contract.id}
  >
- {processing === contract.id ? '⏳ Processing...' : '✅ Accept'}
+ {processing === contract.id ? '⏳...' : '✅ Accept'}
  </Button>
  <Button
  variant="outline"
- className="text-red-600 hover:text-red-700 border-2 border-red-300 hover:border-red-400 hover:bg-red-50 font-bold rounded-xl px-5 py-3"
+ className="text-red-600 hover:text-red-700 border-2 border-red-300 hover:border-red-400 hover:bg-red-50 font-bold rounded-lg sm:rounded-xl px-3 py-2 sm:px-5 sm:py-3 text-xs sm:text-base"
  onClick={() => handleRejectContract(contract.id)}
  disabled={processing === contract.id}
  >
@@ -616,7 +621,6 @@ export default function PlayerContractsPage() {
  </Button>
  </>
  )}
- </div>
  </div>
  </div>
  </div>

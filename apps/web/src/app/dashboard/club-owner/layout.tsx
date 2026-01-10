@@ -181,6 +181,13 @@ export default function ClubOwnerLayout({
               loading={notificationsLoading}
             />
             <button
+              onClick={handleSignOut}
+              className="p-2.5 rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+            <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
             >

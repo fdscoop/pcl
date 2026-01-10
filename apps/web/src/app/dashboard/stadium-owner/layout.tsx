@@ -147,6 +147,16 @@ export default function StadiumOwnerLayout({
  </p>
  </div>
  </div>
+ <div className="flex items-center gap-2">
+ <Button
+ variant="ghost"
+ size="icon"
+ className="h-9 w-9 rounded-xl hover:bg-red-100 text-red-600"
+ onClick={handleSignOut}
+ title="Sign Out"
+ >
+ <LogOut className="h-5 w-5" />
+ </Button>
  <Button
  variant="ghost"
  size="icon"
@@ -155,6 +165,7 @@ export default function StadiumOwnerLayout({
  >
  {sidebarOpen ? <X className="h-5 w-5 text-slate-600 " /> : <Menu className="h-5 w-5 text-slate-600 " />}
  </Button>
+ </div>
  </div>
  </header>
 

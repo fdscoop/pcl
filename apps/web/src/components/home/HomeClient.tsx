@@ -110,6 +110,43 @@ export default function HomeClient() {
  data: { user },
  } = await client.auth.getUser()
  setUser(user)
+ 
+ // Auto-redirect authenticated users to their role-specific dashboard
+ if (user) {
+ const { data: userData } = await client
+ .from('users')
+ .select('role')
+ .eq('id', user.id)
+ .single()
+ 
+ if (userData?.role) {
+ // Redirect to role-specific dashboard
+ switch (userData.role) {
+ case 'club_owner':
+ router.push('/dashboard/club-owner')
+ return
+ case 'player':
+ router.push('/dashboard/player')
+ return
+ case 'referee':
+ router.push('/dashboard/referee')
+ return
+ case 'staff':
+ router.push('/dashboard/staff')
+ return
+ case 'stadium_owner':
+ router.push('/dashboard/stadium-owner')
+ return
+ case 'admin':
+ router.push('/dashboard/admin')
+ return
+ default:
+ // If role not recognized, show onboarding
+ router.push('/dashboard')
+ return
+ }
+ }
+ }
  } catch (error) {
  console.error('Error fetching user:', error)
  }

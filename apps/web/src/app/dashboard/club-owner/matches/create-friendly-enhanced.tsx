@@ -12,6 +12,7 @@ import { useToast } from '@/context/ToastContext'
 import { DayPicker } from 'react-day-picker'
 import { format, isBefore, startOfDay, addHours, isAfter, isSameDay } from 'date-fns'
 import 'react-day-picker/dist/style.css'
+import razorpayService, { PaymentResponse, RazorpayService } from '@/services/razorpayService'
 import { 
  Users, 
  Calendar, 
@@ -32,7 +33,10 @@ import {
  Zap,
  ChevronLeft,
  ChevronRight,
- AlertCircle
+ AlertCircle,
+ CreditCard,
+ Lock,
+ Banknote
 } from 'lucide-react'
 
 interface Club {
@@ -112,7 +116,12 @@ export function CreateFriendlyMatch({
 
  // Multi-step wizard state
  const [currentStep, setCurrentStep] = useState<number>(1)
- const totalSteps = 5
+ const totalSteps = 6 // Updated to include payment step
+ 
+ // Payment state
+ const [paymentProcessing, setPaymentProcessing] = useState(false)
+ const [paymentCompleted, setPaymentCompleted] = useState(false)
+ const [paymentResponse, setPaymentResponse] = useState<PaymentResponse | null>(null)
  
  // Available data
  const [availableClubs, setAvailableClubs] = useState<Club[]>([])
@@ -807,6 +816,11 @@ export function CreateFriendlyMatch({
  loadScheduledMatches()
  }, [selectedDate, formData.stadiumId])
 
+ // Recalculate budget when relevant form data changes
+ useEffect(() => {
+ calculateBudget()
+ }, [formData.selectedStadium, formData.duration, formData.refereeIds, formData.staffIds, formData.teamSize])
+
  const calculateBudget = () => {
  let stadiumCost = 0
  let refereeCost = 0
@@ -850,7 +864,352 @@ export function CreateFriendlyMatch({
  })
  }
 
+ const handlePayment = async () => {
+ if (paymentProcessing || paymentCompleted) return
+
+ setPaymentProcessing(true)
+
+ try {
+ const amount = RazorpayService.rupeesToPaise(budget.totalCost)
+ const receipt = RazorpayService.generateReceipt('MATCH')
+ 
+ const paymentData = {
+ amount: amount,
+ currency: 'INR',
+ receipt: receipt,
+ description: `Match booking - ${formData.matchFormat} at ${formData.selectedStadium?.stadium_name}`,
+ customer: {
+ name: club.name,
+ email: club.contact_email || 'owner@example.com',
+ contact: club.contact_phone || '9999999999'
+ },
+ notes: {
+ match_format: formData.matchFormat,
+ stadium_id: formData.stadiumId,
+ club_id: club.id,
+ match_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
+ match_time: formData.matchTime
+ }
+ }
+
+ await razorpayService.processPayment(
+ paymentData,
+ (response: PaymentResponse) => {
+ console.log('Payment successful:', response)
+ setPaymentResponse(response)
+ setPaymentCompleted(true)
+ setPaymentProcessing(false)
+ 
+ addToast({
+ title: 'Payment Successful',
+ description: 'Payment completed successfully. Creating match...',
+ type: 'success'
+ })
+
+ // Automatically proceed to match creation
+ setTimeout(() => {
+ createMatchAfterPayment()
+ }, 1000)
+ },
+ (error: any) => {
+ console.error('Payment failed:', error)
+ setPaymentProcessing(false)
+ 
+ addToast({
+ title: 'Payment Failed',
+ description: error.message || 'Payment was cancelled or failed. Please try again.',
+ type: 'error'
+ })
+ }
+ )
+
+ } catch (error: any) {
+ console.error('Payment processing error:', error)
+ setPaymentProcessing(false)
+ 
+ addToast({
+ title: 'Payment Error',
+ description: error.message || 'Failed to process payment. Please try again.',
+ type: 'error'
+ })
+ }
+ }
+
+ const createMatchAfterPayment = async () => {
+ if (!paymentCompleted || !paymentResponse) {
+ addToast({
+ title: 'Error',
+ description: 'Payment verification required before creating match.',
+ type: 'error'
+ })
+ return
+ }
+
+ setLoading(true)
+
+ try {
+ const supabase = createClient()
+ const { data: userData } = await supabase.auth.getUser()
+ if (!userData.user) throw new Error('User not authenticated')
+
+ // Validate required fields
+ if (!formData.stadiumId) throw new Error('Stadium is required')
+ if (!selectedDate) throw new Error('Match date is required')
+ if (!formData.matchTime) throw new Error('Match time is required')
+ if (!formData.teamId) throw new Error('Team is required')
+
+ // Validate official match requirements
+ if (formData.matchType === 'official') {
+ if (!formData.refereeIds || formData.refereeIds.length === 0) {
+ throw new Error('Official matches require at least one referee. Please select a referee in Step 4.')
+ }
+ if (!formData.staffIds || formData.staffIds.length === 0) {
+ throw new Error('Official matches require at least one staff member. Please select staff in Step 4.')
+ }
+ }
+
+ // ✅ SERVER-SIDE VALIDATION: Check for stadium conflicts
+ const matchDate = format(selectedDate, 'yyyy-MM-dd')
+ const matchTimeHour = parseInt(formData.matchTime.split(':')[0])
+ 
+ // Calculate match duration based on format
+ const MATCH_DURATIONS: Record<string, number> = {
+ '5-a-side': 1, // 1 hour
+ '7-a-side': 2, // 2 hours
+ '11-a-side': 3 // 3 hours
+ }
+ const matchDuration = MATCH_DURATIONS[formData.matchFormat as keyof typeof MATCH_DURATIONS] || 1
+
+ // Fetch existing matches for this stadium on this date
+ const { data: existingMatches, error: conflictCheckError } = await supabase
+ .from('matches')
+ .select('id, match_time, match_format')
+ .eq('stadium_id', formData.stadiumId)
+ .eq('match_date', matchDate)
+ .eq('status', 'scheduled')
+
+ if (conflictCheckError) {
+ console.error('Error checking stadium conflicts:', conflictCheckError)
+ throw new Error('Unable to verify stadium availability. Please try again.')
+ }
+
+ // Check for time slot conflicts
+ if (existingMatches && existingMatches.length > 0) {
+ for (const existingMatch of existingMatches) {
+ const existingStartHour = parseInt(existingMatch.match_time.split(':')[0])
+ const existingDuration = MATCH_DURATIONS[existingMatch.match_format as keyof typeof MATCH_DURATIONS] || 1
+
+ // Check if time slots overlap
+ const newMatchEnd = matchTimeHour + matchDuration
+ const existingMatchEnd = existingStartHour + existingDuration
+
+ if (
+ (matchTimeHour >= existingStartHour && matchTimeHour < existingMatchEnd) ||
+ (newMatchEnd > existingStartHour && newMatchEnd <= existingMatchEnd) ||
+ (matchTimeHour <= existingStartHour && newMatchEnd >= existingMatchEnd)
+ ) {
+ const conflictTimeRange = `${String(existingStartHour).padStart(2, '0')}:00 - ${String(existingMatchEnd).padStart(2, '0')}:00`
+ throw new Error(
+ `Stadium already booked from ${conflictTimeRange} on this date. Please select a different time slot or stadium.`
+ )
+ }
+ }
+ }
+
+ console.log(`✅ STADIUM VALIDATION: No conflicts found for ${formData.matchTime} on ${matchDate}`)
+
+ // Get the home team details and validate it can play this format
+ const { data: homeTeam } = await supabase
+ .from('teams')
+ .select('*')
+ .eq('id', formData.teamId)
+ .single()
+
+ if (!homeTeam) throw new Error('Team not found')
+
+ // Validate home team has enough players for selected format
+ const MIN_SQUAD_SIZES: Record<string, number> = {
+ '5-a-side': 8,
+ '7-a-side': 11,
+ '11-a-side': 16
+ }
+
+ const minRequired = MIN_SQUAD_SIZES[formData.matchFormat as keyof typeof MIN_SQUAD_SIZES]
+ if ((homeTeam.total_players || 0) < minRequired) {
+ throw new Error(
+ `Your team "${homeTeam.team_name}" has only ${homeTeam.total_players} players. Minimum ${minRequired} required for ${formData.matchFormat}.`
+ )
+ }
+
+ console.log(`🎯 HOME TEAM VALIDATION: ${homeTeam.team_name} (${homeTeam.total_players} players) is eligible for ${formData.matchFormat}`)
+
+ // For friendly matches, we need an away team with matching format
+ let awayTeamId = null
+
+ if (formData.selectedClub?.id) {
+ // Smart team selection: Find any team with enough players for the selected format
+ // Rather than requiring exact format match
+ const { data: availableTeams, error: teamsError } = await supabase
+ .from('teams')
+ .select('*')
+ .eq('club_id', formData.selectedClub.id)
+ .eq('is_active', true)
+
+ if (teamsError || !availableTeams || availableTeams.length === 0) {
+ throw new Error(
+ `${formData.selectedClub.name} does not have any active teams. Please select a different opponent.`
+ )
+ }
+
+ // Find the team with most players that meets the minimum requirement
+ const eligibleTeams = availableTeams.filter(team => 
+ (team.total_players || 0) >= minRequired
+ )
+
+ if (eligibleTeams.length === 0) {
+ const bestTeam = availableTeams.reduce((prev, curr) => 
+ (curr.total_players || 0) > (prev.total_players || 0) ? curr : prev
+ )
+ throw new Error(
+ `${formData.selectedClub.name}'s best team has only ${bestTeam.total_players} players. Minimum ${minRequired} required for ${formData.matchFormat}.`
+ )
+ }
+
+ // Select the team with the most players for better match quality
+ const selectedTeam = eligibleTeams.reduce((prev, curr) => 
+ (curr.total_players || 0) > (prev.total_players || 0) ? curr : prev
+ )
+
+ awayTeamId = selectedTeam.id
+
+ console.log(`🎯 TEAM SELECTION: Selected ${selectedTeam.team_name} (${selectedTeam.total_players} players) for ${formData.matchFormat} match`)
+ } else {
+ throw new Error('Please select an opponent club.')
+ }
+
+ // Final check - ensure teams are different
+ if (homeTeam.id === awayTeamId) {
+ throw new Error('Home and away teams cannot be the same. Please select a different opponent club.')
+ }
+
+ console.log('Match setup - Home Team:', homeTeam.id, 'Away Team:', awayTeamId)
+
+ // Insert into matches table using correct schema
+ const { data: matchData, error: matchError } = await supabase
+ .from('matches')
+ .insert([
+ {
+ home_team_id: homeTeam.id,
+ away_team_id: awayTeamId,
+ stadium_id: formData.stadiumId,
+ match_date: format(selectedDate, 'yyyy-MM-dd'),
+ match_time: formData.matchTime,
+ match_format: formData.matchFormat,
+ match_type: formData.matchType, // Save friendly vs official
+ league_structure: formData.leagueType, // Friendly matches save 'friendly', official matches save hobby/amateur/etc
+ status: 'scheduled',
+ created_by: userData.user.id,
+ payment_id: paymentResponse.razorpay_payment_id // Store payment reference
+ }
+ ])
+ .select()
+
+ if (matchError) throw matchError
+ if (!matchData || matchData.length === 0) throw new Error('Failed to create match')
+
+ const createdMatch = matchData[0]
+ console.log('Match created:', createdMatch.id, 'Home:', createdMatch.home_team_id, 'Away:', createdMatch.away_team_id, 'Payment:', paymentResponse.razorpay_payment_id)
+
+ // Handle referee/staff assignments if it's an official match
+ if (formData.matchType === 'official' && formData.refereeIds.length > 0) {
+ const assignments = formData.refereeIds.map(refereeId => ({
+ match_id: createdMatch.id,
+ referee_id: refereeId,
+ assignment_type: 'referee',
+ status: 'pending'
+ }))
+
+ await supabase.from('match_assignments').insert(assignments)
+ }
+
+ if (formData.matchType === 'official' && formData.staffIds.length > 0) {
+ const assignments = formData.staffIds.map(staffId => ({
+ match_id: createdMatch.id,
+ staff_id: staffId,
+ assignment_type: 'staff',
+ status: 'pending'
+ }))
+
+ await supabase.from('match_assignments').insert(assignments)
+ }
+
+ // Create notification for the opponent club
+ if (formData.selectedClub?.id) {
+ // Get the opponent club's owner to notify them
+ const { data: opponentClub } = await supabase
+ .from('clubs')
+ .select('owner_id')
+ .eq('id', formData.selectedClub.id)
+ .single()
+
+ if (opponentClub?.owner_id) {
+ const matchDateStr = format(selectedDate, 'PPP')
+ const stadiumName = formData.selectedStadium?.stadium_name || 'TBD'
+ 
+ const { error: notificationError } = await supabase
+ .from('notifications')
+ .insert([
+ {
+ user_id: opponentClub.owner_id,
+ type: 'friendly_match_request',
+ title: `Friendly Match Request from ${club.name}`,
+ message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}. Payment confirmed.`,
+ action_url: `/dashboard/matches/${createdMatch.id}`,
+ read: false
+ }
+ ])
+
+ if (notificationError) console.error('Notification error:', notificationError)
+ }
+ }
+
+ addToast({
+ title: 'Success',
+ description: 'Match created successfully with payment confirmation!',
+ type: 'success'
+ })
+
+ console.log('Match created successfully with payment:', paymentResponse.razorpay_payment_id)
+ onSuccess()
+ 
+ } catch (error: any) {
+ console.error('Error creating match after payment:', error)
+ addToast({
+ title: 'Error',
+ description: error.message || 'Failed to create match after payment',
+ type: 'error'
+ })
+ } finally {
+ setLoading(false)
+ }
+ }
+
  const handleSubmit = async (e: React.FormEvent) => {
+ e.preventDefault()
+ 
+ // For payment step (step 6), handle payment
+ if (currentStep === 6) {
+ await handlePayment()
+ return
+ }
+ 
+ // For other steps, just proceed to next step
+ if (currentStep < totalSteps) {
+ setCurrentStep(currentStep + 1)
+ }
+ }
+
+ const originalHandleSubmit = async (e: React.FormEvent) => {
  e.preventDefault()
  
  // Prevent double submission
@@ -1226,6 +1585,11 @@ export function CreateFriendlyMatch({
  return true
  }
 
+ const validateStep5 = (): boolean => {
+ // Budget review step - always valid (just for review)
+ return true
+ }
+
  const canProceedToNextStep = (): boolean => {
  switch (currentStep) {
  case 1:
@@ -1236,6 +1600,10 @@ export function CreateFriendlyMatch({
  return validateStep3()
  case 4:
  return validateStep4()
+ case 5:
+ return validateStep5()
+ case 6:
+ return paymentCompleted // Can only proceed if payment is completed
  default:
  return true
  }
@@ -1302,7 +1670,8 @@ export function CreateFriendlyMatch({
  currentStep === 2 ? '🏟️ Select Stadium' :
  currentStep === 3 ? '📅 Date & Time' :
  currentStep === 4 ? '👨‍⚖️ Officials & Resources' :
- '✅ Review & Confirm'}
+ currentStep === 5 ? '📋 Review & Budget' :
+ '💳 Payment & Confirmation'}
  </CardDescription>
  </div>
  </div>
@@ -1350,6 +1719,7 @@ export function CreateFriendlyMatch({
  {step === 3 && 'Schedule'}
  {step === 4 && 'Officials'}
  {step === 5 && 'Review'}
+ {step === 6 && 'Payment'}
  </span>
  </div>
  </div>
@@ -2607,6 +2977,145 @@ export function CreateFriendlyMatch({
  </div>
  )}
 
+ {/* STEP 6: Payment & Confirmation */}
+ {(currentStep as number) === 6 && (
+ <div className="space-y-6">
+ {/* Payment Header */}
+ <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-6">
+ <h3 className="font-semibold text-xl mb-4 text-orange-900 flex items-center gap-2">
+ <CreditCard className="h-6 w-6" />
+ Payment & Confirmation
+ </h3>
+ <p className="text-orange-700 text-sm">
+ Secure payment powered by Razorpay. Complete payment to confirm your match booking.
+ </p>
+ </div>
+
+ {/* Payment Summary */}
+ <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+ <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
+ <Banknote className="h-5 w-5 text-green-600" />
+ Payment Summary
+ </h4>
+ 
+ <div className="space-y-3">
+ <div className="flex justify-between text-sm">
+ <span className="text-gray-600">Stadium Booking ({formData.duration}h)</span>
+ <span className="font-medium">₹{budget.stadiumCost}</span>
+ </div>
+ 
+ {formData.matchType === 'official' && budget.refereeCost > 0 && (
+ <div className="flex justify-between text-sm">
+ <span className="text-gray-600">Referees ({formData.refereeIds.length})</span>
+ <span className="font-medium">₹{budget.refereeCost}</span>
+ </div>
+ )}
+ 
+ {formData.matchType === 'official' && budget.staffCost > 0 && (
+ <div className="flex justify-between text-sm">
+ <span className="text-gray-600">PCL Staff ({formData.staffIds.length})</span>
+ <span className="font-medium">₹{budget.staffCost}</span>
+ </div>
+ )}
+ 
+ <div className="flex justify-between text-sm">
+ <span className="text-gray-600">Platform Charges (9.5%)</span>
+ <span className="font-medium">₹{budget.processingFee.toFixed(2)}</span>
+ </div>
+ 
+ <div className="border-t pt-3 flex justify-between text-lg font-bold">
+ <span>Total Amount</span>
+ <span className="text-green-600">₹{budget.totalCost.toFixed(2)}</span>
+ </div>
+ </div>
+ </div>
+
+ {/* Match Summary for Payment */}
+ <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+ <h4 className="font-semibold text-lg mb-4">Match Details</h4>
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+ <div>
+ <span className="text-gray-600">Format:</span>
+ <span className="ml-2 font-medium">{formData.matchFormat}</span>
+ </div>
+ <div>
+ <span className="text-gray-600">Date:</span>
+ <span className="ml-2 font-medium">
+ {selectedDate ? format(selectedDate, 'PPP') : 'Not selected'}
+ </span>
+ </div>
+ <div>
+ <span className="text-gray-600">Time:</span>
+ <span className="ml-2 font-medium">{formData.matchTime}</span>
+ </div>
+ <div>
+ <span className="text-gray-600">Stadium:</span>
+ <span className="ml-2 font-medium">{formData.selectedStadium?.stadium_name}</span>
+ </div>
+ <div>
+ <span className="text-gray-600">Opponent:</span>
+ <span className="ml-2 font-medium">{formData.selectedClub?.name}</span>
+ </div>
+ <div>
+ <span className="text-gray-600">Duration:</span>
+ <span className="ml-2 font-medium">{formData.duration} hour(s)</span>
+ </div>
+ </div>
+ </div>
+
+ {/* Payment Status */}
+ {!paymentCompleted && !paymentProcessing && (
+ <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+ <div className="flex items-start gap-3">
+ <Lock className="h-5 w-5 text-blue-600 mt-1" />
+ <div>
+ <h4 className="font-semibold text-blue-900 mb-2">Secure Payment</h4>
+ <p className="text-blue-700 text-sm mb-4">
+ Click "Pay Now" to proceed with secure payment via Razorpay. Your payment is protected by industry-standard encryption.
+ </p>
+ <div className="flex flex-wrap gap-2">
+ <Badge variant="outline" className="text-xs">256-bit SSL</Badge>
+ <Badge variant="outline" className="text-xs">PCI Compliant</Badge>
+ <Badge variant="outline" className="text-xs">Razorpay Secured</Badge>
+ </div>
+ </div>
+ </div>
+ </div>
+ )}
+
+ {paymentProcessing && (
+ <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+ <div className="flex items-center gap-3">
+ <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600"></div>
+ <div>
+ <h4 className="font-semibold text-yellow-900">Processing Payment...</h4>
+ <p className="text-yellow-700 text-sm">
+ Please complete the payment process. Do not refresh or close this page.
+ </p>
+ </div>
+ </div>
+ </div>
+ )}
+
+ {paymentCompleted && paymentResponse && (
+ <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+ <div className="flex items-start gap-3">
+ <CheckCircle2 className="h-6 w-6 text-green-600 mt-1" />
+ <div>
+ <h4 className="font-semibold text-green-900 mb-2">Payment Successful!</h4>
+ <p className="text-green-700 text-sm mb-3">
+ Your payment has been processed successfully. Match booking is being finalized.
+ </p>
+ <div className="text-xs text-green-600 font-mono bg-green-100 p-2 rounded">
+ Payment ID: {paymentResponse.razorpay_payment_id}
+ </div>
+ </div>
+ </div>
+ </div>
+ )}
+ </div>
+ )}
+
  {/* Enhanced Navigation */}
  <div className="flex items-center justify-between pt-8 mt-8 border-t border-gray-200 bg-gray-50 -mx-6 px-6 py-6 rounded-b-lg">
  {currentStep > 1 ? (
@@ -2666,7 +3175,61 @@ export function CreateFriendlyMatch({
  </p>
  )}
  </div>
+ ) : currentStep === 6 ? (
+ // Payment step buttons
+ <div className="flex flex-col gap-2">
+ {!paymentCompleted ? (
+ <Button
+ type="button"
+ onClick={(e) => {
+ e.preventDefault()
+ handleSubmit(e as any)
+ }}
+ disabled={paymentProcessing || budget.totalCost <= 0}
+ className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 px-8 py-3 shadow-lg transform hover:scale-105 transition-all"
+ >
+ {paymentProcessing ? (
+ <div className="flex items-center gap-3">
+ <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+ <span>Processing Payment...</span>
+ </div>
  ) : (
+ <div className="flex items-center gap-3">
+ <CreditCard className="h-5 w-5" />
+ <span className="font-semibold">Pay ₹{budget.totalCost.toFixed(2)}</span>
+ <Lock className="h-4 w-4" />
+ </div>
+ )}
+ </Button>
+ ) : (
+ <Button
+ type="button"
+ onClick={(e) => {
+ e.preventDefault()
+ createMatchAfterPayment()
+ }}
+ disabled={loading}
+ className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-8 py-3 shadow-lg transform hover:scale-105 transition-all"
+ >
+ {loading ? (
+ <div className="flex items-center gap-3">
+ <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+ <span>Creating Match...</span>
+ </div>
+ ) : (
+ <div className="flex items-center gap-3">
+ <CheckCircle2 className="h-5 w-5" />
+ <span className="font-semibold">Complete Match Booking</span>
+ <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
+ ✓
+ </div>
+ </div>
+ )}
+ </Button>
+ )}
+ </div>
+ ) : (
+ // Legacy final step button (now unused)
  <Button
  type="button"
  onClick={(e) => {

@@ -30,6 +30,13 @@ const config: CapacitorConfig = {
     Keyboard: {
       resizeOnFullScreen: true,
     },
+    CapacitorRazorpay: {
+      keyId: 'rzp_test_S2J0LeOfybI0jg', // Test key ID
+      theme: {
+        color: '#f97316', // Orange theme to match PCL branding
+        backdrop_color: '#000000',
+      },
+    },
   },
   android: {
     allowMixedContent: false,

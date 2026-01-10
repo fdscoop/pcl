@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SidebarNav, MobileNavList, BottomNav, NavItem } from '@/components/ui/modern-nav'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { useStaffNotifications } from '@/hooks/useStaffNotifications'
 import {
  User,
  FileCheck,
@@ -25,8 +27,17 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
  const pathname = usePathname()
  const [user, setUser] = useState<any>(null)
  const [staff, setStaff] = useState<any>(null)
+ const [staffId, setStaffId] = useState<string | null>(null)
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
  const [loading, setLoading] = useState(true)
+ 
+ const {
+   notifications,
+   unreadCount: notificationUnreadCount,
+   loading: notificationsLoading,
+   markAsRead,
+   markAllAsRead
+ } = useStaffNotifications(staffId)
 
  useEffect(() => {
  loadUser()
@@ -64,6 +75,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
  .single()
 
  setStaff(staffData)
+ setStaffId(staffData?.id || null)
  } catch (error) {
  console.error('Error loading user:', error)
  } finally {
@@ -128,9 +140,15 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
  </div>
  </div>
  <div className="flex items-center gap-2">
- <button className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
- <Bell className="w-5 h-5" />
- </button>
+ <NotificationCenter
+ notifications={notifications}
+ unreadCount={notificationUnreadCount}
+ onMarkAsRead={markAsRead}
+ onMarkAllAsRead={markAllAsRead}
+ loading={notificationsLoading}
+ theme="light"
+ accentColor="green"
+ />
  <button
  onClick={handleSignOut}
  className="p-2.5 rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-colors"

@@ -234,7 +234,10 @@ export interface Notification {
  id: string;
  club_id?: string;
  player_id?: string;
- notification_type: 'contract_signed' | 'contract_created' | 'player_joined' | string;
+ referee_id?: string;
+ staff_id?: string;
+ stadium_owner_id?: string;
+ notification_type: 'contract_signed' | 'contract_created' | 'player_joined' | 'match_assigned' | 'payment_received' | string;
  title: string;
  message: string;
  contract_id?: string;
@@ -243,8 +246,14 @@ export interface Notification {
  read_at?: string;
  read_by_club?: boolean; // Club-specific read status
  read_by_player?: boolean; // Player-specific read status
+ read_by_referee?: boolean; // Referee-specific read status
+ read_by_staff?: boolean; // Staff-specific read status
+ read_by_stadium_owner?: boolean; // Stadium owner-specific read status
  club_read_at?: string; // When club read it
  player_read_at?: string; // When player read it
+ referee_read_at?: string; // When referee read it
+ staff_read_at?: string; // When staff read it
+ stadium_owner_read_at?: string; // When stadium owner read it
  action_url?: string;
  created_at: string;
  updated_at: string;

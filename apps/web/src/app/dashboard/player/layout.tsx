@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SidebarNav, MobileNavList, BottomNav, NavItem } from '@/components/ui/modern-nav'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { usePlayerNotifications } from '@/hooks/usePlayerNotifications'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 import { 
@@ -19,7 +21,9 @@ import {
  X,
  Users,
  Bell,
- Trophy
+ Trophy,
+ BarChart3,
+ Dumbbell
 } from 'lucide-react'
 
 export default function PlayerLayout({
@@ -32,12 +36,22 @@ export default function PlayerLayout({
  const supabase = createClient()
  const [user, setUser] = useState<any>(null)
  const [player, setPlayer] = useState<any>(null)
+ const [playerId, setPlayerId] = useState<string | null>(null)
  const [loading, setLoading] = useState(true)
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
  
  // Get user ID for unread messages hook
  const [userId, setUserId] = useState<string | null>(null)
  const { unreadCount: unreadMessagesCount } = useUnreadMessages(userId)
+ 
+ // Use player notifications hook
+ const {
+   notifications,
+   unreadCount: notificationUnreadCount,
+   loading: notificationsLoading,
+   markAsRead,
+   markAllAsRead
+ } = usePlayerNotifications(playerId)
 
  useEffect(() => {
  checkUser()
@@ -81,6 +95,7 @@ export default function PlayerLayout({
  .single()
 
  setPlayer(playerData)
+ setPlayerId(playerData?.id || null)
  } catch (error) {
  console.error('Error checking user:', error)
  } finally {
@@ -96,10 +111,13 @@ export default function PlayerLayout({
  const navigation: NavItem[] = [
  { name: 'Dashboard', href: '/dashboard/player', icon: Home },
  { name: 'Profile', href: '/dashboard/player/profile', icon: User },
+ { name: 'Statistics', href: '/dashboard/player/statistics', icon: BarChart3 },
+ { name: 'Training', href: '/dashboard/player/training', icon: Dumbbell },
  { name: 'KYC', href: '/kyc/upload', icon: Shield },
  { name: 'Contracts', href: '/dashboard/player/contracts', icon: FileText },
  { name: 'Messages', href: '/dashboard/player/messages', icon: Mail, badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
  { name: 'Matches', href: '/dashboard/player/matches', icon: Trophy },
+ { name: 'Finance', href: '/dashboard/player/finance', icon: DollarSign },
  ]
 
  // Bottom navigation shows only essential items
@@ -145,9 +163,15 @@ export default function PlayerLayout({
  </div>
  </div>
  <div className="flex items-center gap-2">
- <button className="p-2.5 rounded-xl bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors">
- <Bell className="w-5 h-5" />
- </button>
+ <NotificationCenter
+ notifications={notifications}
+ unreadCount={notificationUnreadCount}
+ onMarkAsRead={markAsRead}
+ onMarkAllAsRead={markAllAsRead}
+ loading={notificationsLoading}
+ theme="light"
+ accentColor="orange"
+ />
  <button
  onClick={handleSignOut}
  className="p-2.5 rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-colors"

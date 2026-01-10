@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { SidebarNav, MobileNavList, BottomNav, NavItem } from '@/components/ui/modern-nav'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { useRefereeNotifications } from '@/hooks/useRefereeNotifications'
 import { 
  Home, 
  User, 
@@ -30,8 +32,17 @@ export default function RefereeLayout({
  const supabase = createClient()
  const [user, setUser] = useState<any>(null)
  const [referee, setReferee] = useState<any>(null)
+ const [refereeId, setRefereeId] = useState<string | null>(null)
  const [loading, setLoading] = useState(true)
  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+ const {
+   notifications,
+   unreadCount: notificationUnreadCount,
+   loading: notificationsLoading,
+   markAsRead,
+   markAllAsRead
+ } = useRefereeNotifications(refereeId)
 
  useEffect(() => {
  checkUser()
@@ -73,6 +84,7 @@ export default function RefereeLayout({
  .single()
 
  setReferee(refereeData)
+ setRefereeId(refereeData?.id || null)
  } catch (error) {
  console.error('Error checking user:', error)
  } finally {
@@ -136,9 +148,15 @@ export default function RefereeLayout({
  </div>
  </div>
  <div className="flex items-center gap-2">
- <button className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
- <Bell className="w-5 h-5" />
- </button>
+ <NotificationCenter
+ notifications={notifications}
+ unreadCount={notificationUnreadCount}
+ onMarkAsRead={markAsRead}
+ onMarkAllAsRead={markAllAsRead}
+ loading={notificationsLoading}
+ theme="light"
+ accentColor="purple"
+ />
  <button
  onClick={handleSignOut}
  className="p-2.5 rounded-xl bg-red-100 text-red-600 hover:bg-red-200 transition-colors"

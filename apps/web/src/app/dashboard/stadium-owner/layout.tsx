@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Building2, Calendar, DollarSign, FileText, Home, LogOut, Settings, BarChart3, Menu, X, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/context/ToastContext'
+import { NotificationCenter } from '@/components/NotificationCenter'
+import { useStadiumOwnerNotifications } from '@/hooks/useStadiumOwnerNotifications'
 
 interface Stadium {
  id: string
@@ -24,9 +26,18 @@ export default function StadiumOwnerLayout({
  const router = useRouter()
  const { addToast } = useToast()
  const [stadium, setStadium] = useState<Stadium | null>(null)
+ const [stadiumOwnerId, setStadiumOwnerId] = useState<string | null>(null)
  const [loading, setLoading] = useState(true)
  const [sidebarOpen, setSidebarOpen] = useState(false)
  const supabase = createClient()
+ 
+ const {
+   notifications,
+   unreadCount: notificationUnreadCount,
+   loading: notificationsLoading,
+   markAsRead,
+   markAllAsRead
+ } = useStadiumOwnerNotifications(stadiumOwnerId)
 
  useEffect(() => {
  checkStadiumOwner()
@@ -89,6 +100,7 @@ export default function StadiumOwnerLayout({
  .maybeSingle()
 
  setStadium(stadiumData)
+ setStadiumOwnerId(stadiumData?.id || null)
  } catch (error) {
  console.error('Error checking stadium owner:', error)
  router.push('/auth/login')
@@ -148,6 +160,15 @@ export default function StadiumOwnerLayout({
  </div>
  </div>
  <div className="flex items-center gap-2">
+ <NotificationCenter
+ notifications={notifications}
+ unreadCount={notificationUnreadCount}
+ onMarkAsRead={markAsRead}
+ onMarkAllAsRead={markAllAsRead}
+ loading={notificationsLoading}
+ theme="light"
+ accentColor="orange"
+ />
  <Button
  variant="ghost"
  size="icon"

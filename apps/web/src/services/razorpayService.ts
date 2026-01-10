@@ -312,27 +312,42 @@ class RazorpayService {
       })
 
       // Call Checkout.open() directly as per capacitor-razorpay docs
-      const result = await CheckoutModule.open(options)
-      
-      console.log('Native payment result:', result)
-      
-      if (result && result.response) {
-        console.log('Payment successful, verifying...')
-        // Verify payment on backend
-        const verified = await this.verifyPayment(result.response)
-        if (verified) {
-          console.log('Payment verified successfully')
-          onSuccess(result.response)
+      try {
+        const result = await CheckoutModule.open(options)
+        
+        console.log('Native payment result:', result)
+        
+        if (result && result.response) {
+          console.log('Payment successful, verifying...')
+          // Verify payment on backend
+          const verified = await this.verifyPayment(result.response)
+          if (verified) {
+            console.log('Payment verified successfully')
+            onSuccess(result.response)
+          } else {
+            console.error('Payment verification failed')
+            onError(new Error('Payment verification failed'))
+          }
         } else {
-          console.error('Payment verification failed')
-          onError(new Error('Payment verification failed'))
+          console.error('Payment cancelled or failed:', result)
+          onError(new Error('Payment cancelled or failed'))
         }
-      } else {
-        console.error('Payment cancelled or failed:', result)
-        onError(new Error('Payment cancelled or failed'))
+      } catch (checkoutError: any) {
+        console.error('Checkout.open() error:', {
+          message: checkoutError.message,
+          code: checkoutError.code,
+          stack: checkoutError.stack,
+          full: checkoutError
+        })
+        throw new Error(`Native checkout failed: ${checkoutError.message || 'Unknown error'}`)
       }
-    } catch (error) {
-      console.error('Mobile payment error:', error)
+    } catch (error: any) {
+      console.error('Mobile payment error:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        full: error
+      })
       throw error // Re-throw so fallback can be used
     }
   }

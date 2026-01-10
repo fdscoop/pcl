@@ -174,11 +174,13 @@ export default function StadiumOwnerLayout({
  <div 
  className="lg:hidden fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm"
  onClick={() => setSidebarOpen(false)}
+ style={{ top: 'max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px))' }}
  />
  )}
 
  {/* Sidebar */}
- <aside className={`
+ <aside 
+ className={`
  fixed top-0 left-0 z-50 h-full w-[280px] 
  bg-white/95 backdrop-blur-xl 
  border-r border-orange-100 
@@ -186,7 +188,9 @@ export default function StadiumOwnerLayout({
  lg:translate-x-0
  ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
  shadow-2xl shadow-slate-900/10 lg:shadow-xl lg:shadow-orange-100/50 
- `}>
+ `}
+ style={{ paddingTop: 'max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px))' }}
+ >
  {/* Sidebar Header */}
  <div className="p-5 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 ">
  <div className="flex items-center gap-3">

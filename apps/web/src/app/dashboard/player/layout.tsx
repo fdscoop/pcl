@@ -170,8 +170,12 @@ export default function PlayerLayout({
  <div 
  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
  onClick={() => setMobileMenuOpen(false)}
+ style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
  />
- <div className="fixed top-16 left-0 right-0 bottom-0 bg-white z-50 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
+ <div 
+ className="fixed left-0 right-0 bottom-0 bg-white z-50 overflow-y-auto animate-in slide-in-from-top-2 duration-200"
+ style={{ top: 'calc(max(var(--status-bar-height, 0px), env(safe-area-inset-top, 0px)) + 4rem)' }}
+ >
  {/* User Info */}
  <div className="p-4 border-b border-orange-100">
  <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200">

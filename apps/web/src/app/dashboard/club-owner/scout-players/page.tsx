@@ -697,14 +697,15 @@ export default function ScoutPlayersPage() {
  </CardHeader>
 
  <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6 px-4 sm:px-6 pb-6 bg-white">
- {/* Player Photo */}
+ {/* Player Photo - Larger and mobile-friendly */}
  {viewModal.player.photo_url && (
- <div className="relative w-full h-48 sm:h-72 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-slate-200 shadow-lg">
+ <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-xl sm:rounded-2xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 shadow-lg">
  <Image
  src={viewModal.player.photo_url}
  alt={`${viewModal.player.users?.first_name} ${viewModal.player.users?.last_name}`}
  fill
- className="object-cover"
+ className="object-contain p-2"
+ priority
  />
  </div>
  )}

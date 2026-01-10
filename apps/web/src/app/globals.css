@@ -602,7 +602,16 @@ body.mobile-app {
   /* For mobile devices, ensure sticky navbars start below status bar */
   @media screen and (max-width: 767px) {
     .sticky-nav-mobile-safe {
-      padding-top: var(--status-bar-height);
+      padding-top: max(var(--status-bar-height), env(safe-area-inset-top, 0px));
+      position: sticky;
+      top: 0;
+    }
+  }
+  
+  /* Additional safety for Capacitor/Cordova apps */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    .sticky-nav-mobile-safe {
+      padding-top: max(var(--status-bar-height), env(safe-area-inset-top, 0px));
     }
   }
 

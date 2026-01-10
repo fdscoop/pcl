@@ -13,14 +13,16 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- CRITICAL: These settings ensure content doesn't go behind system bars -->
+        <item name="android:fitsSystemWindows">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@color/colorPrimaryDark</item>
         <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <!-- Ensure content doesn't go behind status bar -->
-        <item name="android:fitsSystemWindows">true</item>
+        <!-- Disable translucent bars to prevent overlap -->
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowTranslucentNavigation">false</item>
+        <!-- Handle display cutouts (notches) properly -->
+        <item name="android:windowLayoutInDisplayCutoutMode">default</item>
     </style>
 
 

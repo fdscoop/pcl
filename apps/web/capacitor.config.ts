@@ -19,8 +19,8 @@ const config: CapacitorConfig = {
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: true,
-      splashFullScreen: true,
-      splashImmersive: true,
+      splashFullScreen: false, // Changed to false to respect system bars
+      splashImmersive: false,  // Changed to false to prevent content overlap
     },
     StatusBar: {
       style: 'LIGHT', // Light icons on dark background

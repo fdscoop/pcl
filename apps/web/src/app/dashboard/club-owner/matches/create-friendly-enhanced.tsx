@@ -1154,6 +1154,11 @@ export function CreateFriendlyMatch({
  }
  }
 
+ // Final check - ensure we have a payment record
+ if (!paymentRecord) {
+ throw new Error(`Could not find payment record for razorpay_payment_id: ${paymentResponse.razorpay_payment_id}. This might be a timing issue - please try again.`)
+ }
+
  console.log('Found payment record:', paymentRecord.id, 'for razorpay_payment_id:', paymentResponse.razorpay_payment_id)
 
  // Insert into matches table using correct schema

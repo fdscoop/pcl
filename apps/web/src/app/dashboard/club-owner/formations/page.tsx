@@ -593,7 +593,9 @@ export default function FormationsPage() {
        duration: 4000
      })
    }
- } // Mobile load lineup handler
+ }
+
+ // Mobile load lineup handler
  const handleMobileLoadLineup = async (matchId?: string, format?: string): Promise<{
    assignments: Record<string, Player | null>
    selectedPlayers: Set<string>

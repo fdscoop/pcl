@@ -78,23 +78,18 @@ export async function POST(request: NextRequest) {
           currency: 'INR'
         })
         
-        // Create payment record
+        // Update the existing payment record (created during order creation)
         const { data: paymentData, error: paymentError } = await supabase
           .from('payments')
-          .upsert([
-            {
-              razorpay_order_id: razorpay_order_id,
-              razorpay_payment_id: razorpay_payment_id,
-              razorpay_signature: razorpay_signature,
-              status: 'completed',
-              amount: orderAmount,
-              currency: 'INR',
-              payment_method: 'razorpay',
-              completed_at: new Date().toISOString()
-            }
-          ], {
-            onConflict: 'razorpay_payment_id'
+          .update({
+            razorpay_payment_id: razorpay_payment_id,
+            razorpay_signature: razorpay_signature,
+            status: 'completed',
+            payment_method: 'razorpay',
+            completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
+          .eq('razorpay_order_id', razorpay_order_id)
           .select()
         
         if (paymentError) {

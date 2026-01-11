@@ -15,6 +15,7 @@ export interface RazorpayOrderData {
   receipt: string
   status: string
   created_at: number
+  payment_id: string // Our local payment record ID
 }
 
 export interface PaymentData {

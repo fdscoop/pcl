@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { filterValidImages } from '@/lib/image-compression'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -559,7 +560,11 @@ export function CreateFriendlyMatch({
  if (!photosMap.has(photo.stadium_id)) {
  photosMap.set(photo.stadium_id, [])
  }
- photosMap.get(photo.stadium_id)!.push(photo.photo_data)
+ // Filter out invalid base64 images to prevent ERR_INVALID_URL errors
+ const validPhoto = photo.photo_data
+ if (validPhoto && validPhoto.startsWith('data:image/') && validPhoto.includes(';base64,')) {
+ photosMap.get(photo.stadium_id)!.push(validPhoto)
+ }
  })
  }
 

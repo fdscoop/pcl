@@ -179,6 +179,51 @@ export function validateImage(file: File): { valid: boolean; error?: string } {
 }
 
 /**
+ * Validates if a base64 string is a valid image data URL
+ * @param base64String - The base64 string to validate
+ * @returns boolean indicating if the string is valid
+ */
+export function isValidBase64Image(base64String: string): boolean {
+ try {
+ // Check if it starts with data: and has proper format
+ if (!base64String.startsWith('data:image/')) {
+ return false
+ }
+ 
+ // Check if it contains base64 header
+ if (!base64String.includes(';base64,')) {
+ return false
+ }
+ 
+ // Extract the base64 part
+ const base64Part = base64String.split(',')[1]
+ if (!base64Part || base64Part.length === 0) {
+ return false
+ }
+ 
+ // Check if it's valid base64 (not just '=' padding)
+ if (base64Part === '=' || base64Part === '==') {
+ return false
+ }
+ 
+ // Try to decode to validate
+ atob(base64Part)
+ return true
+ } catch {
+ return false
+ }
+}
+
+/**
+ * Filters out invalid base64 images from an array
+ * @param images - Array of base64 image strings
+ * @returns Filtered array with only valid images
+ */
+export function filterValidImages(images: string[]): string[] {
+ return images.filter(isValidBase64Image)
+}
+
+/**
  * Utility to format file size for display
  */
 export function formatFileSize(bytes: number): string {

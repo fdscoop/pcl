@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { filterValidImages } from '@/lib/image-compression'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -347,7 +348,7 @@ export default function MatchesPage() {
  if (stadiumIds.length > 0) {
  const { data: stadiumPhotos } = await supabase
  .from('stadium_photos')
- .select('stadium_id, photo_url')
+ .select('stadium_id, photo_data')
  .in('stadium_id', stadiumIds)
  .limit(100)
 
@@ -358,7 +359,11 @@ export default function MatchesPage() {
  if (!photosMap.has(photo.stadium_id)) {
  photosMap.set(photo.stadium_id, [])
  }
- photosMap.get(photo.stadium_id)!.push(photo.photo_url)
+ // Filter out invalid base64 images to prevent ERR_INVALID_URL errors
+ const validPhoto = photo.photo_data
+ if (validPhoto && validPhoto.startsWith('data:image/') && validPhoto.includes(';base64,')) {
+ photosMap.get(photo.stadium_id)!.push(validPhoto)
+ }
  })
  }
 

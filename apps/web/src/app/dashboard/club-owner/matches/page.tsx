@@ -26,8 +26,9 @@ import {
  Calculator,
  UserCheck,
  Shield,
- X,
- AlertTriangle
+ AlertTriangle,
+ ChevronLeft,
+ ChevronRight
 } from 'lucide-react'
 
 interface Team {
@@ -84,6 +85,7 @@ export default function MatchesPage() {
  const [showCancelDialog, setShowCancelDialog] = useState(false)
  const [matchToCancel, setMatchToCancel] = useState<Match | null>(null)
  const [cancelReason, setCancelReason] = useState('')
+ const [currentImageIndex, setCurrentImageIndex] = useState<Record<string, number>>({})
  const { addToast } = useToast()
  const {
  notifications,
@@ -423,6 +425,23 @@ export default function MatchesPage() {
    setMatchToCancel(match)
    setCancelReason('')
    setShowCancelDialog(true)
+ }
+
+ const handleImageNavigation = (matchId: string, direction: 'prev' | 'next', totalImages: number, event: React.MouseEvent) => {
+   event.stopPropagation() // Prevent card click event
+   
+   setCurrentImageIndex(prev => {
+     const currentIndex = prev[matchId] || 0
+     let newIndex: number
+     
+     if (direction === 'prev') {
+       newIndex = currentIndex === 0 ? totalImages - 1 : currentIndex - 1
+     } else {
+       newIndex = currentIndex === totalImages - 1 ? 0 : currentIndex + 1
+     }
+     
+     return { ...prev, [matchId]: newIndex }
+   })
  }
 
  const confirmCancelMatch = async () => {
@@ -917,23 +936,6 @@ export default function MatchesPage() {
  >
  {match.status}
  </Badge>
- {/* Cancel Match Button */}
- {(match.status === 'scheduled' || match.status === 'pending') && (
- <Button
- onClick={(e) => handleCancelMatch(match, e)}
- variant="outline"
- size="sm"
- disabled={cancelingMatch === match.id}
- className="h-6 w-6 p-0 border-red-200 hover:border-red-400 hover:bg-red-50 hover:text-red-700 transition-colors"
- title="Cancel Match"
- >
- {cancelingMatch === match.id ? (
- <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
- ) : (
- <X className="h-3 w-3 text-red-500" />
- )}
- </Button>
- )}
  </div>
  </div>
 
@@ -1047,26 +1049,118 @@ export default function MatchesPage() {
  {/* Stadium Photos */}
  {match.stadium.photos && match.stadium.photos.length > 0 && (
  <div className="mt-2 pl-9 sm:pl-10">
- <div className="grid grid-cols-2 gap-2">
- {match.stadium.photos.slice(0, 2).map((photo, idx) => (
- <div
- key={idx}
- className="h-16 sm:h-20 rounded-lg overflow-hidden bg-slate-200 border border-slate-300 shadow-sm hover:shadow-md transition-shadow"
- >
+ <div className="relative h-20 sm:h-24 rounded-lg overflow-hidden bg-slate-200 border border-slate-300 shadow-sm">
+ {/* Current Image */}
  <img
- src={photo}
- alt={`${match.stadium?.stadium_name || 'Stadium'} - Photo ${idx + 1}`}
+ src={match.stadium.photos[currentImageIndex[match.id] || 0]}
+ alt={`${match.stadium?.stadium_name || 'Stadium'} - Photo ${(currentImageIndex[match.id] || 0) + 1}`}
  className="w-full h-full object-cover"
  onError={(e) => {
  e.currentTarget.style.display = 'none'
  }}
  />
- </div>
- ))}
- </div>
- {match.stadium.photos.length > 2 && (
- <p className="text-[10px] sm:text-xs text-slate-500 mt-1">+{match.stadium.photos.length - 2} more photos</p>
+ 
+ {/* Navigation Arrows */}
+ {match.stadium?.photos && match.stadium.photos.length > 1 && (
+ <>
+ <button
+ onClick={(e) => handleImageNavigation(match.id, 'prev', match.stadium?.photos?.length || 0, e)}
+ className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full flex items-center justify-center transition-all"
+ >
+ <ChevronLeft className="h-3 w-3 text-white" />
+ </button>
+ <button
+ onClick={(e) => handleImageNavigation(match.id, 'next', match.stadium?.photos?.length || 0, e)}
+ className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full flex items-center justify-center transition-all"
+ >
+ <ChevronRight className="h-3 w-3 text-white" />
+ </button>
+ </>
  )}
+ 
+ {/* Image Counter */}
+ {match.stadium?.photos && match.stadium.photos.length > 1 && (
+ <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white px-2 py-0.5 rounded text-[10px] font-medium">
+ {(currentImageIndex[match.id] || 0) + 1} / {match.stadium.photos.length}
+ </div>
+ )}
+ </div>
+ 
+ {/* Cancel Match Button */}
+ {(match.status === 'scheduled' || match.status === 'pending') && (
+ <div className="mt-3">
+ <Button
+ onClick={(e) => handleCancelMatch(match, e)}
+ variant="outline"
+ size="sm"
+ disabled={cancelingMatch === match.id}
+ className="w-full h-8 text-xs border-red-200 hover:border-red-400 hover:bg-red-50 hover:text-red-700 transition-colors font-medium"
+ >
+ {cancelingMatch === match.id ? (
+ <div className="flex items-center gap-2">
+ <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+ <span>Canceling...</span>
+ </div>
+ ) : (
+ <>
+ <AlertTriangle className="h-3 w-3 text-red-500 mr-1.5" />
+ Cancel Match
+ </>
+ )}
+ </Button>
+ </div>
+ )}
+ </div>
+ )}
+ 
+ {/* Cancel Match Button - Show for matches without stadium photos */}
+ {(match.status === 'scheduled' || match.status === 'pending') && 
+  match.stadium && (!match.stadium.photos || match.stadium.photos.length === 0) && (
+ <div className="mt-2 pl-9 sm:pl-10">
+ <Button
+ onClick={(e) => handleCancelMatch(match, e)}
+ variant="outline"
+ size="sm"
+ disabled={cancelingMatch === match.id}
+ className="w-full h-8 text-xs border-red-200 hover:border-red-400 hover:bg-red-50 hover:text-red-700 transition-colors font-medium"
+ >
+ {cancelingMatch === match.id ? (
+ <div className="flex items-center gap-2">
+ <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+ <span>Canceling...</span>
+ </div>
+ ) : (
+ <>
+ <AlertTriangle className="h-3 w-3 text-red-500 mr-1.5" />
+ Cancel Match
+ </>
+ )}
+ </Button>
+ </div>
+ )}
+ 
+ {/* Cancel Match Button - Show for matches without stadium */}
+ {(match.status === 'scheduled' || match.status === 'pending') && !match.stadium && (
+ <div className="mt-2">
+ <Button
+ onClick={(e) => handleCancelMatch(match, e)}
+ variant="outline"
+ size="sm"
+ disabled={cancelingMatch === match.id}
+ className="w-full h-8 text-xs border-red-200 hover:border-red-400 hover:bg-red-50 hover:text-red-700 transition-colors font-medium"
+ >
+ {cancelingMatch === match.id ? (
+ <div className="flex items-center gap-2">
+ <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+ <span>Canceling...</span>
+ </div>
+ ) : (
+ <>
+ <AlertTriangle className="h-3 w-3 text-red-500 mr-1.5" />
+ Cancel Match
+ </>
+ )}
+ </Button>
  </div>
  )}
  </div>

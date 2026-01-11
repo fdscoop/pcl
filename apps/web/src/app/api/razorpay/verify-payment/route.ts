@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient } from '@/lib/supabase/server'
+import Razorpay from 'razorpay'
+
+// Initialize Razorpay instance
+const razorpay = new Razorpay({
+  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+  key_secret: process.env.RAZORPAY_SECRET_KEY!
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,6 +55,16 @@ export async function POST(request: NextRequest) {
       try {
         const supabase = await createClient()
         
+        // Get order details from Razorpay to get amount
+        let orderAmount = 100 // Default fallback amount (₹1 in paise)
+        try {
+          const orderDetails = await razorpay.orders.fetch(razorpay_order_id)
+          orderAmount = typeof orderDetails.amount === 'number' ? orderDetails.amount : parseInt(orderDetails.amount)
+          console.log('Fetched order amount:', orderAmount, 'paise for order:', razorpay_order_id)
+        } catch (orderError) {
+          console.warn('Could not fetch order details, using fallback amount:', orderError)
+        }
+        
         // Create payment record
         const { data: paymentData, error: paymentError } = await supabase
           .from('payments')
@@ -55,13 +72,16 @@ export async function POST(request: NextRequest) {
             {
               razorpay_order_id: razorpay_order_id,
               razorpay_payment_id: razorpay_payment_id,
+              razorpay_signature: razorpay_signature,
               status: 'completed',
-              amount: 0, // Will be updated when we have order details
+              amount: orderAmount,
               currency: 'INR',
               payment_method: 'razorpay',
-              verified_at: new Date().toISOString()
+              completed_at: new Date().toISOString()
             }
-          ])
+          ], {
+            onConflict: 'razorpay_payment_id'
+          })
           .select()
         
         if (paymentError) {

@@ -471,3 +471,141 @@ export async function notifyNewContractOffer(
     console.error('Error sending new contract offer push notification:', error)
   }
 }
+
+/**
+ * Notify opponent club owner about match cancellation
+ */
+export async function notifyMatchCanceled(
+  opponentClubId: string,
+  cancelingClubName: string,
+  matchDate: string,
+  matchTime: string,
+  matchFormat?: string,
+  reason?: string
+): Promise<void> {
+  try {
+    const supabase = createClient()
+    
+    // Get opponent club owner
+    const { data: club } = await supabase
+      .from('clubs')
+      .select('owner_id')
+      .eq('id', opponentClubId)
+      .single()
+    
+    if (!club?.owner_id) {
+      console.log('No opponent club owner found for cancellation notification')
+      return
+    }
+    
+    const formattedDate = new Date(matchDate).toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    })
+    
+    const formatStr = matchFormat ? ` (${matchFormat})` : ''
+    const reasonStr = reason ? `. Reason: ${reason}` : ''
+    
+    await sendPushToUser(
+      club.owner_id,
+      '❌ Match Canceled',
+      `${cancelingClubName} canceled the match on ${formattedDate} at ${matchTime}${formatStr}${reasonStr}`,
+      `/dashboard/club-owner/matches`
+    )
+    
+    console.log('✅ Match cancellation notification sent to opponent club owner')
+  } catch (error) {
+    console.error('Error notifying opponent club about cancellation:', error)
+  }
+}
+
+/**
+ * Notify stadium owner about match cancellation
+ */
+export async function notifyStadiumMatchCanceled(
+  stadiumId: string,
+  cancelingClubName: string,
+  opponentClubName: string,
+  matchDate: string,
+  matchTime: string,
+  matchFormat?: string
+): Promise<void> {
+  try {
+    const supabase = createClient()
+    
+    // Get stadium owner
+    const { data: stadium } = await supabase
+      .from('stadiums')
+      .select('owner_id, stadium_name')
+      .eq('id', stadiumId)
+      .single()
+    
+    if (!stadium?.owner_id) {
+      console.log('No stadium owner found for cancellation notification')
+      return
+    }
+    
+    const formattedDate = new Date(matchDate).toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    })
+    
+    const formatStr = matchFormat ? ` (${matchFormat})` : ''
+    
+    await sendPushToUser(
+      stadium.owner_id,
+      '❌ Match Booking Canceled',
+      `${cancelingClubName} vs ${opponentClubName}${formatStr} on ${formattedDate} at ${matchTime} has been canceled`,
+      `/dashboard/stadium-owner/bookings`
+    )
+    
+    console.log('✅ Stadium cancellation notification sent to stadium owner')
+  } catch (error) {
+    console.error('Error notifying stadium owner about cancellation:', error)
+  }
+}
+
+/**
+ * Notify all players in a club about match cancellation
+ */
+export async function notifyPlayersMatchCanceled(
+  clubId: string,
+  teamId: string,
+  opponentClubName: string,
+  matchDate: string,
+  matchTime: string,
+  matchFormat?: string,
+  reason?: string
+): Promise<void> {
+  try {
+    // Get all team player user IDs
+    const userIds = await getTeamPlayerUserIds(clubId, teamId)
+    
+    if (userIds.length === 0) {
+      console.log('No players found in the team to notify about cancellation')
+      return
+    }
+    
+    const formattedDate = new Date(matchDate).toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    })
+    
+    const formatStr = matchFormat ? ` (${matchFormat})` : ''
+    const reasonStr = reason ? ` - ${reason}` : ''
+    
+    await sendPushToUsers(
+      userIds,
+      '❌ Match Canceled',
+      `Match vs ${opponentClubName}${formatStr} on ${formattedDate} at ${matchTime} has been canceled${reasonStr}`,
+      `/dashboard/player/matches`
+    )
+    
+    console.log(`✅ Match cancellation notification sent to ${userIds.length} players`)
+  } catch (error) {
+    console.error('Error notifying players about match cancellation:', error)
+  }
+}

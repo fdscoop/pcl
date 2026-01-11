@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { NotificationCenter } from '@/components/NotificationCenter'
 import { useClubNotifications } from '@/hooks/useClubNotifications'
 import { useToast } from '@/context/ToastContext'
@@ -23,7 +25,9 @@ import {
  Info,
  Calculator,
  UserCheck,
- Shield
+ Shield,
+ X,
+ AlertTriangle
 } from 'lucide-react'
 
 interface Team {
@@ -76,6 +80,10 @@ export default function MatchesPage() {
  const [awayTeamLineup, setAwayTeamLineup] = useState<any>(null)
  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
  const [lastLineupUpdate, setLastLineupUpdate] = useState<number>(0)
+ const [cancelingMatch, setCancelingMatch] = useState<string | null>(null)
+ const [showCancelDialog, setShowCancelDialog] = useState(false)
+ const [matchToCancel, setMatchToCancel] = useState<Match | null>(null)
+ const [cancelReason, setCancelReason] = useState('')
  const { addToast } = useToast()
  const {
  notifications,
@@ -135,6 +143,7 @@ export default function MatchesPage() {
  .single()
 
  if (!clubData) {
+ console.log('❌ No club found for user')
  addToast({
  title: 'Club Not Found',
  description: 'Unable to find your club information',
@@ -144,6 +153,7 @@ export default function MatchesPage() {
  return
  }
 
+ console.log('🔍 Club data:', clubData)
  setClub(clubData)
 
  // Check KYC verification status
@@ -168,13 +178,17 @@ export default function MatchesPage() {
  .eq('club_id', clubData.id)
  .eq('is_active', true)
 
+ console.log('🔍 Teams data:', teamsData)
  setTeams(teamsData || [])
 
  // Get upcoming matches
  let matchesData: any[] = []
  if (teamsData && teamsData.length > 0) {
  const teamIds = teamsData.map(t => t.id).join(',')
- const { data: matches } = await supabase
+ console.log('🔍 Querying matches for team IDs:', teamIds)
+ console.log('🔍 Date filter:', new Date().toISOString().split('T')[0])
+ 
+ const { data: matches, error: matchesError } = await supabase
  .from('matches')
  .select(`
  *,
@@ -189,6 +203,12 @@ export default function MatchesPage() {
  .gte('match_date', new Date().toISOString().split('T')[0])
  .order('match_date')
  .limit(10)
+ 
+ console.log('🔍 Matches query result:', { matches, matchesError })
+ 
+ if (matchesError) {
+ console.error('❌ Error querying matches:', matchesError)
+ }
  
  if (matches && matches.length > 0) {
  // Create a map of team_id to club_id from teamsData we already fetched (only our club's teams)
@@ -396,6 +416,58 @@ export default function MatchesPage() {
  } finally {
  setLoading(false)
  }
+ }
+
+ const handleCancelMatch = (match: Match, event: React.MouseEvent) => {
+   event.stopPropagation() // Prevent card click event
+   setMatchToCancel(match)
+   setCancelReason('')
+   setShowCancelDialog(true)
+ }
+
+ const confirmCancelMatch = async () => {
+   if (!matchToCancel) return
+
+   setCancelingMatch(matchToCancel.id)
+   
+   try {
+     const response = await fetch('/api/matches/cancel', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json'
+       },
+       body: JSON.stringify({
+         matchId: matchToCancel.id,
+         reason: cancelReason.trim() || 'No reason provided'
+       })
+     })
+
+     if (!response.ok) {
+       const errorData = await response.json()
+       throw new Error(errorData.error || 'Failed to cancel match')
+     }
+
+     addToast({
+       title: 'Match Canceled',
+       description: 'Match has been successfully canceled and all stakeholders have been notified',
+       type: 'success'
+     })
+
+     // Refresh matches to remove the canceled match
+     await loadData()
+     
+   } catch (error: any) {
+     console.error('Error canceling match:', error)
+     addToast({
+       title: 'Error',
+       description: error.message || 'Failed to cancel match',
+       type: 'error'
+     })
+   } finally {
+     setCancelingMatch(null)
+     setShowCancelDialog(false)
+     setMatchToCancel(null)
+   }
  }
 
  const refreshLineupStatus = async () => {
@@ -834,6 +906,7 @@ export default function MatchesPage() {
  {isHomeMatch ? 'HOME' : 'AWAY'}
  </Badge>
  </div>
+ <div className="flex items-center gap-2">
  <Badge
  variant="outline"
  className={`${
@@ -844,6 +917,24 @@ export default function MatchesPage() {
  >
  {match.status}
  </Badge>
+ {/* Cancel Match Button */}
+ {(match.status === 'scheduled' || match.status === 'pending') && (
+ <Button
+ onClick={(e) => handleCancelMatch(match, e)}
+ variant="outline"
+ size="sm"
+ disabled={cancelingMatch === match.id}
+ className="h-6 w-6 p-0 border-red-200 hover:border-red-400 hover:bg-red-50 hover:text-red-700 transition-colors"
+ title="Cancel Match"
+ >
+ {cancelingMatch === match.id ? (
+ <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+ ) : (
+ <X className="h-3 w-3 text-red-500" />
+ )}
+ </Button>
+ )}
+ </div>
  </div>
 
  {/* Match-up Display */}
@@ -1116,6 +1207,84 @@ export default function MatchesPage() {
  {homeTeamLineup ? 'Update Playing XI' : 'Declare Playing XI Now'}
  </Button>
  </div>
+ </div>
+ </CardContent>
+ </Card>
+ </div>
+ )}
+
+ {/* Cancel Match Dialog */}
+ {showCancelDialog && matchToCancel && (
+ <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+ <Card className="w-full max-w-md">
+ <CardHeader>
+ <CardTitle className="flex items-center gap-2 text-red-700">
+ <AlertTriangle className="h-5 w-5" />
+ Cancel Match
+ </CardTitle>
+ <CardDescription>
+ Are you sure you want to cancel this match? This action cannot be undone and all participants will be notified.
+ </CardDescription>
+ </CardHeader>
+ <CardContent className="space-y-4">
+ <div className="bg-slate-50 p-3 rounded-lg">
+ <p className="text-sm font-medium text-slate-900 mb-1">
+ {matchToCancel?.home_club_name} vs {matchToCancel?.away_club_name}
+ </p>
+ <p className="text-xs text-slate-600">
+ {new Date(matchToCancel!.match_date).toLocaleDateString('en-US', {
+   weekday: 'long',
+   month: 'long',
+   day: 'numeric',
+   year: 'numeric'
+ })} at {matchToCancel!.match_time}
+ </p>
+ <p className="text-xs text-slate-600">
+ Format: {matchToCancel?.match_format}
+ </p>
+ </div>
+ 
+ <div>
+ <Label htmlFor="cancelReason" className="text-sm font-medium">
+ Reason for cancellation (optional)
+ </Label>
+ <Textarea
+ id="cancelReason"
+ placeholder="e.g., Weather conditions, player unavailability, venue issues..."
+ value={cancelReason}
+ onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCancelReason(e.target.value)}
+ className="mt-1"
+ rows={3}
+ />
+ </div>
+ 
+ <div className="flex gap-3 justify-end">
+ <Button
+ variant="outline"
+ onClick={() => {
+ setShowCancelDialog(false)
+ setMatchToCancel(null)
+ setCancelReason('')
+ }}
+ disabled={cancelingMatch === matchToCancel?.id}
+ >
+ Keep Match
+ </Button>
+ <Button
+ variant="destructive"
+ onClick={confirmCancelMatch}
+ disabled={cancelingMatch === matchToCancel?.id}
+ className="min-w-24"
+ >
+ {cancelingMatch === matchToCancel?.id ? (
+ <div className="flex items-center gap-2">
+ <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin" />
+ Canceling...
+ </div>
+ ) : (
+ 'Cancel Match'
+ )}
+ </Button>
  </div>
  </CardContent>
  </Card>

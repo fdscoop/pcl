@@ -414,11 +414,17 @@ export function MobileMatchCreation({
       {/* Stadium List */}
       <div className="space-y-3">
         {filteredStadiums.map((stadium) => (
-          <button
+          <div
             key={stadium.id}
-            type="button"
             onClick={() => selectStadium(stadium)}
-            className={`w-full text-left rounded-xl border-2 overflow-hidden transition-all active:scale-[0.98] ${
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                selectStadium(stadium)
+              }
+            }}
+            className={`w-full text-left rounded-xl border-2 overflow-hidden transition-all active:scale-[0.98] cursor-pointer ${
               formData.stadiumId === stadium.id
                 ? 'border-purple-500 shadow-lg'
                 : 'border-gray-200'
@@ -511,7 +517,7 @@ export function MobileMatchCreation({
                 </div>
               )}
             </div>
-          </button>
+          </div>
         ))}
       </div>
     </div>

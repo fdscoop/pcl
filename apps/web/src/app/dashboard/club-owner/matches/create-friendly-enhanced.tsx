@@ -14,6 +14,7 @@ import { DayPicker } from 'react-day-picker'
 import { format, isBefore, startOfDay, addHours, isAfter, isSameDay } from 'date-fns'
 import 'react-day-picker/dist/style.css'
 import razorpayService, { PaymentResponse, RazorpayService } from '@/services/razorpayService'
+import { notifyOpponentClub, notifyStadiumOwner, notifyOwnClubPlayers } from '@/services/matchNotificationService'
 import { Capacitor } from '@capacitor/core'
 import { 
  Users, 
@@ -1223,34 +1224,52 @@ export function CreateFriendlyMatch({
  await supabase.from('match_assignments').insert(assignments)
  }
 
- // Create notification for the opponent club
- if (formData.selectedClub?.id) {
- // Get the opponent club's owner to notify them
- const { data: opponentClub } = await supabase
- .from('clubs')
- .select('owner_id')
- .eq('id', formData.selectedClub.id)
- .single()
-
- if (opponentClub?.owner_id) {
- const matchDateStr = format(selectedDate, 'PPP')
- const stadiumName = formData.selectedStadium?.stadium_name || 'TBD'
+ // Send comprehensive notifications
+ const notificationPromises: Promise<void>[] = []
  
-        const { error: notificationError } = await supabase
-          .from('notifications')
-          .insert([
-            {
-              user_id: opponentClub.owner_id,
-              type: 'friendly_match_request',
-              title: `Friendly Match Request from ${club.name}`,
-              message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}. Payment confirmed.`,
-              action_url: `/dashboard/matches/${createdMatch.id}`
-            }
-          ])
+ // 1. Notify opponent club owner
+ if (formData.selectedClub?.id) {
+   notificationPromises.push(
+     notifyOpponentClub(
+       formData.selectedClub.id,
+       club.name,
+       selectedDate.toISOString(),
+       formData.matchFormat
+     )
+   )
+ }
 
-        if (notificationError) console.error('Notification error:', notificationError)
+ // 2. Notify stadium owner
+ if (formData.selectedStadium?.id) {
+   notificationPromises.push(
+     notifyStadiumOwner(
+       formData.selectedStadium.id,
+       club.name,
+       formData.selectedClub?.name || 'TBD',
+       selectedDate.toISOString(),
+       formData.matchTime,
+       formData.matchFormat
+     )
+   )
  }
+
+ // 3. Notify own club players
+ if (formData.teamId) {
+   notificationPromises.push(
+     notifyOwnClubPlayers(
+       club.id,
+       formData.teamId,
+       formData.selectedClub?.name || 'TBD',
+       selectedDate.toISOString(),
+       formData.matchTime,
+       createdMatch.id,
+       formData.matchFormat
+     )
+   )
  }
+
+ // Execute all notifications
+ await Promise.allSettled(notificationPromises)
 
  addToast({
  title: 'Success',
@@ -1501,34 +1520,52 @@ export function CreateFriendlyMatch({
  await supabase.from('match_assignments').insert(assignments)
  }
 
- // Create notification for the opponent club
- if (formData.selectedClub?.id) {
- // Get the opponent club's owner to notify them
- const { data: opponentClub } = await supabase
- .from('clubs')
- .select('owner_id')
- .eq('id', formData.selectedClub.id)
- .single()
-
- if (opponentClub?.owner_id) {
- const matchDateStr = format(selectedDate, 'PPP')
- const stadiumName = formData.selectedStadium?.stadium_name || 'TBD'
+ // Send comprehensive notifications
+ const notificationPromises: Promise<void>[] = []
  
-        const { error: notificationError } = await supabase
-          .from('notifications')
-          .insert([
-            {
-              user_id: opponentClub.owner_id,
-              type: 'friendly_match_request',
-              title: `Friendly Match Request from ${club.name}`,
-              message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}`,
-              action_url: `/dashboard/matches/${createdMatch.id}`
-            }
-          ])
+ // 1. Notify opponent club owner
+ if (formData.selectedClub?.id) {
+   notificationPromises.push(
+     notifyOpponentClub(
+       formData.selectedClub.id,
+       club.name,
+       selectedDate.toISOString(),
+       formData.matchFormat
+     )
+   )
+ }
 
-        if (notificationError) console.error('Notification error:', notificationError)
+ // 2. Notify stadium owner
+ if (formData.selectedStadium?.id) {
+   notificationPromises.push(
+     notifyStadiumOwner(
+       formData.selectedStadium.id,
+       club.name,
+       formData.selectedClub?.name || 'TBD',
+       selectedDate.toISOString(),
+       formData.matchTime,
+       formData.matchFormat
+     )
+   )
  }
+
+ // 3. Notify own club players
+ if (formData.teamId) {
+   notificationPromises.push(
+     notifyOwnClubPlayers(
+       club.id,
+       formData.teamId,
+       formData.selectedClub?.name || 'TBD',
+       selectedDate.toISOString(),
+       formData.matchTime,
+       createdMatch.id,
+       formData.matchFormat
+     )
+   )
  }
+
+ // Execute all notifications
+ await Promise.allSettled(notificationPromises)
 
  console.log('Match created successfully:', createdMatch)
 

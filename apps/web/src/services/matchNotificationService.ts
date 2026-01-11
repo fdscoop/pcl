@@ -191,6 +191,95 @@ export async function notifyOpponentClub(
 }
 
 /**
+ * Notify stadium owner when their venue is booked for a match
+ */
+export async function notifyStadiumOwner(
+  stadiumId: string,
+  challengerClubName: string,
+  opponentClubName: string,
+  matchDate: string,
+  matchTime: string,
+  matchFormat?: string
+): Promise<void> {
+  try {
+    const supabase = createClient()
+    
+    // Get stadium owner
+    const { data: stadium } = await supabase
+      .from('stadiums')
+      .select('owner_id, stadium_name')
+      .eq('id', stadiumId)
+      .single()
+    
+    if (!stadium?.owner_id) {
+      console.log('No stadium owner found')
+      return
+    }
+    
+    const formattedDate = new Date(matchDate).toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    })
+    
+    const formatStr = matchFormat ? ` (${matchFormat})` : ''
+    
+    await sendPushToUser(
+      stadium.owner_id,
+      '🏟️ Stadium Booking Confirmed',
+      `${challengerClubName} vs ${opponentClubName}${formatStr} on ${formattedDate} at ${matchTime}`,
+      `/dashboard/stadium-owner/bookings`
+    )
+    
+    console.log('✅ Stadium booking notification sent to stadium owner')
+  } catch (error) {
+    console.error('Error notifying stadium owner:', error)
+  }
+}
+
+/**
+ * Notify own club players about a new match created
+ */
+export async function notifyOwnClubPlayers(
+  clubId: string,
+  teamId: string,
+  opponentClubName: string,
+  matchDate: string,
+  matchTime: string,
+  matchId: string,
+  matchFormat?: string
+): Promise<void> {
+  try {
+    // Get all team player user IDs
+    const userIds = await getTeamPlayerUserIds(clubId, teamId)
+    
+    if (userIds.length === 0) {
+      console.log('No players found in the team to notify')
+      return
+    }
+    
+    const formattedDate = new Date(matchDate).toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    })
+    
+    const formatStr = matchFormat ? ` (${matchFormat})` : ''
+    
+    await sendPushToUsers(
+      userIds,
+      '⚽ New Match Scheduled!',
+      `Match vs ${opponentClubName}${formatStr} on ${formattedDate} at ${matchTime}`,
+      `/dashboard/player/matches/${matchId}`
+    )
+    
+    console.log(`✅ Match notification sent to ${userIds.length} players`)
+  } catch (error) {
+    console.error('Error notifying own club players:', error)
+  }
+}
+
+/**
  * Notify players selected for starting XI
  */
 export async function notifyStartingXI(data: LineupNotificationData): Promise<void> {

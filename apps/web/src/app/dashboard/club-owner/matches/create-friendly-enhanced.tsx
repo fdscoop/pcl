@@ -1236,20 +1236,19 @@ export function CreateFriendlyMatch({
  const matchDateStr = format(selectedDate, 'PPP')
  const stadiumName = formData.selectedStadium?.stadium_name || 'TBD'
  
- const { error: notificationError } = await supabase
- .from('notifications')
- .insert([
- {
- user_id: opponentClub.owner_id,
- type: 'friendly_match_request',
- title: `Friendly Match Request from ${club.name}`,
- message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}. Payment confirmed.`,
- action_url: `/dashboard/matches/${createdMatch.id}`,
- read: false
- }
- ])
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert([
+            {
+              user_id: opponentClub.owner_id,
+              type: 'friendly_match_request',
+              title: `Friendly Match Request from ${club.name}`,
+              message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}. Payment confirmed.`,
+              action_url: `/dashboard/matches/${createdMatch.id}`
+            }
+          ])
 
- if (notificationError) console.error('Notification error:', notificationError)
+        if (notificationError) console.error('Notification error:', notificationError)
  }
  }
 
@@ -1515,20 +1514,19 @@ export function CreateFriendlyMatch({
  const matchDateStr = format(selectedDate, 'PPP')
  const stadiumName = formData.selectedStadium?.stadium_name || 'TBD'
  
- const { error: notificationError } = await supabase
- .from('notifications')
- .insert([
- {
- user_id: opponentClub.owner_id,
- type: 'friendly_match_request',
- title: `Friendly Match Request from ${club.name}`,
- message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}`,
- action_url: `/dashboard/matches/${createdMatch.id}`,
- read: false
- }
- ])
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert([
+            {
+              user_id: opponentClub.owner_id,
+              type: 'friendly_match_request',
+              title: `Friendly Match Request from ${club.name}`,
+              message: `${club.name} requested a ${formData.matchFormat} match on ${matchDateStr} at ${formData.matchTime}. Location: ${stadiumName}`,
+              action_url: `/dashboard/matches/${createdMatch.id}`
+            }
+          ])
 
- if (notificationError) console.error('Notification error:', notificationError)
+        if (notificationError) console.error('Notification error:', notificationError)
  }
  }
 

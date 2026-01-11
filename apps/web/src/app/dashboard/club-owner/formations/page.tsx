@@ -165,7 +165,7 @@ export default function FormationsPage() {
  }
  }
 
- // Fetch upcoming matches for this team
+ // Fetch upcoming matches for this team (only scheduled and ongoing)
  const { data: matchesData } = await supabase
  .from('matches')
  .select(`
@@ -175,6 +175,7 @@ export default function FormationsPage() {
  stadium:stadiums(stadium_name)
  `)
  .or(`home_team_id.eq.${teamData.id},away_team_id.eq.${teamData.id}`)
+ .in('status', ['scheduled', 'ongoing'])
  .gte('match_date', new Date().toISOString().split('T')[0])
  .order('match_date')
  .order('match_time')

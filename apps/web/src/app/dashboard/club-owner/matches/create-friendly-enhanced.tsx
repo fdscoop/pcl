@@ -730,13 +730,14 @@ export function CreateFriendlyMatch({
  const supabase = createClient()
  const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
- // ✅ Fetch matches scheduled on this stadium for the selected date
+ // ✅ Fetch matches scheduled on this stadium for the selected date (exclude cancelled matches)
  const { data: matches, error: matchesError } = await supabase
  .from('matches')
  .select('id, match_date, match_time, match_format')
  .eq('stadium_id', formData.stadiumId)
  .eq('match_date', dateStr)
- .eq('status', 'scheduled')
+ .in('status', ['scheduled', 'ongoing'])
+ .is('canceled_at', null)
 
  if (matchesError) {
  console.error('❌ Error fetching scheduled matches:', matchesError)

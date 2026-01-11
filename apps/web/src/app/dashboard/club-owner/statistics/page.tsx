@@ -33,6 +33,9 @@ interface Match {
  status: string;
  home_team_score: number | null;
  away_team_score: number | null;
+ canceled_at: string | null;
+ canceled_by: string | null;
+ cancellation_reason: string | null;
  home_team: {
  team_name: string;
  club: {
@@ -300,6 +303,7 @@ export default function PerformancePage() {
  const [clubData, setClubData] = useState<ClubStats | null>(null);
  const [upcomingMatches, setUpcomingMatches] = useState<Match[]>([]);
  const [pastMatches, setPastMatches] = useState<Match[]>([]);
+ const [canceledMatches, setCanceledMatches] = useState<Match[]>([]);
  const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
  const [clubTeamIds, setClubTeamIds] = useState<string[]>([]);
  const [currentTime, setCurrentTime] = useState(new Date());
@@ -342,7 +346,7 @@ export default function PerformancePage() {
  const teamIds = teams.map(t => t.id);
  setClubTeamIds(teamIds);
 
- // Fetch all matches (we'll filter client-side based on date)
+ // Fetch all matches including canceled ones (we'll filter client-side based on date)
  const { data: allMatches } = await supabase
  .from('matches')
  .select(`
@@ -362,6 +366,9 @@ export default function PerformancePage() {
  away_team_score,
  home_team_id,
  away_team_id,
+ canceled_at,
+ canceled_by,
+ cancellation_reason,
  home_team:teams!matches_home_team_id_fkey(
  team_name,
  club:clubs(club_name)
@@ -394,16 +401,21 @@ export default function PerformancePage() {
  },
  }));
 
- // Filter matches based on date/time and status
+ // Filter matches based on date/time, status, and cancellation
  const now = new Date();
  const upcoming: Match[] = [];
  const past: Match[] = [];
+ const canceled: Match[] = [];
 
  transformedMatches.forEach((match: Match) => {
  const matchDateTime = new Date(`${match.match_date}T${match.match_time}`);
  
+ // If match is canceled, add to canceled list
+ if (match.canceled_at) {
+ canceled.push(match);
+ }
  // If match is completed OR date has passed, it goes to past
- if (match.status === 'completed' || matchDateTime < now) {
+ else if (match.status === 'completed' || matchDateTime < now) {
  past.push(match);
  } else {
  // Otherwise it's upcoming
@@ -419,8 +431,16 @@ export default function PerformancePage() {
  });
 
  // Past matches already sorted by date descending (most recent first)
+ // Canceled matches sorted by cancellation date descending (most recent first)
+ canceled.sort((a, b) => {
+ const dateA = a.canceled_at ? new Date(a.canceled_at).getTime() : 0;
+ const dateB = b.canceled_at ? new Date(b.canceled_at).getTime() : 0;
+ return dateB - dateA;
+ });
+
  setUpcomingMatches(upcoming.slice(0, 5));
  setPastMatches(past.slice(0, 5));
+ setCanceledMatches(canceled.slice(0, 5));
  }
  }
 
@@ -603,6 +623,42 @@ export default function PerformancePage() {
  <span className="font-semibold text-lg">
  {clubData?.total_matches ? (clubData.total_goals_scored / clubData.total_matches).toFixed(2) : '0.00'}
  </span>
+ </div>
+ </div>
+ </CardContent>
+ </Card>
+
+ {/* Canceled Matches Statistics */}
+ <Card>
+ <CardHeader>
+ <CardTitle className="text-lg font-semibold flex items-center gap-2">
+ <Clock className="w-5 h-5 text-red-600" />
+ Canceled Matches
+ </CardTitle>
+ </CardHeader>
+ <CardContent>
+ <div className="space-y-3">
+ <div className="flex justify-between items-center">
+ <span className="text-gray-600">Total Canceled:</span>
+ <span className="font-semibold text-red-600 text-lg">{canceledMatches.length}</span>
+ </div>
+ <div className="h-px bg-gray-200"></div>
+ <div className="text-sm text-gray-600">
+ {canceledMatches.length > 0 ? (
+ <div className="space-y-2">
+ {canceledMatches.slice(0, 3).map((match) => (
+ <div key={match.id} className="flex justify-between text-xs">
+ <span>{match.match_date}</span>
+ <span className="text-gray-500">{match.cancellation_reason || 'No reason'}</span>
+ </div>
+ ))}
+ {canceledMatches.length > 3 && (
+ <p className="text-teal-600 font-medium">+{canceledMatches.length - 3} more</p>
+ )}
+ </div>
+ ) : (
+ <p className="text-green-600">No canceled matches</p>
+ )}
  </div>
  </div>
  </CardContent>

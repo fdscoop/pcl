@@ -187,8 +187,6 @@ export default function MatchesPage() {
  let matchesData: any[] = []
  if (teamsData && teamsData.length > 0) {
  const teamIds = teamsData.map(t => t.id).join(',')
- console.log('🔍 Querying matches for team IDs:', teamIds)
- console.log('🔍 Date filter:', new Date().toISOString().split('T')[0])
  
  const { data: matches, error: matchesError } = await supabase
  .from('matches')
@@ -203,10 +201,9 @@ export default function MatchesPage() {
  `)
  .or(`home_team_id.in.(${teamIds}),away_team_id.in.(${teamIds})`)
  .gte('match_date', new Date().toISOString().split('T')[0])
+ .is('canceled_at', null) // Only show non-canceled matches
  .order('match_date')
  .limit(10)
- 
- console.log('🔍 Matches query result:', { matches, matchesError })
  
  if (matchesError) {
  console.error('❌ Error querying matches:', matchesError)
@@ -1164,9 +1161,10 @@ export default function MatchesPage() {
  </div>
  )}
  </div>
+ )}
  </div>
 
-  {/* Lineup Status */}
+ {/* Lineup Status */}
  {typeof match.has_lineup !== 'undefined' && (
  <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${
  match.has_lineup ? 'border-green-100' : 'border-red-100'
@@ -1309,7 +1307,7 @@ export default function MatchesPage() {
  {/* Cancel Match Dialog */}
  {showCancelDialog && matchToCancel && (
  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
- <Card className="w-full max-w-md">
+ <Card className="w-full max-w-md bg-white">
  <CardHeader>
  <CardTitle className="flex items-center gap-2 text-red-700">
  <AlertTriangle className="h-5 w-5" />

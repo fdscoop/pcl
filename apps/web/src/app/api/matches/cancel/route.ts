@@ -81,11 +81,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cannot cancel completed or ongoing matches' }, { status: 400 })
     }
 
-    // Update match status to canceled
+    // Update match with cancellation details AND status
     const { error: updateError } = await supabase
       .from('matches')
       .update({
-        status: 'canceled'
+        status: 'cancelled',
+        canceled_at: new Date().toISOString(),
+        canceled_by: user.id,
+        cancellation_reason: reason || 'No reason provided'
       })
       .eq('id', matchId)
 
@@ -174,7 +177,7 @@ export async function POST(request: NextRequest) {
       message: 'Match canceled successfully',
       match: {
         id: matchId,
-        status: 'canceled',
+        status: 'cancelled',
         home_team: match.home_team,
         away_team: match.away_team,
         stadium: match.stadium,

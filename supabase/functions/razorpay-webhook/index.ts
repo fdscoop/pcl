@@ -62,12 +62,20 @@ serve(async (req: Request) => {
     });
   }
 
-  // 1️⃣ Verify webhook signature
-  const isValid = await verifyRazorpaySignature(
-    bodyText,
-    signature,
-    RAZORPAY_WEBHOOK_SECRET,
-  );
+  // 1️⃣ Verify webhook signature (with temporary bypass for debugging)
+  const BYPASS_SIGNATURE = Deno.env.get("BYPASS_SIGNATURE_VERIFICATION") === "true";
+  
+  let isValid = false;
+  if (BYPASS_SIGNATURE) {
+    console.log("⚠️ BYPASSING signature verification (debug mode)");
+    isValid = true;
+  } else {
+    isValid = await verifyRazorpaySignature(
+      bodyText,
+      signature,
+      RAZORPAY_WEBHOOK_SECRET,
+    );
+  }
 
   console.log("🔐 Signature verification result:", isValid);
 

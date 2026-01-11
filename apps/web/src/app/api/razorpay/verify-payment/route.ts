@@ -52,6 +52,10 @@ export async function POST(request: NextRequest) {
 
     if (is_authentic) {
       // Payment is authentic - create payment record in database
+      console.log('🔧 DEBUG: Starting payment record creation...')
+      console.log('🔧 DEBUG: Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+      console.log('🔧 DEBUG: Service role key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0)
+      
       try {
         const supabase = await createClient()
         
@@ -60,10 +64,19 @@ export async function POST(request: NextRequest) {
         try {
           const orderDetails = await razorpay.orders.fetch(razorpay_order_id)
           orderAmount = typeof orderDetails.amount === 'number' ? orderDetails.amount : parseInt(orderDetails.amount)
-          console.log('Fetched order amount:', orderAmount, 'paise for order:', razorpay_order_id)
+          console.log('🔧 DEBUG: Fetched order amount:', orderAmount, 'paise for order:', razorpay_order_id)
         } catch (orderError) {
-          console.warn('Could not fetch order details, using fallback amount:', orderError)
+          console.warn('🔧 DEBUG: Could not fetch order details, using fallback amount:', orderError)
         }
+        
+        console.log('🔧 DEBUG: About to upsert payment record...')
+        console.log('🔧 DEBUG: Payment data:', {
+          razorpay_order_id,
+          razorpay_payment_id,
+          status: 'completed',
+          amount: orderAmount,
+          currency: 'INR'
+        })
         
         // Create payment record
         const { data: paymentData, error: paymentError } = await supabase
@@ -85,14 +98,17 @@ export async function POST(request: NextRequest) {
           .select()
         
         if (paymentError) {
-          console.error('Error creating payment record:', paymentError)
+          console.error('🔧 DEBUG: Payment record creation error:', paymentError)
+          console.error('🔧 DEBUG: Error details:', JSON.stringify(paymentError, null, 2))
           // Still return success since payment verification succeeded
         } else {
-          console.log('Payment record created successfully:', paymentData?.[0]?.id)
+          console.log('🔧 DEBUG: Payment record created successfully:', paymentData?.[0]?.id)
+          console.log('🔧 DEBUG: Full payment data:', paymentData)
         }
         
       } catch (dbError) {
-        console.error('Database error while creating payment record:', dbError)
+        console.error('🔧 DEBUG: Database connection/operation error:', dbError)
+        console.error('🔧 DEBUG: Error stack:', (dbError as Error)?.stack || 'No stack trace')
         // Still return success since payment verification succeeded
       }
       

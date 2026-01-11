@@ -12,11 +12,11 @@ SELECT
   b.match_id,
   m.match_date,
   m.match_time,
-  m.home_team_name,
-  m.away_team_name,
+  hc.club_name AS home_club_name,
+  ac.club_name AS away_club_name,
   m.status AS match_status,
   s.id AS stadium_id,
-  s.name AS stadium_name,
+  s.stadium_name AS stadium_name,
   s.owner_id AS stadium_owner_id,
   b.amount AS gross_amount,
   b.commission AS pcl_commission,
@@ -31,11 +31,15 @@ SELECT
   pay.razorpay_payment_id,
   pay.payment_method,
   pay.completed_at AS payment_date,
-  c.name AS club_name,
-  c.id AS club_id
+  c.club_name AS paying_club_name,
+  c.id AS paying_club_id
 FROM bookings b
 JOIN matches m ON b.match_id = m.id
 JOIN stadiums s ON b.resource_id = s.id
+LEFT JOIN teams ht ON m.home_team_id = ht.id
+LEFT JOIN teams at ON m.away_team_id = at.id
+LEFT JOIN clubs hc ON ht.club_id = hc.id
+LEFT JOIN clubs ac ON at.club_id = ac.id
 LEFT JOIN payouts p ON b.payout_id = p.id
 LEFT JOIN payments pay ON b.payment_id = pay.id
 LEFT JOIN clubs c ON pay.club_id = c.id
@@ -54,10 +58,10 @@ SELECT
   b.match_id,
   m.match_date,
   m.match_time,
-  m.home_team_name,
-  m.away_team_name,
+  hc.club_name AS home_club_name,
+  ac.club_name AS away_club_name,
   m.status AS match_status,
-  s.name AS stadium_name,
+  s.stadium_name AS stadium_name,
   s.location AS stadium_location,
   b.resource_id AS referee_user_id,
   u.email AS referee_email,
@@ -74,10 +78,14 @@ SELECT
   p.id AS payout_id,
   pay.razorpay_payment_id,
   pay.completed_at AS payment_date,
-  c.name AS club_name
+  c.club_name AS paying_club_name
 FROM bookings b
 JOIN matches m ON b.match_id = m.id
 JOIN stadiums s ON m.stadium_id = s.id
+LEFT JOIN teams ht ON m.home_team_id = ht.id
+LEFT JOIN teams at ON m.away_team_id = at.id
+LEFT JOIN clubs hc ON ht.club_id = hc.id
+LEFT JOIN clubs ac ON at.club_id = ac.id
 LEFT JOIN auth.users u ON b.resource_id = u.id
 LEFT JOIN payouts p ON b.payout_id = p.id
 LEFT JOIN payments pay ON b.payment_id = pay.id
@@ -97,10 +105,10 @@ SELECT
   b.match_id,
   m.match_date,
   m.match_time,
-  m.home_team_name,
-  m.away_team_name,
+  hc.club_name AS home_club_name,
+  ac.club_name AS away_club_name,
   m.status AS match_status,
-  s.name AS stadium_name,
+  s.stadium_name AS stadium_name,
   s.location AS stadium_location,
   b.resource_id AS staff_user_id,
   u.email AS staff_email,
@@ -117,10 +125,14 @@ SELECT
   p.id AS payout_id,
   pay.razorpay_payment_id,
   pay.completed_at AS payment_date,
-  c.name AS club_name
+  c.club_name AS paying_club_name
 FROM bookings b
 JOIN matches m ON b.match_id = m.id
 JOIN stadiums s ON m.stadium_id = s.id
+LEFT JOIN teams ht ON m.home_team_id = ht.id
+LEFT JOIN teams at ON m.away_team_id = at.id
+LEFT JOIN clubs hc ON ht.club_id = hc.id
+LEFT JOIN clubs ac ON at.club_id = ac.id
 LEFT JOIN auth.users u ON b.resource_id = u.id
 LEFT JOIN payouts p ON b.payout_id = p.id
 LEFT JOIN payments pay ON b.payment_id = pay.id
@@ -186,17 +198,21 @@ SELECT
   pay.refunded_amount,
   pay.refund_reason,
   c.id AS club_id,
-  c.name AS club_name,
+  c.club_name AS club_name,
   m.id AS match_id,
   m.match_date,
-  m.home_team_name,
-  m.away_team_name,
+  hc.club_name AS home_club_name,
+  ac.club_name AS away_club_name,
   m.status AS match_status,
-  s.name AS stadium_name,
+  s.stadium_name AS stadium_name,
   pay.amount_breakdown
 FROM payments pay
 JOIN clubs c ON pay.club_id = c.id
 LEFT JOIN matches m ON pay.match_id = m.id
+LEFT JOIN teams ht ON m.home_team_id = ht.id
+LEFT JOIN teams at ON m.away_team_id = at.id
+LEFT JOIN clubs hc ON ht.club_id = hc.id
+LEFT JOIN clubs ac ON at.club_id = ac.id
 LEFT JOIN stadiums s ON m.stadium_id = s.id
 ORDER BY pay.created_at DESC;
 

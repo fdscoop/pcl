@@ -1125,6 +1125,19 @@ export function CreateFriendlyMatch({
 
  console.log('Match setup - Home Team:', homeTeam.id, 'Away Team:', awayTeamId)
 
+ // First, get the payment record ID using the razorpay_payment_id
+ const { data: paymentRecord, error: paymentLookupError } = await supabase
+ .from('payments')
+ .select('id')
+ .eq('razorpay_payment_id', paymentResponse.razorpay_payment_id)
+ .single()
+
+ if (paymentLookupError || !paymentRecord) {
+ throw new Error('Could not find payment record for creating match')
+ }
+
+ console.log('Found payment record:', paymentRecord.id, 'for razorpay_payment_id:', paymentResponse.razorpay_payment_id)
+
  // Insert into matches table using correct schema
  const { data: matchData, error: matchError } = await supabase
  .from('matches')
@@ -1140,7 +1153,7 @@ export function CreateFriendlyMatch({
  league_structure: formData.leagueType, // Friendly matches save 'friendly', official matches save hobby/amateur/etc
  status: 'scheduled',
  created_by: userData.user.id,
- payment_id: paymentResponse.razorpay_payment_id // Store payment reference
+ payment_id: paymentRecord.id // Use payment table UUID, not razorpay_payment_id
  }
  ])
  .select()

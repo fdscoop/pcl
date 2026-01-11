@@ -106,28 +106,56 @@ class RazorpayService {
   }
 
   /**
-   * Verify payment signature on backend
+   * Poll payment status using webhook updates (NO MORE VERIFY-PAYMENT API!)
+   * This polls the database to check if webhook has updated the payment record
    */
-  async verifyPayment(paymentResponse: PaymentResponse): Promise<boolean> {
-    try {
-      const response = await fetch('/api/razorpay/verify-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentResponse)
-      })
+  async pollPaymentStatus(paymentResponse: PaymentResponse): Promise<boolean> {
+    console.log('🔄 Polling payment status for:', paymentResponse.razorpay_payment_id)
+    
+    const maxAttempts = 10 // Poll for up to 10 seconds
+    const pollInterval = 1000 // 1 second intervals
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        console.log(`📊 Poll attempt ${attempt}/${maxAttempts} for payment:`, paymentResponse.razorpay_payment_id)
+        
+        // Query payment record directly from database
+        const response = await fetch(`/api/payments/check-status?payment_id=${paymentResponse.razorpay_payment_id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
 
-      if (!response.ok) {
-        throw new Error('Payment verification failed')
+        if (response.ok) {
+          const result = await response.json()
+          console.log('📊 Payment status check result:', result)
+          
+          if (result.status === 'completed') {
+            console.log('✅ Payment confirmed by webhook!')
+            return true
+          } else if (result.status === 'failed') {
+            console.log('❌ Payment failed according to webhook')
+            throw new Error('Payment failed')
+          }
+          // If still pending, continue polling
+        }
+        
+        // Wait before next attempt (except on last attempt)
+        if (attempt < maxAttempts) {
+          console.log(`⏳ Payment still processing, waiting ${pollInterval}ms...`)
+          await new Promise(resolve => setTimeout(resolve, pollInterval))
+        }
+      } catch (error) {
+        console.error(`❌ Error on polling attempt ${attempt}:`, error)
+        if (attempt === maxAttempts) throw error
+        
+        // Wait before retry on error too
+        await new Promise(resolve => setTimeout(resolve, pollInterval))
       }
-
-      const result = await response.json()
-      return result.verified === true
-    } catch (error) {
-      console.error('Error verifying payment:', error)
-      throw error
     }
+    
+    throw new Error('Payment verification timeout - webhook may be delayed')
   }
 
   /**
@@ -168,18 +196,20 @@ class RazorpayService {
         },
         handler: async (response: PaymentResponse) => {
           try {
-            console.log('Payment response received:', response.razorpay_payment_id)
-            // Verify payment on backend
-            const verified = await this.verifyPayment(response)
+            console.log('💳 Payment response received:', response.razorpay_payment_id)
+            console.log('🔄 Starting webhook polling verification...')
+            
+            // Poll payment status using webhook updates (NO MORE VERIFY-PAYMENT API!)
+            const verified = await this.pollPaymentStatus(response)
             if (verified) {
-              console.log('Payment verified successfully')
+              console.log('✅ Payment verified by webhook polling!')
               onSuccess(response)
             } else {
-              console.error('Payment verification failed')
+              console.error('❌ Payment verification failed via webhook polling')
               onError(new Error('Payment verification failed'))
             }
           } catch (error) {
-            console.error('Payment verification error:', error)
+            console.error('❌ Payment verification error:', error)
             onError(error)
           }
         },

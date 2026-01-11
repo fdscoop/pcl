@@ -1125,41 +1125,54 @@ export function CreateFriendlyMatch({
 
  console.log('Match setup - Home Team:', homeTeam.id, 'Away Team:', awayTeamId)
 
- // Get the payment record ID using the razorpay_payment_id with retry logic
+ // Get the payment record ID using the razorpay_order_id (more reliable since webhook uses order_id)
  let paymentRecord = null
  let attemptCount = 0
- const maxAttempts = 3
+ const maxAttempts = 5 // Increase attempts for webhook processing time
+ 
+ console.log('🔍 Looking for payment record using order_id:', paymentResponse.razorpay_order_id)
  
  while (!paymentRecord && attemptCount < maxAttempts) {
  attemptCount++
- console.log(`Attempting to find payment record (attempt ${attemptCount}/${maxAttempts})...`)
+ console.log(`🔄 Attempting to find payment record (attempt ${attemptCount}/${maxAttempts})...`)
  
  const { data, error } = await supabase
  .from('payments')
- .select('id')
- .eq('razorpay_payment_id', paymentResponse.razorpay_payment_id)
+ .select('id, status, razorpay_payment_id')
+ .eq('razorpay_order_id', paymentResponse.razorpay_order_id)
  .single()
  
  if (data && !error) {
+ console.log('✅ Payment record found:', {
+ id: data.id,
+ status: data.status,
+ razorpay_payment_id: data.razorpay_payment_id
+ })
+ 
+ // Verify the payment is completed (webhook should have updated this)
+ if (data.status === 'completed') {
  paymentRecord = data
  break
+ } else {
+ console.log(`⏳ Payment record found but status is '${data.status}', waiting for webhook...`)
+ }
  }
  
  if (attemptCount < maxAttempts) {
- console.log('Payment record not found, waiting 1 second before retry...')
- await new Promise(resolve => setTimeout(resolve, 1000))
+ console.log('💤 Payment record not ready, waiting 2 seconds before retry...')
+ await new Promise(resolve => setTimeout(resolve, 2000)) // Longer wait for webhook
  } else {
- console.error('Final attempt failed. Error:', error)
- throw new Error(`Could not find payment record for razorpay_payment_id: ${paymentResponse.razorpay_payment_id}. This might be a timing issue - please try again.`)
+ console.error('❌ Final attempt failed. Error:', error)
+ throw new Error(`Could not find completed payment record for order_id: ${paymentResponse.razorpay_order_id}. Webhook processing may be delayed - please try again.`)
  }
  }
 
  // Final check - ensure we have a payment record
  if (!paymentRecord) {
- throw new Error(`Could not find payment record for razorpay_payment_id: ${paymentResponse.razorpay_payment_id}. This might be a timing issue - please try again.`)
+ throw new Error(`Could not find completed payment record for order_id: ${paymentResponse.razorpay_order_id}. Webhook processing may be delayed - please try again.`)
  }
 
- console.log('Found payment record:', paymentRecord.id, 'for razorpay_payment_id:', paymentResponse.razorpay_payment_id)
+ console.log('✅ Found completed payment record:', paymentRecord.id, 'for order_id:', paymentResponse.razorpay_order_id)
 
  // Insert into matches table using correct schema
  const { data: matchData, error: matchError } = await supabase

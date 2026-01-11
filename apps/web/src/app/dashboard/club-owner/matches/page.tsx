@@ -359,10 +359,15 @@ export default function MatchesPage() {
  if (!photosMap.has(photo.stadium_id)) {
  photosMap.set(photo.stadium_id, [])
  }
- // Filter out invalid base64 images to prevent ERR_INVALID_URL errors
- const validPhoto = photo.photo_data
- if (validPhoto && validPhoto.startsWith('data:image/') && validPhoto.includes(';base64,')) {
- photosMap.get(photo.stadium_id)!.push(validPhoto)
+ // Validate base64 image before adding to prevent ERR_INVALID_URL errors
+ const photoData = photo.photo_data
+ if (photoData && 
+ photoData.startsWith('data:image/') && 
+ photoData.includes(';base64,') &&
+ photoData.split(',')[1] && 
+ photoData.split(',')[1] !== '=' && 
+ photoData.split(',')[1] !== '==') {
+ photosMap.get(photo.stadium_id)!.push(photoData)
  }
  })
  }

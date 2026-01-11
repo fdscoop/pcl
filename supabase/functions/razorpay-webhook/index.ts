@@ -15,10 +15,24 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 // Create Supabase client (server-side, safe)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+// CORS headers for webhook responses
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-razorpay-signature',
+};
+
 serve(async (req: Request) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   // Only allow POST
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+    return new Response("Method not allowed", { 
+      status: 405,
+      headers: corsHeaders 
+    });
   }
 
   // Razorpay sends raw body + signature header
@@ -26,6 +40,8 @@ serve(async (req: Request) => {
   const signature = req.headers.get("x-razorpay-signature") ?? "";
 
   console.log("🔔 Razorpay webhook received");
+  console.log("📋 Signature present:", !!signature);
+  console.log("📋 Body length:", bodyText.length);
 
   // 1️⃣ Verify webhook signature
   const isValid = await verifyRazorpaySignature(
@@ -36,7 +52,10 @@ serve(async (req: Request) => {
 
   if (!isValid) {
     console.error("❌ Invalid Razorpay signature");
-    return new Response("Invalid signature", { status: 400 });
+    return new Response("Invalid signature", { 
+      status: 400,
+      headers: corsHeaders 
+    });
   }
 
   // 2️⃣ Parse event JSON
@@ -45,7 +64,10 @@ serve(async (req: Request) => {
     event = JSON.parse(bodyText);
   } catch (err) {
     console.error("❌ Invalid JSON body", err);
-    return new Response("Invalid JSON", { status: 400 });
+    return new Response("Invalid JSON", { 
+      status: 400,
+      headers: corsHeaders 
+    });
   }
 
   const eventType = event?.event;
@@ -269,7 +291,10 @@ serve(async (req: Request) => {
   }
 
   // Always respond quickly so Razorpay is happy
-  return new Response("ok", { status: 200 });
+  return new Response("ok", { 
+    status: 200,
+    headers: corsHeaders 
+  });
 });
 
 // ---------------- Signature verification helper ----------------

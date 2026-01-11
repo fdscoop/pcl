@@ -109,105 +109,128 @@ serve(async (req: Request) => {
   if (eventType === "payment.captured") {
     const payment = payload?.payment?.entity;
 
+    console.log("🎯 Processing payment.captured event");
+    console.log("📋 Payload structure:", JSON.stringify(payload, null, 2));
+    console.log("📋 Payment entity:", JSON.stringify(payment, null, 2));
+
     if (!payment) {
       console.error("❌ No payment entity in payload");
-    } else {
-      try {
-        // Razorpay supports sending back custom notes. We include the local
-        // payment record id in notes when opening checkout so the webhook can
-        // directly map the Razorpay payment to our payments row.
-        const notes = payment?.notes || {};
-        let paymentRow = null;
+      return new Response("No payment entity", { 
+        status: 400,
+        headers: corsHeaders 
+      });
+    }
 
-        if (notes?.payment_id) {
-          // If frontend passed our payment id into Razorpay notes, update by id
-          const { error: updErr } = await supabase
-            .from("payments")
-            .update({
-              status: payment.captured ? "completed" : "pending",
-              payment_method: payment.method,
-              payment_gateway: "razorpay",
-              transaction_id: payment.id,
-              webhook_received: true,
-              webhook_data: JSON.stringify(payment),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", notes.payment_id);
+    try {
+      // Razorpay supports sending back custom notes. We include the local
+      // payment record id in notes when opening checkout so the webhook can
+      // directly map the Razorpay payment to our payments row.
+      const notes = payment?.notes || {};
+      console.log("📋 Payment notes:", JSON.stringify(notes, null, 2));
+      let paymentRow = null;
 
-          if (updErr) {
-            console.error("❌ Error updating payment by id:", updErr);
-          } else {
-            console.log("✅ Payment updated by id:", notes.payment_id);
-          }
+      if (notes?.payment_id) {
+        console.log("🔍 Updating payment by notes.payment_id:", notes.payment_id);
+        
+        // If frontend passed our payment id into Razorpay notes, update by id
+        const { error: updErr } = await supabase
+          .from("payments")
+          .update({
+            status: payment.captured ? "completed" : "pending",
+            payment_method: payment.method,
+            payment_gateway: "razorpay",
+            razorpay_payment_id: payment.id,
+            webhook_received: true,
+            webhook_data: JSON.stringify(payment),
+            webhook_received_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", notes.payment_id);
 
-          // Fetch the payment row we just updated
-          const { data: fetched, error: fetchErr } = await supabase
-            .from("payments")
-            .select("*")
-            .eq("id", notes.payment_id)
-            .maybeSingle();
-
-          if (fetchErr) console.error('❌ Error fetching payment by id:', fetchErr);
-          paymentRow = fetched || null;
+        if (updErr) {
+          console.error("❌ Error updating payment by id:", updErr);
+          return new Response("Database update error", { 
+            status: 500,
+            headers: corsHeaders 
+          });
         } else {
-          // Fallback: try to update by transaction_id (in case we already set it earlier)
-          const { error: updErr } = await supabase
-            .from("payments")
-            .update({
-              status: payment.captured ? "completed" : "pending",
-              payment_method: payment.method,
-              payment_gateway: "razorpay",
-              transaction_id: payment.id,
-              webhook_received: true,
-              webhook_data: JSON.stringify(payment),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("transaction_id", payment.id);
-
-          if (updErr) {
-            console.error("❌ Error updating payment by transaction_id:", updErr);
-          } else {
-            console.log("✅ Payment updated by transaction_id:", payment.id);
-          }
-
-          const { data: fetched, error: fetchErr } = await supabase
-            .from("payments")
-            .select("*")
-            .eq("transaction_id", payment.id)
-            .maybeSingle();
-
-          if (fetchErr) console.error('❌ Error fetching payment by transaction_id:', fetchErr);
-          paymentRow = fetched || null;
+          console.log("✅ Payment updated by id:", notes.payment_id);
         }
 
-        // If we located a payment row and it references a match, attempt to finalize
-        // the match (mark confirmed). Handle any DB errors gracefully.
-        if (paymentRow && paymentRow.match_id) {
-          try {
-            const { error: matchErr } = await supabase
-              .from('matches')
-              .update({ 
-                status: 'confirmed', 
-                updated_at: new Date().toISOString() 
-              })
-              .eq('id', paymentRow.match_id);
+        // Fetch the payment row we just updated
+        const { data: fetched, error: fetchErr } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("id", notes.payment_id)
+          .maybeSingle();
 
-            if (matchErr) {
-              // If database constraint prevents confirmation (e.g., overlap constraint), log it.
-              console.error('❌ Error confirming match for match_id', paymentRow.match_id, matchErr);
-              // Optionally you could mark payment as 'issue' or notify admins here.
-            } else {
-              console.log('✅ Match confirmed for match_id', paymentRow.match_id);
-            }
-          } catch (err) {
-            console.error('❌ Unexpected error while confirming match:', err);
-          }
+        if (fetchErr) console.error('❌ Error fetching payment by id:', fetchErr);
+        paymentRow = fetched || null;
+      } else {
+        console.log("🔍 No payment_id in notes, trying by razorpay_payment_id");
+        
+        // Fallback: try to update by razorpay_payment_id (in case we already set it earlier)
+        const { error: updErr } = await supabase
+          .from("payments")
+          .update({
+            status: payment.captured ? "completed" : "pending",
+            payment_method: payment.method,
+            payment_gateway: "razorpay",
+            razorpay_payment_id: payment.id,
+            webhook_received: true,
+            webhook_data: JSON.stringify(payment),
+            webhook_received_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("razorpay_payment_id", payment.id);
+
+        if (updErr) {
+          console.error("❌ Error updating payment by razorpay_payment_id:", updErr);
         } else {
-          console.log('ℹ️ No local payment row found or no match_id present to confirm.');
+          console.log("✅ Payment updated by razorpay_payment_id:", payment.id);
         }
-      } catch (err) {
-        console.error('❌ Error handling payment.captured webhook:', err);
+
+        const { data: fetched, error: fetchErr } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("razorpay_payment_id", payment.id)
+          .maybeSingle();
+
+        if (fetchErr) console.error('❌ Error fetching payment by razorpay_payment_id:', fetchErr);
+        paymentRow = fetched || null;
       }
+
+      // If we located a payment row and it references a match, attempt to finalize
+      // the match (mark confirmed). Handle any DB errors gracefully.
+      if (paymentRow && paymentRow.match_id) {
+        try {
+          const { error: matchErr } = await supabase
+            .from('matches')
+            .update({ 
+              status: 'confirmed', 
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', paymentRow.match_id);
+
+          if (matchErr) {
+            // If database constraint prevents confirmation (e.g., overlap constraint), log it.
+            console.error('❌ Error confirming match for match_id', paymentRow.match_id, matchErr);
+            // Optionally you could mark payment as 'issue' or notify admins here.
+          } else {
+            console.log('✅ Match confirmed for match_id', paymentRow.match_id);
+          }
+        } catch (err) {
+          console.error('❌ Unexpected error while confirming match:', err);
+        }
+      } else {
+        console.log('ℹ️ No local payment row found or no match_id present to confirm.');
+      }
+    } catch (err) {
+      console.error('❌ Error handling payment.captured webhook:', err);
+      return new Response("Webhook processing error", { 
+        status: 500,
+        headers: corsHeaders 
+      });
     }
   }
 

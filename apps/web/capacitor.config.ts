@@ -10,6 +10,8 @@ const config: CapacitorConfig = {
     url: 'https://www.professionalclubleague.com',
     cleartext: false,
     androidScheme: 'https',
+    // Allow Capacitor bridge to work with remote server
+    allowNavigation: ['*'],
   },
   plugins: {
     SplashScreen: {

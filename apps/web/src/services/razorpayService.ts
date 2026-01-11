@@ -2,32 +2,6 @@
 
 import { Capacitor } from '@capacitor/core'
 
-// Import Razorpay Checkout directly
-let Checkout: any = null
-
-async function loadRazorpayCheckout() {
-  if (Capacitor.isNativePlatform() && !Checkout) {
-    try {
-      console.log('Loading capacitor-razorpay Checkout...')
-      const module = await import('capacitor-razorpay')
-      
-      console.log('Plugin import result:', {
-        hasCheckout: !!module.Checkout,
-        keys: Object.keys(module)
-      })
-      
-      Checkout = module.Checkout
-      
-      console.log('Checkout loaded:', typeof Checkout, Checkout?.open ? 'has open method' : 'no open method')
-      
-    } catch (error) {
-      console.error('Failed to load Razorpay Checkout:', error)
-      Checkout = null
-    }
-  }
-  return Checkout
-}
-
 declare global {
   interface Window {
     Razorpay: any;
@@ -64,33 +38,13 @@ export interface PaymentResponse {
 
 class RazorpayService {
   private keyId: string
-  private isNative: boolean
-  private isCapacitorWebView: boolean
-  private isCapacitorApp: boolean
 
   constructor() {
     this.keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || ''
-    this.isNative = Capacitor.isNativePlatform()
     
-    // Better detection for Capacitor environment
-    this.isCapacitorApp = this.isNative || (
-      typeof window !== 'undefined' && 
-      (window.location.protocol === 'capacitor:' || 
-       window.location.protocol === 'ionic:' ||
-       navigator.userAgent.includes('wv') || // WebView identifier
-       navigator.userAgent.includes('Capacitor'))
-    )
-    
-    this.isCapacitorWebView = this.isCapacitorApp && typeof window !== 'undefined'
-    
-    console.log('=== RAZORPAY SERVICE INITIALIZATION ===')
-    console.log('Platform detection:', {
-      isNative: this.isNative,
-      isCapacitorApp: this.isCapacitorApp,
-      isCapacitorWebView: this.isCapacitorWebView,
-      protocol: typeof window !== 'undefined' ? window.location.protocol : 'server',
-      userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'server'
-    })
+    console.log('=== RAZORPAY SERVICE INITIALIZATION (Web Mode) ===')
+    console.log('Platform:', Capacitor.getPlatform())
+    console.log('User Agent:', typeof window !== 'undefined' ? navigator.userAgent : 'server')
     
     if (!this.keyId) {
       throw new Error('Razorpay Key ID not found in environment variables')
@@ -98,7 +52,7 @@ class RazorpayService {
   }
 
   /**
-   * Load Razorpay script dynamically for web and Capacitor webview
+   * Load Razorpay script dynamically for web
    */
   private async loadRazorpayScript(): Promise<boolean> {
     return new Promise((resolve) => {
@@ -267,93 +221,8 @@ class RazorpayService {
   }
 
   /**
-   * Process payment for mobile platform using Capacitor
-   */
-  private async processMobilePayment(
-    order: RazorpayOrderData,
-    customer: PaymentData['customer'],
-    description: string,
-    onSuccess: (response: PaymentResponse) => void,
-    onError: (error: any) => void
-  ): Promise<void> {
-    try {
-      console.log('=== MOBILE PAYMENT ATTEMPT ===')
-      console.log('Loading Razorpay Checkout...')
-      
-      const CheckoutModule = await loadRazorpayCheckout()
-      
-      if (!CheckoutModule) {
-        console.error('Razorpay Checkout not loaded')
-        throw new Error('Razorpay Checkout not available on this platform')
-      }
-
-      console.log('Razorpay Checkout loaded successfully:', typeof CheckoutModule)
-
-      const options = {
-        key: this.keyId,
-        amount: order.amount.toString(), // Convert to string as per plugin docs
-        currency: order.currency,
-        name: 'Professional Club League',
-        description: description,
-        order_id: order.id,
-        prefill: {
-          name: customer.name,
-          email: customer.email,
-          contact: customer.contact
-        },
-        theme: {
-          color: '#f97316' // Orange theme to match PCL branding
-        }
-      }
-
-      console.log('Opening native Razorpay with options:', {
-        ...options,
-        key: options.key.substring(0, 8) + '...' // Log partial key for debugging
-      })
-
-      // Call Checkout.open() directly as per capacitor-razorpay docs
-      try {
-        const result = await CheckoutModule.open(options)
-        
-        console.log('Native payment result:', result)
-        
-        if (result && result.response) {
-          console.log('Payment successful, verifying...')
-          // Verify payment on backend
-          const verified = await this.verifyPayment(result.response)
-          if (verified) {
-            console.log('Payment verified successfully')
-            onSuccess(result.response)
-          } else {
-            console.error('Payment verification failed')
-            onError(new Error('Payment verification failed'))
-          }
-        } else {
-          console.error('Payment cancelled or failed:', result)
-          onError(new Error('Payment cancelled or failed'))
-        }
-      } catch (checkoutError: any) {
-        console.error('Checkout.open() error:', {
-          message: checkoutError.message,
-          code: checkoutError.code,
-          stack: checkoutError.stack,
-          full: checkoutError
-        })
-        throw new Error(`Native checkout failed: ${checkoutError.message || 'Unknown error'}`)
-      }
-    } catch (error: any) {
-      console.error('Mobile payment error:', {
-        message: error.message,
-        code: error.code,
-        stack: error.stack,
-        full: error
-      })
-      throw error // Re-throw so fallback can be used
-    }
-  }
-
-  /**
-   * Main payment processing function with enhanced Capacitor support
+   * Main payment processing function - Uses web implementation for all platforms
+   * This works perfectly in Capacitor webview when loading from remote URL
    */
   async processPayment(
     paymentData: PaymentData,
@@ -363,49 +232,19 @@ class RazorpayService {
     try {
       // Create order first
       const order = await this.createOrder(paymentData)
-      console.log('Order created:', order.id)
+      console.log('✅ Razorpay order created:', order.id)
 
-      console.log('=== PAYMENT METHOD SELECTION ===')
-      console.log('isNative:', this.isNative)
-      console.log('isCapacitorApp:', this.isCapacitorApp)
-      console.log('isCapacitorWebView:', this.isCapacitorWebView)
-
-      // For Capacitor apps, try native plugin first, fallback to web
-      if (this.isCapacitorApp) {
-        console.log('Detected Capacitor app - attempting native plugin')
-        try {
-          await this.processMobilePayment(
-            order,
-            paymentData.customer,
-            paymentData.description,
-            onSuccess,
-            onError
-          )
-          return // Success, exit early
-        } catch (nativeError) {
-          console.warn('Native plugin failed, falling back to web implementation:', nativeError)
-          // Fallback to web implementation
-          await this.processWebPayment(
-            order,
-            paymentData.customer,
-            paymentData.description,
-            onSuccess,
-            onError
-          )
-        }
-      } else {
-        // Pure web browser
-        console.log('Using web Razorpay implementation for browser')
-        await this.processWebPayment(
-          order,
-          paymentData.customer,
-          paymentData.description,
-          onSuccess,
-          onError
-        )
-      }
+      // Always use web implementation - works in all environments
+      console.log('🌐 Using web Razorpay checkout (works in web & Capacitor)')
+      await this.processWebPayment(
+        order,
+        paymentData.customer,
+        paymentData.description,
+        onSuccess,
+        onError
+      )
     } catch (error) {
-      console.error('Payment processing error:', error)
+      console.error('❌ Payment processing error:', error)
       onError(error)
     }
   }

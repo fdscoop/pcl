@@ -941,7 +941,9 @@ export function CreateFriendlyMatch({
  })
 
  // Automatically proceed to match creation
+ console.log('🚀 Starting automatic match creation in 1 second...')
  setTimeout(() => {
+ console.log('🔄 Calling createMatchAfterPayment() automatically...')
  createMatchAfterPayment()
  }, 1000)
  },
@@ -972,7 +974,10 @@ export function CreateFriendlyMatch({
  }
 
  const createMatchAfterPayment = async () => {
+ console.log('🎯 createMatchAfterPayment() called - paymentCompleted:', paymentCompleted, 'paymentResponse:', !!paymentResponse)
+ 
  if (!paymentCompleted || !paymentResponse) {
+ console.log('❌ Payment verification failed - paymentCompleted:', paymentCompleted, 'paymentResponse exists:', !!paymentResponse)
  addToast({
  title: 'Error',
  description: 'Payment verification required before creating match.',
@@ -981,6 +986,7 @@ export function CreateFriendlyMatch({
  return
  }
 
+ console.log('✅ Payment verified, starting match creation...')
  setLoading(true)
 
  try {

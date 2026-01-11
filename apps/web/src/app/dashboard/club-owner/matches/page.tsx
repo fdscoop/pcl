@@ -1164,10 +1164,9 @@ export default function MatchesPage() {
  </div>
  )}
  </div>
- )}
  </div>
 
- {/* Lineup Status */}
+  {/* Lineup Status */}
  {typeof match.has_lineup !== 'undefined' && (
  <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${
  match.has_lineup ? 'border-green-100' : 'border-red-100'

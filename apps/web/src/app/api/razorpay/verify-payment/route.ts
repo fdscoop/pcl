@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,8 +44,38 @@ export async function POST(request: NextRequest) {
     })
 
     if (is_authentic) {
-      // Payment is authentic - you can save this to database here
-      // For now, we'll just return success
+      // Payment is authentic - create payment record in database
+      try {
+        const supabase = await createClient()
+        
+        // Create payment record
+        const { data: paymentData, error: paymentError } = await supabase
+          .from('payments')
+          .upsert([
+            {
+              razorpay_order_id: razorpay_order_id,
+              razorpay_payment_id: razorpay_payment_id,
+              status: 'completed',
+              amount: 0, // Will be updated when we have order details
+              currency: 'INR',
+              payment_method: 'razorpay',
+              verified_at: new Date().toISOString()
+            }
+          ])
+          .select()
+        
+        if (paymentError) {
+          console.error('Error creating payment record:', paymentError)
+          // Still return success since payment verification succeeded
+        } else {
+          console.log('Payment record created successfully:', paymentData?.[0]?.id)
+        }
+        
+      } catch (dbError) {
+        console.error('Database error while creating payment record:', dbError)
+        // Still return success since payment verification succeeded
+      }
+      
       return NextResponse.json({
         verified: true,
         order_id: razorpay_order_id,

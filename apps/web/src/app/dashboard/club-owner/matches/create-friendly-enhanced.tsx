@@ -1125,15 +1125,33 @@ export function CreateFriendlyMatch({
 
  console.log('Match setup - Home Team:', homeTeam.id, 'Away Team:', awayTeamId)
 
- // First, get the payment record ID using the razorpay_payment_id
- const { data: paymentRecord, error: paymentLookupError } = await supabase
+ // Get the payment record ID using the razorpay_payment_id with retry logic
+ let paymentRecord = null
+ let attemptCount = 0
+ const maxAttempts = 3
+ 
+ while (!paymentRecord && attemptCount < maxAttempts) {
+ attemptCount++
+ console.log(`Attempting to find payment record (attempt ${attemptCount}/${maxAttempts})...`)
+ 
+ const { data, error } = await supabase
  .from('payments')
  .select('id')
  .eq('razorpay_payment_id', paymentResponse.razorpay_payment_id)
  .single()
-
- if (paymentLookupError || !paymentRecord) {
- throw new Error('Could not find payment record for creating match')
+ 
+ if (data && !error) {
+ paymentRecord = data
+ break
+ }
+ 
+ if (attemptCount < maxAttempts) {
+ console.log('Payment record not found, waiting 1 second before retry...')
+ await new Promise(resolve => setTimeout(resolve, 1000))
+ } else {
+ console.error('Final attempt failed. Error:', error)
+ throw new Error(`Could not find payment record for razorpay_payment_id: ${paymentResponse.razorpay_payment_id}. This might be a timing issue - please try again.`)
+ }
  }
 
  console.log('Found payment record:', paymentRecord.id, 'for razorpay_payment_id:', paymentResponse.razorpay_payment_id)

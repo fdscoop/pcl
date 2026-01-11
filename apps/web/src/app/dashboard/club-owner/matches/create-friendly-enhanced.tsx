@@ -16,6 +16,8 @@ import 'react-day-picker/dist/style.css'
 import razorpayService, { PaymentResponse, RazorpayService } from '@/services/razorpayService'
 import { notifyOpponentClub, notifyStadiumOwner, notifyOwnClubPlayers } from '@/services/matchNotificationService'
 import { Capacitor } from '@capacitor/core'
+import { useMobileDetection } from '@/hooks/useMobileDetection'
+import { MobileMatchCreation } from './mobile-match-creation'
 import { 
  Users, 
  Calendar, 
@@ -107,13 +109,14 @@ interface CreateFriendlyMatchProps {
  onSuccess: () => void
 }
 
-export function CreateFriendlyMatch({ 
- club, 
- teams, 
- availableFormats, 
- onSuccess 
+export function CreateFriendlyMatch({
+ club,
+ teams,
+ availableFormats,
+ onSuccess
 }: CreateFriendlyMatchProps) {
  const { addToast } = useToast()
+ const { isMobile } = useMobileDetection()
  const [loading, setLoading] = useState(false)
  const [loadingData, setLoadingData] = useState(true)
 
@@ -1768,6 +1771,51 @@ export function CreateFriendlyMatch({
  )
  }
 
+ // Render mobile-optimized wizard for mobile devices
+ if (isMobile) {
+ return (
+ <MobileMatchCreation
+ formData={formData}
+ setFormData={setFormData}
+ availableFormats={availableFormats}
+ teams={teams}
+ filteredClubs={filteredClubs}
+ filteredStadiums={filteredStadiums}
+ availableReferees={availableReferees}
+ availableStaff={availableStaff}
+ selectedDate={selectedDate}
+ setSelectedDate={setSelectedDate}
+ blockedTimeSlots={blockedTimeSlots}
+ availableTimeSlots={availableTimeSlots}
+ isLoadingMatches={isLoadingMatches}
+ budget={budget}
+ paymentProcessing={paymentProcessing}
+ paymentCompleted={paymentCompleted}
+ selectClub={selectClub}
+ selectStadium={selectStadium}
+ toggleReferee={toggleReferee}
+ toggleStaff={toggleStaff}
+ canSelectTimeSlot={canSelectTimeSlot}
+ handlePayment={handlePayment}
+ currentStep={currentStep}
+ setCurrentStep={setCurrentStep}
+ validateStep1={validateStep1}
+ validateStep2={validateStep2}
+ validateStep3={validateStep3}
+ validateStep4={validateStep4}
+ validateStep5={validateStep5}
+ clubSearchTerm={clubSearchTerm}
+ setClubSearchTerm={setClubSearchTerm}
+ club={club}
+ selectedStadiumPhotos={selectedStadiumPhotos}
+ nextStadiumPhoto={nextStadiumPhoto}
+ prevStadiumPhoto={prevStadiumPhoto}
+ onClose={onSuccess}
+ />
+ )
+ }
+
+ // Desktop version (original UI)
  return (
  <div className="max-w-5xl mx-auto space-y-8">
  <Card className="border-0 shadow-lg bg-gradient-to-r from-white via-gray-50 to-white">

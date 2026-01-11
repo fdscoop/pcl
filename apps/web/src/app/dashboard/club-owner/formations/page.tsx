@@ -4,9 +4,13 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { FormationBuilder } from '@/components/FormationBuilder'
+import { MobileFormationBuilder } from '@/components/MobileFormationBuilder'
+import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, MapPin, Clock, CheckCircle2, Info } from 'lucide-react'
+import { notifyLineupAnnounced } from '@/services/matchNotificationService'
+import { useToast } from '@/context/ToastContext'
 
 interface Player {
  id: string
@@ -52,6 +56,8 @@ interface Match {
 export default function FormationsPage() {
  const router = useRouter()
  const searchParams = useSearchParams()
+ const { isMobile } = useMobileDetection()
+ const { addToast } = useToast()
  const [loading, setLoading] = useState(true)
  const [club, setClub] = useState<any>(null)
  const [team, setTeam] = useState<any>(null)
@@ -435,6 +441,252 @@ export default function FormationsPage() {
  </Card>
  </div>
  )
+ }
+
+ // Mobile save lineup handler
+ const handleMobileSaveLineup = async (lineupName: string, data: {
+   matchId?: string
+   format: string
+   formation: string
+   assignments: Record<string, Player | null>
+   selectedPlayers: Set<string>
+   substitutePlayers: Player[]
+ }) => {
+   try {
+     const supabase = createClient()
+
+     // Convert format key to match format
+     const formatMap: Record<string, string> = {
+       '5s': '5-a-side',
+       '7s': '7-a-side',
+       '11s': '11-a-side'
+     }
+     const matchFormat = formatMap[data.format] || data.format
+
+   // Build lineup data
+   const assignedPlayers = Object.entries(data.assignments)
+     .filter(([, player]) => player !== null)
+     .map(([positionKey, player]) => ({
+       player_id: player!.id,
+       position_key: positionKey,
+       is_starter: true
+     }))
+
+   const substituteData = data.substitutePlayers.map((player, index) => ({
+     player_id: player.id,
+     position_key: `SUB_${index + 1}`,
+     is_starter: false
+   }))
+
+   const allPlayers = [...assignedPlayers, ...substituteData]
+
+   // Check if lineup exists for this match/format
+   const query = supabase
+     .from('team_lineups')
+     .select('id')
+     .eq('team_id', team?.id)
+     .eq('format', matchFormat)
+
+   if (data.matchId) {
+     query.eq('match_id', data.matchId)
+   } else {
+     query.is('match_id', null)
+   }
+
+   const { data: existingLineup } = await query.maybeSingle()
+
+   if (existingLineup) {
+     // Update existing lineup
+     await supabase
+       .from('team_lineups')
+       .update({
+         lineup_name: lineupName,
+         formation: data.formation,
+         lineup_data: allPlayers,
+         updated_at: new Date().toISOString()
+       })
+       .eq('id', existingLineup.id)
+   } else {
+     // Insert new lineup
+     await supabase
+       .from('team_lineups')
+       .insert({
+         team_id: team?.id,
+         match_id: data.matchId || null,
+         format: matchFormat,
+         lineup_name: lineupName,
+         formation: data.formation,
+         lineup_data: allPlayers
+       })
+   }
+
+   // Send push notifications to players (only for match-specific lineups)
+   if (data.matchId && club?.id && team?.id) {
+     try {
+       // Get match details for notification
+       const { data: matchData } = await supabase
+         .from('matches')
+         .select(`
+           id,
+           match_date,
+           home_team_id,
+           away_team_id,
+           home_team:teams!matches_home_team_id_fkey(team_name),
+           away_team:teams!matches_away_team_id_fkey(team_name)
+         `)
+         .eq('id', data.matchId)
+         .single()
+
+       const isHomeTeam = matchData?.home_team_id === team.id
+       const opponentName = isHomeTeam 
+         ? (matchData?.away_team as any)?.team_name 
+         : (matchData?.home_team as any)?.team_name
+
+       // Get player IDs for notifications
+       const starterPlayerIds = Object.values(data.assignments)
+         .filter((player): player is Player => player !== null)
+         .map(player => player.players.id)
+
+       const substitutePlayerIds = data.substitutePlayers.map(player => player.players.id)
+
+       // Send notifications
+       await notifyLineupAnnounced({
+         matchId: data.matchId,
+         clubId: club.id,
+         teamId: team.id,
+         opponentName,
+         matchDate: matchData?.match_date,
+         selectedPlayerIds: starterPlayerIds,
+         substitutePlayerIds
+       })
+
+       console.log('✅ Mobile lineup notifications sent to players')
+     } catch (notifyError) {
+       console.error('Error sending mobile lineup notifications:', notifyError)
+       // Don't fail the save if notifications fail
+     }
+   }
+
+   // Trigger lineup update for other components
+   localStorage.setItem('lineupUpdated', JSON.stringify({
+     timestamp: Date.now(),
+     matchId: data.matchId
+   }))
+
+     // Show success message
+     const matchText = data.matchId ? 'for the selected match' : 'as template'
+     addToast({
+       title: 'Formation Declared Successfully! 🎉',
+       description: `Club has successfully declared formation ${matchText}. Players have been notified.`,
+       type: 'success',
+       duration: 4000
+     })
+
+     // Refresh lineup status
+     refreshLineupStatus()
+   } catch (error: any) {
+     console.error('Error saving mobile lineup:', error)
+     addToast({
+       title: 'Save Failed',
+       description: error.message || 'Failed to save formation. Please try again.',
+       type: 'error',
+       duration: 4000
+     })
+   }
+ } // Mobile load lineup handler
+ const handleMobileLoadLineup = async (matchId?: string, format?: string): Promise<{
+   assignments: Record<string, Player | null>
+   selectedPlayers: Set<string>
+   substitutePlayers: Player[]
+   formation: string
+ } | null> => {
+   if (!team?.id || !format) return null
+
+   const supabase = createClient()
+
+   // Convert format key to match format
+   const formatMap: Record<string, string> = {
+     '5s': '5-a-side',
+     '7s': '7-a-side',
+     '11s': '11-a-side'
+   }
+   const matchFormat = formatMap[format] || format
+
+   // Try to load match-specific lineup first
+   let query = supabase
+     .from('team_lineups')
+     .select('*')
+     .eq('team_id', team.id)
+     .eq('format', matchFormat)
+
+   if (matchId) {
+     query = query.eq('match_id', matchId)
+   } else {
+     query = query.is('match_id', null)
+   }
+
+   const { data: lineup } = await query.maybeSingle()
+
+   // If no match-specific lineup, try template
+   if (!lineup && matchId) {
+     const { data: templateLineup } = await supabase
+       .from('team_lineups')
+       .select('*')
+       .eq('team_id', team.id)
+       .eq('format', matchFormat)
+       .is('match_id', null)
+       .maybeSingle()
+
+     if (!templateLineup) return null
+
+     // Use template lineup
+     return processLineupData(templateLineup)
+   }
+
+   if (!lineup) return null
+
+   return processLineupData(lineup)
+ }
+
+ // Helper to process lineup data
+ const processLineupData = (lineup: any) => {
+   const lineupData = lineup.lineup_data || []
+   const assignments: Record<string, Player | null> = {}
+   const selectedPlayerIds = new Set<string>()
+   const subs: Player[] = []
+
+   lineupData.forEach((item: any) => {
+     const player = players.find(p => p.id === item.player_id)
+     if (player) {
+       selectedPlayerIds.add(player.id)
+       if (item.is_starter && item.position_key) {
+         assignments[item.position_key] = player
+       } else {
+         subs.push(player)
+       }
+     }
+   })
+
+   return {
+     assignments,
+     selectedPlayers: selectedPlayerIds,
+     substitutePlayers: subs,
+     formation: lineup.formation || '2-2'
+   }
+ }
+
+ // Render mobile-optimized wizard for mobile devices
+ if (isMobile) {
+   return (
+     <MobileFormationBuilder
+       players={players}
+       matches={matches}
+       teamId={team?.id}
+       clubId={club?.id}
+       onSaveLineup={handleMobileSaveLineup}
+       onLoadLineup={handleMobileLoadLineup}
+     />
+   )
  }
 
  return (

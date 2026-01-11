@@ -6,6 +6,8 @@
 /* CSS variables for status bar height that sticky navbars can use */
 :root {
   --status-bar-height: env(safe-area-inset-top, 0px);
+  --bottom-nav-height: 5rem; /* Standard bottom nav height */
+  --dashboard-header-height: 4rem; /* Standard dashboard header height */
 }
 
 @media screen and (max-width: 767px) {
@@ -913,6 +915,38 @@ body.mobile-app {
   /* Mobile flex container */
   .mobile-flex {
     @apply flex flex-wrap gap-2 sm:gap-3 w-full max-w-full;
+  }
+
+  /* Mobile step wizard optimized content */
+  .mobile-wizard-content {
+    @apply space-y-4 sm:space-y-5 w-full max-w-full;
+  }
+
+  /* Mobile wizard section with better spacing */
+  .mobile-wizard-section {
+    @apply space-y-3 w-full;
+  }
+
+  /* Mobile wizard dynamic list - handles expanding content */
+  .mobile-wizard-list {
+    max-height: 50vh;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .mobile-wizard-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Scrollbar hide utility for webkit browsers */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   /* Mobile scroll container for horizontal scrolling elements */

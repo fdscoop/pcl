@@ -11,9 +11,24 @@ CREATE POLICY "Users can view their own payments"
   ON payments FOR SELECT
   TO authenticated
   USING (
+    -- Users can view payments they made directly
     paid_by = auth.uid() OR 
+    -- Club owners can view payments for their clubs
     club_id IN (
       SELECT id FROM clubs WHERE owner_id = auth.uid()
+    ) OR
+    -- Stadium owners can view payments for matches at their stadiums
+    EXISTS (
+      SELECT 1 FROM matches m 
+      JOIN stadiums s ON s.id = m.stadium_id 
+      WHERE m.payment_id = payments.id 
+      AND s.owner_id = auth.uid()
+    ) OR
+    -- Admins can view all payments
+    EXISTS (
+      SELECT 1 FROM users 
+      WHERE users.id = auth.uid() 
+      AND users.role = 'admin'
     )
   );
 
@@ -27,7 +42,7 @@ CREATE POLICY "Anonymous can view payments for verification"
 
 -- Comments for documentation
 COMMENT ON POLICY "Users can view their own payments" ON payments 
-IS 'Allows users to view payments they made or for clubs they own';
+IS 'Allows users to view payments: players/referees/staff (their own), club_owners (club payments), stadium_owners (stadium match payments), admins (all payments)';
 
 COMMENT ON POLICY "Anonymous can view payments for verification" ON payments 
 IS 'Allows anonymous users to query payments for checkout verification flow';

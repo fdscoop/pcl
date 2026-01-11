@@ -940,11 +940,11 @@ export function CreateFriendlyMatch({
  type: 'success'
  })
 
- // Automatically proceed to match creation
+ // Automatically proceed to match creation using the response directly
  console.log('🚀 Starting automatic match creation in 1 second...')
  setTimeout(() => {
- console.log('🔄 Calling createMatchAfterPayment() automatically...')
- createMatchAfterPayment()
+ console.log('🔄 Calling createMatchAfterPayment() automatically with direct response...')
+ createMatchAfterPaymentDirect(response)
  }, 1000)
  },
  (error: any) => {
@@ -1300,6 +1300,32 @@ export function CreateFriendlyMatch({
  } finally {
  setLoading(false)
  }
+ }
+
+ // Direct version that takes payment response as parameter (avoids React state timing issues)
+ const createMatchAfterPaymentDirect = async (paymentRes: PaymentResponse) => {
+ console.log('🎯 createMatchAfterPaymentDirect() called with payment:', paymentRes.razorpay_payment_id)
+ 
+ if (!paymentRes) {
+ console.log('❌ Direct payment verification failed - no payment response')
+ addToast({
+ title: 'Error',
+ description: 'Payment verification required before creating match.',
+ type: 'error'
+ })
+ return
+ }
+
+ console.log('✅ Direct payment verified, starting match creation...')
+ 
+ // Store the payment response in state for the original function to use
+ setPaymentResponse(paymentRes)
+ setPaymentCompleted(true)
+ 
+ // Wait a bit for state to update, then call the original function
+ setTimeout(() => {
+ createMatchAfterPayment()
+ }, 500)
  }
 
  const handleSubmit = async (e: React.FormEvent) => {

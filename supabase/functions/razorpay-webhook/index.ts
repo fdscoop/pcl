@@ -364,16 +364,13 @@ async function verifyRazorpaySignature(
 
   try {
     console.log("🔐 Verifying signature:");
-    console.log("   Secret length:", secret.length);
+    console.log("   Secret:", secret);
     console.log("   Body length:", body.length);
-    console.log("   Signature length:", signature.length);
+    console.log("   Signature:", signature);
 
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secret);
     const bodyData = encoder.encode(body);
-
-    console.log("   Encoded secret bytes:", keyData.length);
-    console.log("   Encoded body bytes:", bodyData.length);
 
     const cryptoKey = await crypto.subtle.importKey(
       "raw",
@@ -384,11 +381,11 @@ async function verifyRazorpaySignature(
     );
 
     const signatureBuffer = await crypto.subtle.sign("HMAC", cryptoKey, bodyData);
-    // Razorpay sends base64-encoded HMAC-SHA256 signature. Convert the
-    // raw signature bytes to base64 for comparison.
-    const expectedSignature = bufferToBase64(signatureBuffer);
+    
+    // Razorpay sends HMAC-SHA256 signature in hexadecimal format
+    const expectedSignature = bufferToHex(signatureBuffer);
 
-    console.log("   Expected signature:", expectedSignature);
+    console.log("   Expected signature (hex):", expectedSignature);
     console.log("   Received signature:", signature);
     console.log("   Match:", expectedSignature === signature);
 
@@ -399,13 +396,7 @@ async function verifyRazorpaySignature(
   }
 }
 
-function bufferToBase64(buffer: ArrayBuffer): string {
+function bufferToHex(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  // Convert bytes to binary string then to base64
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  // btoa is available in Deno runtime
-  return btoa(binary);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }

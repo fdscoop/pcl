@@ -973,11 +973,16 @@ export function CreateFriendlyMatch({
  }
  }
 
- const createMatchAfterPayment = async () => {
- console.log('🎯 createMatchAfterPayment() called - paymentCompleted:', paymentCompleted, 'paymentResponse:', !!paymentResponse)
+ const createMatchAfterPayment = async (directPaymentResponse?: PaymentResponse) => {
+ // Use direct payment response if provided, otherwise use state
+ const activePaymentResponse = directPaymentResponse || paymentResponse
+ const activePaymentCompleted = directPaymentResponse ? true : paymentCompleted
  
- if (!paymentCompleted || !paymentResponse) {
- console.log('❌ Payment verification failed - paymentCompleted:', paymentCompleted, 'paymentResponse exists:', !!paymentResponse)
+ console.log('🎯 createMatchAfterPayment() called - paymentCompleted:', activePaymentCompleted, 'paymentResponse:', !!activePaymentResponse)
+ console.log('📋 Direct response provided:', !!directPaymentResponse, 'State response exists:', !!paymentResponse)
+ 
+ if (!activePaymentCompleted || !activePaymentResponse) {
+ console.log('❌ Payment verification failed - paymentCompleted:', activePaymentCompleted, 'paymentResponse exists:', !!activePaymentResponse)
  addToast({
  title: 'Error',
  description: 'Payment verification required before creating match.',
@@ -1141,7 +1146,7 @@ export function CreateFriendlyMatch({
  let attemptCount = 0
  const maxAttempts = 5 // Increase attempts for webhook processing time
  
- console.log('🔍 Looking for payment record using order_id:', paymentResponse.razorpay_order_id)
+ console.log('🔍 Looking for payment record using order_id:', activePaymentResponse.razorpay_order_id)
  
  while (!paymentRecord && attemptCount < maxAttempts) {
  attemptCount++
@@ -1150,7 +1155,7 @@ export function CreateFriendlyMatch({
  const { data, error } = await supabase
  .from('payments')
  .select('id, status, razorpay_payment_id')
- .eq('razorpay_order_id', paymentResponse.razorpay_order_id)
+ .eq('razorpay_order_id', activePaymentResponse.razorpay_order_id)
  .single()
  
  if (data && !error) {
@@ -1174,16 +1179,16 @@ export function CreateFriendlyMatch({
  await new Promise(resolve => setTimeout(resolve, 2000)) // Longer wait for webhook
  } else {
  console.error('❌ Final attempt failed. Error:', error)
- throw new Error(`Could not find completed payment record for order_id: ${paymentResponse.razorpay_order_id}. Webhook processing may be delayed - please try again.`)
+ throw new Error(`Could not find completed payment record for order_id: ${activePaymentResponse.razorpay_order_id}. Webhook processing may be delayed - please try again.`)
  }
  }
 
  // Final check - ensure we have a payment record
  if (!paymentRecord) {
- throw new Error(`Could not find completed payment record for order_id: ${paymentResponse.razorpay_order_id}. Webhook processing may be delayed - please try again.`)
+ throw new Error(`Could not find completed payment record for order_id: ${activePaymentResponse.razorpay_order_id}. Webhook processing may be delayed - please try again.`)
  }
 
- console.log('✅ Found completed payment record:', paymentRecord.id, 'for order_id:', paymentResponse.razorpay_order_id)
+ console.log('✅ Found completed payment record:', paymentRecord.id, 'for order_id:', activePaymentResponse.razorpay_order_id)
 
  // Insert into matches table using correct schema
  const { data: matchData, error: matchError } = await supabase
@@ -1209,7 +1214,7 @@ export function CreateFriendlyMatch({
  if (!matchData || matchData.length === 0) throw new Error('Failed to create match')
 
  const createdMatch = matchData[0]
- console.log('Match created:', createdMatch.id, 'Home:', createdMatch.home_team_id, 'Away:', createdMatch.away_team_id, 'Payment:', paymentResponse.razorpay_payment_id)
+ console.log('Match created:', createdMatch.id, 'Home:', createdMatch.home_team_id, 'Away:', createdMatch.away_team_id, 'Payment:', activePaymentResponse.razorpay_payment_id)
 
  // Handle referee/staff assignments if it's an official match
  if (formData.matchType === 'official' && formData.refereeIds.length > 0) {
@@ -1287,7 +1292,7 @@ export function CreateFriendlyMatch({
  type: 'success'
  })
 
- console.log('Match created successfully with payment:', paymentResponse.razorpay_payment_id)
+ console.log('Match created successfully with payment:', activePaymentResponse.razorpay_payment_id)
  onSuccess()
  
  } catch (error: any) {
@@ -1316,16 +1321,10 @@ export function CreateFriendlyMatch({
  return
  }
 
- console.log('✅ Direct payment verified, starting match creation...')
+ console.log('✅ Direct payment verified, calling createMatchAfterPayment with direct response...')
  
- // Store the payment response in state for the original function to use
- setPaymentResponse(paymentRes)
- setPaymentCompleted(true)
- 
- // Wait a bit for state to update, then call the original function
- setTimeout(() => {
- createMatchAfterPayment()
- }, 500)
+ // Call the original function with the direct payment response
+ await createMatchAfterPayment(paymentRes)
  }
 
  const handleSubmit = async (e: React.FormEvent) => {

@@ -35,13 +35,32 @@ serve(async (req: Request) => {
     });
   }
 
-  // Razorpay sends raw body + signature header
+  // Get raw body text for signature verification
   const bodyText = await req.text();
   const signature = req.headers.get("x-razorpay-signature") ?? "";
 
   console.log("🔔 Razorpay webhook received");
   console.log("📋 Signature present:", !!signature);
+  console.log("📋 Signature value:", signature);
   console.log("📋 Body length:", bodyText.length);
+  console.log("📋 First 100 chars of body:", bodyText.substring(0, 100));
+
+  // Check if environment variables are set
+  if (!RAZORPAY_WEBHOOK_SECRET) {
+    console.error("❌ RAZORPAY_WEBHOOK_SECRET not configured");
+    return new Response("Secret not configured", { 
+      status: 500,
+      headers: corsHeaders 
+    });
+  }
+
+  if (!signature) {
+    console.error("❌ No x-razorpay-signature header present");
+    return new Response("Missing signature header", { 
+      status: 400,
+      headers: corsHeaders 
+    });
+  }
 
   // 1️⃣ Verify webhook signature
   const isValid = await verifyRazorpaySignature(
@@ -50,8 +69,11 @@ serve(async (req: Request) => {
     RAZORPAY_WEBHOOK_SECRET,
   );
 
+  console.log("🔐 Signature verification result:", isValid);
+
   if (!isValid) {
     console.error("❌ Invalid Razorpay signature");
+    console.error("   Expected signature:", signature);
     return new Response("Invalid signature", { 
       status: 400,
       headers: corsHeaders 
@@ -305,14 +327,22 @@ async function verifyRazorpaySignature(
   secret: string,
 ): Promise<boolean> {
   if (!secret) {
-    console.error("RAZORPAY_WEBHOOK_SECRET is not set");
+    console.error("❌ RAZORPAY_WEBHOOK_SECRET is not set");
     return false;
   }
 
   try {
+    console.log("🔐 Verifying signature:");
+    console.log("   Secret length:", secret.length);
+    console.log("   Body length:", body.length);
+    console.log("   Signature length:", signature.length);
+
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secret);
     const bodyData = encoder.encode(body);
+
+    console.log("   Encoded secret bytes:", keyData.length);
+    console.log("   Encoded body bytes:", bodyData.length);
 
     const cryptoKey = await crypto.subtle.importKey(
       "raw",
@@ -327,9 +357,13 @@ async function verifyRazorpaySignature(
     // raw signature bytes to base64 for comparison.
     const expectedSignature = bufferToBase64(signatureBuffer);
 
+    console.log("   Expected signature:", expectedSignature);
+    console.log("   Received signature:", signature);
+    console.log("   Match:", expectedSignature === signature);
+
     return expectedSignature === signature;
   } catch (err) {
-    console.error("Error verifying Razorpay signature:", err);
+    console.error("❌ Error verifying Razorpay signature:", err);
     return false;
   }
 }

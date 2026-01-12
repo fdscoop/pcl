@@ -106,14 +106,16 @@ interface CreateFriendlyMatchProps {
  club: any
  teams: any[]
  availableFormats: string[]
- onSuccess: () => void
+ onSuccess: (matchId?: string) => void
+ onClose?: () => void
 }
 
 export function CreateFriendlyMatch({
  club,
  teams,
  availableFormats,
- onSuccess
+ onSuccess,
+ onClose
 }: CreateFriendlyMatchProps) {
  const { addToast } = useToast()
  const { isMobile } = useMobileDetection()
@@ -1351,7 +1353,7 @@ export function CreateFriendlyMatch({
  })
 
  console.log('Match created successfully with payment:', activePaymentResponse.razorpay_payment_id)
- onSuccess()
+ onSuccess(createdMatch.id)
  
  } catch (error: any) {
  console.error('Error creating match after payment:', error)
@@ -1899,7 +1901,7 @@ export function CreateFriendlyMatch({
  selectedStadiumPhotos={selectedStadiumPhotos}
  nextStadiumPhoto={nextStadiumPhoto}
  prevStadiumPhoto={prevStadiumPhoto}
- onClose={onSuccess}
+ onClose={onClose || (() => onSuccess())}
  />
  )
  }
@@ -2006,17 +2008,33 @@ export function CreateFriendlyMatch({
  <div className="space-y-6">
  {/* Match Format */}
  <div className="space-y-3">
+ <div className="flex items-center justify-between">
  <Label className="text-base font-semibold">Match Format</Label>
+ {formData.selectedClub && (
+ <Badge className="bg-amber-100 text-amber-700 border border-amber-300">
+ 🔒 Format locked after opponent selection
+ </Badge>
+ )}
+ </div>
  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
- {availableFormats.map((format) => (
+ {availableFormats.map((format) => {
+ const isLocked = !!formData.selectedClub
+ const isSelected = formData.matchFormat === format
+ return (
  <div
  key={format}
- className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
- formData.matchFormat === format
+ className={`p-4 border-2 rounded-lg transition-all ${
+ isSelected
  ? 'border-blue-500 bg-blue-50 shadow-md'
- : 'border-gray-200 hover:border-gray-300'
+ : isLocked
+ ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
+ : 'border-gray-200 hover:border-gray-300 cursor-pointer'
  }`}
- onClick={() => setFormData({ ...formData, matchFormat: format })}
+ onClick={() => {
+ if (!isLocked) {
+ setFormData({ ...formData, matchFormat: format })
+ }
+ }}
  >
  <div className="text-center">
  <div className="text-3xl mb-2">{getFormatIcon(format)}</div>
@@ -2028,8 +2046,14 @@ export function CreateFriendlyMatch({
  </div>
  </div>
  </div>
- ))}
+ )
+ })}
  </div>
+ {formData.selectedClub && (
+ <p className="text-sm text-amber-600 mt-2">
+ 💡 To change the format, first clear the opponent selection below.
+ </p>
+ )}
  </div>
 
  {/* Team Selection */}
@@ -2192,6 +2216,7 @@ export function CreateFriendlyMatch({
 
  {formData.selectedClub && (
  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+ <div className="flex items-center justify-between">
  <div className="flex items-center gap-3">
  <CheckCircle2 className="h-5 w-5 text-green-600" />
  <div>
@@ -2202,6 +2227,20 @@ export function CreateFriendlyMatch({
  {formData.selectedClub.city}, {formData.selectedClub.district}
  </p>
  </div>
+ </div>
+ <Button
+ type="button"
+ variant="outline"
+ size="sm"
+ onClick={() => {
+ setFormData(prev => ({ ...prev, selectedClub: null }))
+ setClubSearchTerm('')
+ }}
+ className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+ >
+ <X className="h-4 w-4 mr-1" />
+ Clear
+ </Button>
  </div>
  </div>
  )}

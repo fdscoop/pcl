@@ -227,21 +227,31 @@ export function MobileMatchCreation({
   }
 
   // Step 1: Match Setup Content
-  const Step1Content = () => (
+  const Step1Content = () => {
+    const isFormatLocked = !!formData.selectedClub
+    
+    return (
     <div className="mobile-wizard-content">
       {/* Match Format Section */}
       <div className="mobile-wizard-section">
         <MobileSectionHeader
           title="Match Format"
           icon="⚽"
-          subtitle="Choose your game type"
+          subtitle={isFormatLocked ? "🔒 Locked after opponent selection" : "Choose your game type"}
         />
         <div className="space-y-3">
-          {availableFormats.map((format) => (
+          {availableFormats.map((format) => {
+            const isSelected = formData.matchFormat === format
+            return (
             <MobileSelectionCard
               key={format}
-              selected={formData.matchFormat === format}
-              onClick={() => setFormData((prev: any) => ({ ...prev, matchFormat: format }))}
+              selected={isSelected}
+              disabled={isFormatLocked && !isSelected}
+              onClick={() => {
+                if (!isFormatLocked) {
+                  setFormData((prev: any) => ({ ...prev, matchFormat: format }))
+                }
+              }}
               icon={<span className="text-2xl">{getFormatIcon(format)}</span>}
               title={format}
               subtitle={
@@ -250,8 +260,13 @@ export function MobileMatchCreation({
                 '14 players • 3 hours'
               }
             />
-          ))}
+          )})}
         </div>
+        {isFormatLocked && (
+          <p className="text-sm text-amber-600 mt-3 text-center">
+            💡 Clear opponent below to change format
+          </p>
+        )}
       </div>
 
       {/* Team Selection */}
@@ -294,12 +309,27 @@ export function MobileMatchCreation({
 
         {/* Selected Club Display */}
         {formData.selectedClub && (
-          <MobileInfoBanner
-            variant="success"
-            icon="✓"
-            title={formData.selectedClub.name}
-            description={`${formData.selectedClub.city}, ${formData.selectedClub.district}`}
-          />
+          <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-semibold text-green-800">{formData.selectedClub.name}</p>
+                  <p className="text-sm text-green-600">{formData.selectedClub.city}, {formData.selectedClub.district}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev: any) => ({ ...prev, selectedClub: null }))
+                  setClubSearchTerm('')
+                }}
+                className="px-3 py-1.5 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Club List */}
@@ -371,7 +401,7 @@ export function MobileMatchCreation({
         </div>
       </div>
     </div>
-  )
+  )}
 
   // Step 2: Stadium Selection Content
   const Step2Content = () => (

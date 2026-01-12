@@ -753,14 +753,23 @@ export default function MatchesPage() {
           club={club} 
           teams={teams}
           availableFormats={getAvailableFormats()}
-          onSuccess={() => {
-            setActiveView('overview')
+          onSuccess={(matchId?: string) => {
             loadData()
             addToast({
               title: 'Success',
-              description: 'Friendly match request sent!',
+              description: 'Match created successfully!',
               type: 'success'
             })
+            // Navigate to the newly created match page if matchId is provided
+            if (matchId) {
+              router.push(`/match/${matchId}`)
+            } else {
+              setActiveView('overview')
+            }
+          }}
+          onClose={() => {
+            // Just go back to overview without showing success toast
+            setActiveView('overview')
           }}
         />
       </div>
@@ -1205,7 +1214,9 @@ export default function MatchesPage() {
  <Button
  onClick={(e) => {
  e.stopPropagation()
- router.push(`/dashboard/club-owner/formations?match=${match.id}`)
+ // Open modal first for "Update Lineup"
+ setSelectedMatch(match)
+ setShowMatchDetails(true)
  }}
  variant="outline"
  size="sm"
@@ -1235,7 +1246,9 @@ export default function MatchesPage() {
  <Button
  onClick={(e) => {
  e.stopPropagation()
- router.push(`/dashboard/club-owner/formations?match=${match.id}`)
+ // Open the match details modal instead of navigating directly
+ setSelectedMatch(match)
+ setShowMatchDetails(true)
  }}
  className="w-full h-9 text-sm bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
  >

@@ -1223,15 +1223,13 @@ export function CreateFriendlyMatch({
    stadium_id: formData.stadiumId
  })
 
- const { data: updatedPayment, error: paymentUpdateError } = await supabase
+ const { error: paymentUpdateError } = await supabase
  .from('payments')
  .update({ 
  match_id: createdMatch.id,
  stadium_id: formData.stadiumId
  })
  .eq('id', paymentRecord.id)
- .select('id, match_id, stadium_id, razorpay_payment_id')
- .single()
 
  if (paymentUpdateError) {
  console.error('❌ CRITICAL: Failed to update payment record with match_id and stadium_id:', {
@@ -1239,46 +1237,41 @@ export function CreateFriendlyMatch({
    payment_id: paymentRecord.id,
    match_id: createdMatch.id,
    stadium_id: formData.stadiumId,
-   message: 'This may be an RLS policy issue. Check if migration 021 is applied.'
+   message: '⚠️ MIGRATION 021 NOT APPLIED! Run: npx supabase db push'
  })
  // Don't throw error here - match is already created successfully
- } else if (updatedPayment) {
- console.log('✅ Payment record successfully updated:', {
-   payment_id: updatedPayment.id,
-   match_id: updatedPayment.match_id,
-   stadium_id: updatedPayment.stadium_id,
-   razorpay_payment_id: updatedPayment.razorpay_payment_id,
-   verified: updatedPayment.match_id === createdMatch.id && updatedPayment.stadium_id === formData.stadiumId
- })
  } else {
- console.error('⚠️ WARNING: Payment update returned no data (possibly RLS blocked the select)')
+ console.log('✅ Payment UPDATE command executed (no RLS error)')
  }
 
  // Verify the update was persisted in the database
- const { data: verifyPayment } = await supabase
+ console.log('🔍 Verifying payment record in database...')
+ const { data: verifyPayment, error: verifyError } = await supabase
  .from('payments')
  .select('id, match_id, stadium_id, club_id, razorpay_payment_id')
  .eq('id', paymentRecord.id)
- .single()
+ .maybeSingle()
 
- if (verifyPayment) {
- if (verifyPayment.match_id && verifyPayment.stadium_id) {
-   console.log('✅ VERIFIED: Payment record in database has match_id and stadium_id:', {
+ if (verifyError) {
+ console.error('❌ VERIFICATION ERROR: Could not query payment record:', verifyError)
+ } else if (!verifyPayment) {
+ console.error('❌ VERIFICATION ERROR: Payment record not found')
+ } else if (verifyPayment.match_id && verifyPayment.stadium_id) {
+   console.log('✅✅✅ VERIFIED: Payment record in database has match_id and stadium_id:', {
      payment_id: verifyPayment.id,
      match_id: verifyPayment.match_id,
      stadium_id: verifyPayment.stadium_id,
-     club_id: verifyPayment.club_id
+     club_id: verifyPayment.club_id,
+     status: '🎉 UPDATE SUCCESSFUL - Migration 021 is working!'
    })
  } else {
-   console.error('❌ VERIFICATION FAILED: Payment record is missing match_id or stadium_id:', {
+   console.error('❌❌❌ VERIFICATION FAILED: Payment record is missing match_id or stadium_id:', {
      payment_id: verifyPayment.id,
      match_id: verifyPayment.match_id,
      stadium_id: verifyPayment.stadium_id,
-     issue: 'RLS policy may be blocking UPDATE or migration 021 not applied'
+     issue: '🚨 MIGRATION 021 NOT APPLIED - RLS policy is blocking UPDATE',
+     action: 'Run: npx supabase db push OR apply migration manually in Supabase Dashboard'
    })
- }
- } else {
- console.error('❌ VERIFICATION FAILED: Could not query payment record after update')
  }
 
  // Handle referee/staff assignments if it's an official match

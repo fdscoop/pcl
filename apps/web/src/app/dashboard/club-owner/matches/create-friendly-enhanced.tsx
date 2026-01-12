@@ -1216,17 +1216,20 @@ export function CreateFriendlyMatch({
  const createdMatch = matchData[0]
  console.log('Match created:', createdMatch.id, 'Home:', createdMatch.home_team_id, 'Away:', createdMatch.away_team_id, 'Payment:', activePaymentResponse.razorpay_payment_id)
 
- // Update payment record with match_id
+ // Update payment record with match_id and stadium_id
  const { error: paymentUpdateError } = await supabase
  .from('payments')
- .update({ match_id: createdMatch.id })
+ .update({ 
+ match_id: createdMatch.id,
+ stadium_id: formData.stadiumId
+ })
  .eq('id', paymentRecord.id)
 
  if (paymentUpdateError) {
- console.error('Warning: Failed to update payment record with match_id:', paymentUpdateError)
+ console.error('Warning: Failed to update payment record with match_id and stadium_id:', paymentUpdateError)
  // Don't throw error here - match is already created successfully
  } else {
- console.log('✅ Payment record updated with match_id:', createdMatch.id)
+ console.log('✅ Payment record updated with match_id:', createdMatch.id, 'and stadium_id:', formData.stadiumId)
  }
 
  // Handle referee/staff assignments if it's an official match

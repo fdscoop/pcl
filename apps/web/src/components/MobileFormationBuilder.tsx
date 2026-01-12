@@ -34,6 +34,7 @@ import { notifyLineupAnnounced } from '@/services/matchNotificationService'
 // Types
 interface Player {
   id: string
+  player_id: string
   jersey_number: number
   position_assigned: string
   players: {

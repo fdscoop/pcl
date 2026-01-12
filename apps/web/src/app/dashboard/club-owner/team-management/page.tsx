@@ -578,7 +578,7 @@ export default function TeamManagementPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
-                Team Management
+                My Team
               </h1>
  <p className="text-muted-foreground">
  {team ? `Managing ${team.team_name}` : 'Create a team to get started'}

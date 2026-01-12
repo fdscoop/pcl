@@ -117,13 +117,13 @@ export default function ClubOwnerLayout({
 
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/dashboard/club-owner', icon: Home },
-    { name: 'Scout Players', href: '/dashboard/club-owner/scout-players', icon: Search },
-    { name: 'Squad', href: '/dashboard/club-owner/team-management', icon: Users },
-    { name: 'Formations', href: '/dashboard/club-owner/formations', icon: Layers },
+    { name: 'Recruit Players', href: '/dashboard/club-owner/scout-players', icon: Search },
+    { name: 'My Team', href: '/dashboard/club-owner/team-management', icon: Users },
+    { name: 'Team Setup', href: '/dashboard/club-owner/formations', icon: Layers },
     { name: 'Matches', href: '/dashboard/club-owner/matches', icon: Calendar },
     { name: 'Tournaments', href: '/dashboard/club-owner/tournaments', icon: Trophy },
     { name: 'Messages', href: '/dashboard/club-owner/messages', icon: MessageCircle, badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
-    { name: 'Statistics', href: '/dashboard/club-owner/statistics', icon: BarChart3 },
+    { name: 'Club Performance', href: '/dashboard/club-owner/statistics', icon: BarChart3 },
     { name: 'Contracts', href: '/dashboard/club-owner/contracts', icon: FileText },
     { name: 'Finance', href: '/dashboard/club-owner/finance', icon: DollarSign },
     { name: 'Membership', href: '/dashboard/club-owner/membership', icon: CreditCard },
@@ -134,7 +134,7 @@ export default function ClubOwnerLayout({
   // Bottom navigation shows only essential items
   const bottomNavItems = [
     { name: 'Home', href: '/dashboard/club-owner', icon: Home },
-    { name: 'Squad', href: '/dashboard/club-owner/team-management', icon: Users },
+    { name: 'My Team', href: '/dashboard/club-owner/team-management', icon: Users },
     { name: 'Matches', href: '/dashboard/club-owner/matches', icon: Calendar },
     { name: 'Messages', href: '/dashboard/club-owner/messages', icon: MessageCircle, badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
     { name: 'Contracts', href: '/dashboard/club-owner/contracts', icon: FileText },

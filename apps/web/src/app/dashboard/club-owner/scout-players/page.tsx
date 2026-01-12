@@ -433,7 +433,7 @@ export default function ScoutPlayersPage() {
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Scout Players</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Recruit Players</h1>
             <p className="text-slate-600 text-sm sm:text-base mt-1">Discover and recruit talented players</p>
           </div>
           <div className="flex items-center gap-2">

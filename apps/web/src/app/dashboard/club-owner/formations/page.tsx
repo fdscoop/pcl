@@ -416,13 +416,13 @@ export default function FormationsPage() {
  No Team Created
  </h3>
  <p className="text-gray-600 mb-6 text-sm sm:text-base">
- Create a team first to build formations
+ Create a team first to build team setups
  </p>
  <button
  onClick={() => router.push('/dashboard/club-owner/team-management')}
  className="px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg text-sm sm:text-base"
  >
- Go to Squad
+ Go to My Team
  </button>
  </div>
  </CardContent>
@@ -439,16 +439,16 @@ export default function FormationsPage() {
  <div className="text-center">
  <div className="text-5xl sm:text-6xl mb-4">⚽</div>
  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
- No Squad Players
+ No Team Members
  </h3>
  <p className="text-gray-600 mb-6 text-sm sm:text-base">
- Add players to your squad to create formations
+ Add players to your team to create team setups
  </p>
  <button
  onClick={() => router.push('/dashboard/club-owner/team-management')}
  className="px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg font-semibold hover:from-teal-600 hover:to-teal-700 transition-all shadow-lg text-sm sm:text-base"
  >
- Go to Squad
+ Go to My Team
  </button>
  </div>
  </CardContent>
@@ -802,9 +802,9 @@ export default function FormationsPage() {
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
  <div>
  <p className="text-teal-600 font-medium mb-1 text-sm">welcome back 👋</p>
- <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Formation & Playing XI</h1>
+ <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Team Setup & Playing XI</h1>
  <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-sm">
- Build your tactical formation and declare your starting lineup
+ Build your tactical team setup and declare your starting lineup
  </p>
  </div>
  </div>
@@ -815,7 +815,7 @@ export default function FormationsPage() {
  <div className="mb-6 sm:mb-8">
  <div className="mb-4 sm:mb-5">
  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Your Upcoming Matches</h2>
- <p className="text-xs sm:text-sm text-gray-600">Click on a match card to build your formation and declare Playing XI</p>
+ <p className="text-xs sm:text-sm text-gray-600">Click on a match card to build your team setup and declare Playing XI</p>
  </div>
  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
  {matches.map((match) => {

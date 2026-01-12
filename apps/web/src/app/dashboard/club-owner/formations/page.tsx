@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { FormationBuilder } from '@/components/FormationBuilder'
@@ -66,6 +66,7 @@ export default function FormationsPage() {
  const [matches, setMatches] = useState<Match[]>([])
  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
  const [lastLineupUpdate, setLastLineupUpdate] = useState<number>(0)
+ const formationBuilderRef = useRef<HTMLDivElement>(null)
 
  useEffect(() => {
  loadData()
@@ -983,6 +984,9 @@ export default function FormationsPage() {
  onClick={(e) => {
  e.stopPropagation()
  setSelectedMatch(match)
+ setTimeout(() => {
+ formationBuilderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+ }, 100)
  }}
  variant="outline"
  size="sm"
@@ -1001,6 +1005,9 @@ export default function FormationsPage() {
  onClick={(e) => {
  e.stopPropagation()
  setSelectedMatch(match)
+ setTimeout(() => {
+ formationBuilderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+ }, 100)
  }}
  className="w-full h-9 text-sm bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
  >
@@ -1041,7 +1048,7 @@ export default function FormationsPage() {
  )}
 
  {/* Main Content - Full Width */}
- <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden border border-slate-200">
+ <div ref={formationBuilderRef} className="bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden border border-slate-200">
  <div className="p-4 sm:p-6">
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 gap-2">
  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">

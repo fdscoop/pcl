@@ -1216,8 +1216,7 @@ export default function MatchesPage() {
  <Button
  onClick={(e) => {
  e.stopPropagation()
- setSelectedMatch(match)
- setShowMatchDetails(true)
+ router.push(`/match/${match.id}`)
  }}
  variant="outline"
  size="sm"

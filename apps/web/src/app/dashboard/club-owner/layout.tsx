@@ -102,6 +102,13 @@ export default function ClubOwnerLayout({
     setMobileMenuOpen(false)
   }, [pathname])
 
+  // Redirect if no club exists
+  useEffect(() => {
+    if (!loading && !club) {
+      router.push('/club/create')
+    }
+  }, [loading, club, router])
+
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -147,9 +154,9 @@ export default function ClubOwnerLayout({
     )
   }
 
-  // If no club exists, redirect to create club
-  if (!loading && !club) {
-    router.push('/club/create')
+  // If no club exists, the useEffect above will handle the redirect
+  // This early return prevents rendering the layout for users without a club
+  if (!club) {
     return null
   }
 

@@ -260,6 +260,10 @@ export function MobileFormationBuilder({
 }: MobileFormationBuilderProps) {
   // Wizard state
   const [currentStep, setCurrentStep] = useState(1)
+  
+  // Track if format has been declared/saved
+  const [formatDeclared, setFormatDeclared] = useState(false)
+  const [declaredFormat, setDeclaredFormat] = useState<string | null>(null)
 
   // Match selection
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
@@ -477,6 +481,9 @@ export function MobileFormationBuilder({
         selectedPlayers,
         substitutePlayers
       })
+      // Mark format as declared after successful save
+      setFormatDeclared(true)
+      setDeclaredFormat(selectedFormat)
       setShowSaveDialog(false)
     } catch (error) {
       console.error('❌ Mobile save error:', error)
@@ -557,14 +564,41 @@ export function MobileFormationBuilder({
         />
       ) : (
         <div className="space-y-3">
-          {/* Option to skip match selection */}
-          <MobileSelectionCard
-            selected={selectedMatch === null && currentStep > 1}
-            onClick={() => setSelectedMatch(null)}
-            icon={<span className="text-2xl">📋</span>}
-            title="Template Lineup"
-            subtitle="Create a reusable lineup without a specific match"
-          />
+          {/* Option to skip match selection - Use native button for better mobile touch support */}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedMatch(null)
+            }}
+            className={`w-full p-4 rounded-xl border-2 text-left transition-all active:scale-[0.98] touch-manipulation ${
+              selectedMatch === null && currentStep > 1
+                ? 'border-blue-500 bg-blue-50 shadow-md'
+                : 'border-gray-200 bg-white active:border-gray-300'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-2xl bg-gray-100">
+                📋
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className={`font-semibold ${selectedMatch === null && currentStep > 1 ? 'text-blue-900' : 'text-gray-900'}`}>
+                    Template Lineup
+                  </span>
+                </div>
+                <p className={`text-sm mt-0.5 ${selectedMatch === null && currentStep > 1 ? 'text-blue-700' : 'text-gray-500'}`}>
+                  Create a reusable lineup without a specific match
+                </p>
+              </div>
+              <div className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                selectedMatch === null && currentStep > 1
+                  ? 'border-blue-500 bg-blue-500'
+                  : 'border-gray-300 bg-white'
+              }`}>
+                {selectedMatch === null && currentStep > 1 && <CheckCircle2 className="h-4 w-4 text-white" />}
+              </div>
+            </div>
+          </button>
 
           <div className="flex items-center gap-2 my-3">
             <div className="flex-1 h-px bg-gray-200"></div>
@@ -1418,11 +1452,20 @@ export function MobileFormationBuilder({
       <Button
         type="button"
         onClick={() => setShowSaveDialog(true)}
-        disabled={Object.values(assignments).filter(p => p !== null).length < requirements.playersOnField || substitutePlayers.length < requirements.minSubs}
+        disabled={Object.values(assignments).filter(p => p !== null).length < requirements.playersOnField || substitutePlayers.length < requirements.minSubs || formatDeclared}
         className="w-full py-5 text-lg font-bold rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:from-green-600 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 transition-all duration-200"
       >
-        <Save className="h-5 w-5 mr-2" />
-        Save Lineup
+        {formatDeclared ? (
+          <>
+            <CheckCircle2 className="h-5 w-5 mr-2" />
+            Format Locked
+          </>
+        ) : (
+          <>
+            <Save className="h-5 w-5 mr-2" />
+            Save Lineup
+          </>
+        )}
       </Button>
     </div>
   )

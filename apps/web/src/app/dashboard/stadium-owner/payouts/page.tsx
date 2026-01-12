@@ -14,18 +14,13 @@ import {
  AlertCircle,
  CheckCircle,
  Edit2,
- Lock
+ Lock,
+ RefreshCw
 } from 'lucide-react'
 import { useToast } from '@/context/ToastContext'
 import Link from 'next/link'
-
-interface PayoutSummary {
- totalEarnings: number
- pendingPayout: number
- availableBalance: number
- lastPayoutDate: string | null
- lastPayoutAmount: number
-}
+import { useStadiumPaymentData } from '@/hooks/useStadiumPayments'
+import { formatCurrency, getCommissionRate } from '@/services/stadiumPaymentService'
 
 interface PayoutAccount {
  id: string
@@ -38,43 +33,32 @@ interface PayoutAccount {
  verified_at: string | null
 }
 
-interface Booking {
- id: string
- slot_date: string
- start_time: string
- end_time: string
- booking_date: string
- stadium: {
- stadium_name: string
- hourly_rate: number
- }
- club: {
- club_name: string
- }
-}
-
 export default function PayoutsPage() {
- const [summary, setSummary] = useState<PayoutSummary>({
- totalEarnings: 0,
- pendingPayout: 0,
- availableBalance: 0,
- lastPayoutDate: null,
- lastPayoutAmount: 0
- })
+ const [user, setUser] = useState<any>(null)
  const [payoutAccount, setPayoutAccount] = useState<PayoutAccount | null>(null)
- const [recentBookings, setRecentBookings] = useState<Booking[]>([])
  const [loading, setLoading] = useState(true)
  const { addToast } = useToast()
  const supabase = createClient()
+ 
+ // Use the new payment hooks for dynamic data
+ const {
+   allTimeStats: paymentStats,
+   recentBookings,
+   loading: paymentLoading,
+   error: paymentError,
+   refetchAll
+ } = useStadiumPaymentData(user?.id || null)
 
  useEffect(() => {
- loadPayoutData()
+ loadUserAndAccount()
  }, [])
 
- const loadPayoutData = async () => {
+ const loadUserAndAccount = async () => {
  try {
  const { data: { user } } = await supabase.auth.getUser()
  if (!user) return
+ 
+ setUser(user)
 
  // Load payout account info
  const { data: accounts } = await supabase
@@ -88,66 +72,6 @@ export default function PayoutsPage() {
  if (accounts) {
  setPayoutAccount(accounts as PayoutAccount)
  }
-
- // Get all stadiums owned by this user
- const { data: stadiums } = await supabase
- .from('stadiums')
- .select('id')
- .eq('owner_id', user.id)
-
- if (!stadiums || stadiums.length === 0) {
- setLoading(false)
- return
- }
-
- const stadiumIds = stadiums.map(s => s.id)
-
- // Get all completed bookings (matches)
- const { data: bookings } = await supabase
- .from('matches')
- .select(`
- *,
- stadium:stadiums(stadium_name, hourly_rate),
- home_team:teams!matches_home_team_id_fkey(
- team_name,
- club:clubs(club_name)
- )
- `)
- .in('stadium_id', stadiumIds)
- .eq('status', 'completed')
- .order('match_date', { ascending: false })
-
- if (bookings) {
- // Helper function to get match duration
- const getMatchDuration = (format: string) => {
- switch (format?.toLowerCase()) {
- case '5-a-side': return 1 // 1 hour
- case '7-a-side': return 1.5 // 1.5 hours
- case '9-a-side': return 2 // 2 hours
- case '11-a-side': return 3 // 3 hours
- default: return 2 // Default 2 hours
- }
- }
-
- // Calculate earnings
- const totalEarnings = bookings.reduce((sum, booking) => {
- const hours = getMatchDuration(booking.match_format)
- const rate = booking.stadium?.hourly_rate || 0
- return sum + (hours * rate)
- }, 0)
-
- // For now, assume all earnings are available (no payout history yet)
- setSummary({
- totalEarnings,
- pendingPayout: 0,
- availableBalance: totalEarnings,
- lastPayoutDate: null,
- lastPayoutAmount: 0
- })
-
- // Get recent bookings (last 10)
- setRecentBookings(bookings.slice(0, 10))
- }
  } catch (error) {
  console.error('Error loading payout data:', error)
  addToast({
@@ -160,22 +84,17 @@ export default function PayoutsPage() {
  }
  }
 
- const calculateBookingRevenue = (booking: Booking) => {
- const startTime = new Date(`2000-01-01T${booking.start_time}`)
- const endTime = new Date(`2000-01-01T${booking.end_time}`)
- const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
- return hours * booking.stadium.hourly_rate
- }
-
  const formatDate = (dateString: string) => {
- return new Date(dateString).toLocaleDateString('en-US', {
+ return new Date(dateString).toLocaleDateString('en-IN', {
  month: 'short',
  day: 'numeric',
  year: 'numeric'
  })
  }
+ 
+ const commissionRate = getCommissionRate()
 
- if (loading) {
+ if (loading || paymentLoading) {
  return (
  <div className="flex items-center justify-center min-h-[400px]">
  <div className="flex flex-col items-center gap-3">
@@ -190,7 +109,7 @@ export default function PayoutsPage() {
  }
 
  return (
- <div className="space-y-5">
+ <div className="space-y-5 w-full max-w-full overflow-x-hidden">
  {/* Header */}
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
  <div>
@@ -204,37 +123,41 @@ export default function PayoutsPage() {
  Manage your earnings and payout history
  </p>
  </div>
+ <Button onClick={refetchAll} variant="outline" size="sm" className="flex-shrink-0">
+ <RefreshCw className="h-4 w-4 mr-1" />
+ Refresh
+ </Button>
  </div>
 
- {/* Stats Grid */}
+ {/* Stats Grid - Using actual payment data */}
  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
  <Card className="border-slate-200 bg-white hover:shadow-lg hover:shadow-emerald-100/50 transition-all group overflow-hidden">
  <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500"></div>
  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
- <CardTitle className="text-xs font-semibold text-slate-500 ">Available Balance</CardTitle>
+ <CardTitle className="text-xs font-semibold text-slate-500 ">Net Earnings</CardTitle>
  <div className="p-1.5 rounded-lg bg-emerald-100 group-hover:bg-emerald-200 transition-colors">
  <DollarSign className="h-3.5 w-3.5 text-emerald-600 " />
  </div>
  </CardHeader>
  <CardContent className="px-4 pb-4">
  <div className="text-xl sm:text-2xl font-bold text-emerald-600 ">
- ₹{summary.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+ {formatCurrency(paymentStats?.netPayout || 0)}
  </div>
- <p className="text-[10px] text-slate-500 mt-0.5">Ready to withdraw</p>
+ <p className="text-[10px] text-slate-500 mt-0.5">After {commissionRate}% commission</p>
  </CardContent>
  </Card>
 
  <Card className="border-slate-200 bg-white hover:shadow-lg transition-all group overflow-hidden">
  <div className="h-1 w-full bg-gradient-to-r from-blue-500 to-indigo-500"></div>
  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
- <CardTitle className="text-xs font-semibold text-slate-500 ">Total Earnings</CardTitle>
+ <CardTitle className="text-xs font-semibold text-slate-500 ">Gross Revenue</CardTitle>
  <div className="p-1.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
  <TrendingUp className="h-3.5 w-3.5 text-blue-600 " />
  </div>
  </CardHeader>
  <CardContent className="px-4 pb-4">
- <div className="text-xl sm:text-2xl font-bold text-slate-800 ">₹{summary.totalEarnings.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
- <p className="text-[10px] text-slate-500 mt-0.5">All time</p>
+ <div className="text-xl sm:text-2xl font-bold text-slate-800 ">{formatCurrency(paymentStats?.stadiumRevenue || 0)}</div>
+ <p className="text-[10px] text-slate-500 mt-0.5">Before commission</p>
  </CardContent>
  </Card>
 
@@ -247,8 +170,8 @@ export default function PayoutsPage() {
  </div>
  </CardHeader>
  <CardContent className="px-4 pb-4">
- <div className="text-xl sm:text-2xl font-bold text-slate-800 ">₹{summary.pendingPayout.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
- <p className="text-[10px] text-slate-500 mt-0.5">Processing</p>
+ <div className="text-xl sm:text-2xl font-bold text-slate-800 ">{formatCurrency(paymentStats?.pendingPayout || 0)}</div>
+ <p className="text-[10px] text-slate-500 mt-0.5">{paymentStats?.pendingPayments || 0} payments pending</p>
  </CardContent>
  </Card>
  </div>
@@ -343,7 +266,7 @@ export default function PayoutsPage() {
  </Card>
 
  {/* Request Payout Card */}
- {summary.availableBalance > 0 && (
+ {(paymentStats?.netPayout || 0) > 0 && (
  <Card className={`overflow-hidden transition-all ${payoutAccount?.verification_status === 'verified' ? 'border-emerald-300 bg-white hover:shadow-lg' : 'border-slate-200 bg-white '}`}>
  <div className={`h-1 w-full ${payoutAccount?.verification_status === 'verified' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-slate-200 '}`}></div>
  <CardHeader className="px-4 py-3.5">
@@ -373,9 +296,9 @@ export default function PayoutsPage() {
  <>
  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 ">
  <div>
- <p className="text-xs text-slate-500 ">Available to withdraw</p>
+ <p className="text-xs text-slate-500 ">Net earnings available</p>
  <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
- ₹{summary.availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+ {formatCurrency(paymentStats?.netPayout || 0)}
  </p>
  </div>
  <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 text-xs h-8">
@@ -422,7 +345,7 @@ export default function PayoutsPage() {
  Recent Earnings
  </CardTitle>
  <CardDescription className="text-xs text-slate-500 ">
- Revenue from your recent bookings
+ Revenue from your recent match bookings
  </CardDescription>
  </div>
  <Button variant="outline" size="sm" className="text-xs h-7 border-slate-200 hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all">
@@ -439,62 +362,61 @@ export default function PayoutsPage() {
  </div>
  <p className="font-semibold text-sm text-slate-800 ">No earnings yet</p>
  <p className="text-xs text-slate-500 mt-0.5">
- Earnings from completed bookings will appear here
+ Earnings from match payments will appear here
  </p>
  </div>
  ) : (
  <div className="space-y-2">
- {recentBookings.map((booking) => {
- const revenue = calculateBookingRevenue(booking)
- return (
+ {recentBookings.map((booking) => (
  <div
  key={booking.id}
  className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all"
  >
  <div className="flex-1 min-w-0">
- <p className="font-semibold text-sm text-slate-800 truncate">{booking.stadium.stadium_name}</p>
+ <p className="font-semibold text-sm text-slate-800 truncate">
+ {booking.homeTeam} vs {booking.awayTeam}
+ </p>
  <p className="text-xs text-slate-500 truncate">
- {booking.club.club_name} • {formatDate(booking.slot_date)}
+ {booking.stadiumName} • {formatDate(booking.matchDate)}
  </p>
  </div>
  <div className="text-right ml-3">
  <p className="font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
- +₹{revenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+ {formatCurrency(booking.netPayout)}
  </p>
- <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 text-[10px] px-1.5 py-0.5">
- Completed
+ <Badge className={`${booking.paymentStatus === 'completed' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-amber-500'} text-white border-0 text-[10px] px-1.5 py-0.5`}>
+ {booking.paymentStatus}
  </Badge>
  </div>
  </div>
- )
- })}
+ ))}
  </div>
  )}
  </CardContent>
  </Card>
 
- {/* Payout History */}
- {summary.lastPayoutDate && (
+ {/* Completed Payouts Summary */}
+ {(paymentStats?.completedPayout || 0) > 0 && (
  <Card className="border-slate-200 bg-white hover:shadow-lg transition-all">
  <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3.5">
  <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
  <Calendar className="h-4 w-4 text-orange-600 " />
- Payout History
+ Payout Summary
  </CardTitle>
- <CardDescription className="text-xs text-slate-500 ">Your previous withdrawals</CardDescription>
+ <CardDescription className="text-xs text-slate-500 ">Overview of your payouts</CardDescription>
  </CardHeader>
  <CardContent className="pt-4 px-4 pb-4">
  <div className="space-y-2">
  <div className="flex items-center justify-between p-3 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 ">
  <div>
- <p className="font-semibold text-sm text-slate-800 ">Last Payout</p>
+ <p className="font-semibold text-sm text-slate-800 ">Completed Payments</p>
  <p className="text-xs text-slate-500 ">
- {formatDate(summary.lastPayoutDate)}
+ {paymentStats?.completedPayments || 0} matches with completed payments
  </p>
  </div>
  <div className="text-right">
- <p className="font-bold text-sm text-slate-800 ">₹{summary.lastPayoutAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
- <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 text-[10px] px-1.5 py-0.5">Completed</Badge>
+ <p className="font-bold text-sm text-slate-800 ">{formatCurrency(paymentStats?.completedPayout || 0)}</p>
+ <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 text-[10px] px-1.5 py-0.5">Earned</Badge>
  </div>
  </div>
  </div>

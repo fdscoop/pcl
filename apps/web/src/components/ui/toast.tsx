@@ -61,7 +61,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
 
  return (
  <div
- className={`animate-in slide-in-from-top-full duration-300 ${bgColor} border rounded-lg p-4 shadow-lg flex flex-col gap-3 min-w-[320px] max-w-[500px]`}
+ className={`animate-in slide-in-from-top-full duration-300 ${bgColor} border rounded-lg p-4 shadow-lg flex flex-col gap-3 w-full max-w-sm sm:max-w-md lg:max-w-lg`}
  role="alert"
  >
  <div className="flex gap-3 items-start">

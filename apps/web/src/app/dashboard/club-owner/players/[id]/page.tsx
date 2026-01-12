@@ -313,7 +313,7 @@ export default function ClubOwnerPlayerProfilePage() {
 
  return (
  <div className="min-h-screen">
- <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+ <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
  {/* Header */}
  <div className="mb-6">
  <div className="flex items-center justify-between">

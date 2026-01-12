@@ -327,7 +327,7 @@ export default function ClubOwnerMessagesPage() {
 
  return (
  <div className="bg-slate-50/50 flex flex-col lg:h-[100dvh] lg:overflow-hidden">
- <main className="flex-1 flex flex-col max-w-[1800px] mx-auto w-full px-2 sm:px-6 lg:px-8 py-2 sm:py-4 lg:overflow-hidden">
+ <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-2 sm:py-4 lg:overflow-hidden">
  {/* Header - Compact on mobile, hidden when in chat view */}
  <div className={`shrink-0 mb-2 sm:mb-4 ${mobileView === 'chat' ? 'hidden lg:block' : ''}`}>
  <div className="flex items-center justify-between">
@@ -385,7 +385,7 @@ export default function ClubOwnerMessagesPage() {
  )}
 
  {/* Desktop: Side-by-side layout | Mobile: Full height toggle */}
- <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-3 sm:gap-4 min-h-0">
+ <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(320px,1fr)_2fr] gap-3 sm:gap-4 min-h-0">
  {/* Conversations List - Full height on mobile */}
  <div className={`flex flex-col bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden border border-slate-200 min-h-0 ${mobileView === 'chat' ? 'hidden lg:flex' : 'flex'}`}>
  <div className="shrink-0 bg-gradient-to-r from-teal-500 to-teal-600 px-3 sm:px-4 py-2.5 sm:py-3">

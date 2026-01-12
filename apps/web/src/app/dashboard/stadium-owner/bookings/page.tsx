@@ -223,7 +223,7 @@ export default function BookingsPage() {
  }).length
 
  return (
- <div className="space-y-5">
+ <div className="space-y-5 w-full max-w-full overflow-x-hidden">
  {/* Header */}
  <div>
  <h1 className="text-xl sm:text-2xl font-bold text-slate-800 ">Bookings</h1>

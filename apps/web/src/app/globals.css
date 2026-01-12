@@ -191,6 +191,30 @@ body.mobile-app {
   button, a {
     text-decoration: none;
   }
+
+  /* Additional overflow protection for containers and cards */
+  .card, [class*="card"], main, section, article, aside, div {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  /* Ensure all flex containers don't overflow */
+  .flex, [class*="flex"] {
+    min-width: 0; /* Allow flex items to shrink */
+  }
+
+  /* Grid containers should not cause overflow */
+  .grid, [class*="grid"] {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  /* Prevent specific layout elements from overflowing */
+  .dashboard-page, .page-container {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
 }
 
 @layer utilities {
@@ -776,6 +800,23 @@ body.mobile-app {
 
   .table-responsive table {
     @apply w-full border-collapse text-sm sm:text-base
+  }
+
+  /* Overflow-safe container utilities */
+  .container-safe {
+    @apply w-full max-w-full overflow-x-hidden;
+  }
+
+  .flex-safe {
+    @apply flex min-w-0; /* Allow flex items to shrink */
+  }
+
+  .grid-safe {
+    @apply grid w-full overflow-x-auto;
+  }
+
+  .card-safe {
+    @apply w-full max-w-full box-border;
   }
 
   .table-responsive th,

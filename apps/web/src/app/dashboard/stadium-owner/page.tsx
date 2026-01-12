@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StadiumPaymentDashboard } from '@/components/StadiumPaymentDashboard'
 import { 
  Building2, 
  Calendar, 
@@ -115,93 +116,72 @@ export default function StadiumOwnerDashboard() {
  return
  }
 
- // Fetch bookings (booked slots)
- const { data: bookingsData, error: bookingsError } = await supabase
- .from('stadium_slots')
+ // Fetch bookings (matches at the stadiums)
+ const { data: matchesData, error: matchesError } = await supabase
+ .from('matches')
  .select(`
  *,
- stadium:stadiums(
+ stadium:stadiums(stadium_name, hourly_rate),
+ home_team:teams!matches_home_team_id_fkey(
+ team_name,
+ club:clubs(club_name)
+ ),
+ payments(
  id,
- stadium_name,
- hourly_rate
+ amount,
+ status,
+ amount_breakdown
  )
  `)
  .in('stadium_id', stadiumIds)
- .eq('is_available', false)
- .order('booking_date', { ascending: false })
+ .order('match_date', { ascending: false })
 
- if (bookingsError) {
- console.error('Error loading bookings:', bookingsError)
+ if (matchesError) {
+ console.error('Error loading matches:', matchesError)
  }
 
- const bookings = bookingsData || []
+ const matches = matchesData || []
  
- // If bookings exist, fetch club info for each booking
- if (bookings.length > 0) {
- const clubIds = [...new Set(bookings.map((b: any) => b.booked_by).filter(Boolean))]
- 
- if (clubIds.length > 0) {
- const { data: clubsData } = await supabase
- .from('clubs')
- .select('id, club_name, owner_id')
- .in('id', clubIds)
+ const totalBookings = matches.length
 
- // Create a map of club_id to club info
- const clubMap = new Map()
- clubsData?.forEach((club: any) => {
- clubMap.set(club.id, club)
- })
-
- // Fetch user info for club owners
- const ownerIds = clubsData?.map((c: any) => c.owner_id).filter(Boolean) || []
- if (ownerIds.length > 0) {
- const { data: usersData } = await supabase
- .from('users')
- .select('id, first_name, last_name, email')
- .in('id', ownerIds)
-
- // Create a map of user_id to user info
- const userMap = new Map()
- usersData?.forEach((user: any) => {
- userMap.set(user.id, user)
- })
-
- // Enrich bookings with club and user info
- bookings.forEach((booking: any) => {
- const club = clubMap.get(booking.booked_by)
- if (club) {
- booking.club_info = club
- booking.booked_by_user = userMap.get(club.owner_id)
- }
- })
- }
- }
- }
-
- const totalBookings = bookings.length
-
- // Calculate this month's revenue
+ // Calculate this month's revenue from actual payments
  const today = new Date()
  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
- const monthlyBookings = bookings.filter((b: any) => {
- const bookingDate = new Date(b.booking_date || b.created_at)
- return bookingDate >= firstDayOfMonth
+ const monthlyMatches = matches.filter((m: any) => {
+ const matchDate = new Date(m.match_date)
+ return matchDate >= firstDayOfMonth
  })
 
- const monthRevenue = monthlyBookings.reduce((sum: number, booking: any) => {
- const startTime = new Date(`2000-01-01T${booking.start_time}`)
- const endTime = new Date(`2000-01-01T${booking.end_time}`)
- const hours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
- const rate = booking.stadium?.hourly_rate || 0
+ // Calculate revenue from payment data
+ const monthRevenue = monthlyMatches.reduce((sum: number, match: any) => {
+ const payment = match.payments?.[0]
+ if (payment && payment.status === 'completed' && payment.amount_breakdown) {
+ // Get stadium portion from breakdown (in paise, convert to rupees)
+ const stadiumFee = payment.amount_breakdown.stadium || 0
+ return sum + (stadiumFee / 100)
+ }
+ // Fallback: estimate from hourly rate if no payment data
+ const hours = 2 // Default 2 hours per match
+ const rate = match.stadium?.hourly_rate || 0
  return sum + (hours * rate)
  }, 0)
 
- // Today's bookings
+ // Today's matches
  const todayStr = today.toISOString().split('T')[0]
- const todayBookings = bookings.filter((b: any) => b.slot_date === todayStr).length
+ const todayBookings = matches.filter((m: any) => m.match_date === todayStr).length
 
- // Recent bookings for display (last 5)
- setRecentBookings(bookings.slice(0, 5))
+ // Recent bookings for display (last 5) - convert matches to booking format
+ const recentMatchBookings = matches.slice(0, 5).map((match: any) => ({
+ id: match.id,
+ slot_date: match.match_date,
+ start_time: match.match_time || '00:00',
+ end_time: match.match_time || '00:00',
+ stadium: match.stadium,
+ home_team: match.home_team,
+ away_team: match.away_team
+ }))
+ 
+ setRecentBookings(recentMatchBookings)
 
  setStats({
  totalStadiums,
@@ -209,7 +189,7 @@ export default function StadiumOwnerDashboard() {
  totalBookings,
  monthRevenue,
  todayBookings,
- pendingBookings: 0 // Can be implemented if you add booking status
+ pendingBookings: 0 // Can be implemented if you add match status
  })
 
  // Check KYC status - fetch fresh data to ensure latest values
@@ -702,6 +682,13 @@ export default function StadiumOwnerDashboard() {
  <span className="text-[10px] sm:text-xs font-semibold text-slate-600 ">KYC</span>
  </Button>
  </div>
+
+ {/* Payment Dashboard - Dynamic Data from Payments Table */}
+ {user && (
+ <div className="mt-6">
+ <StadiumPaymentDashboard userId={user.id} />
+ </div>
+ )}
  </div>
  )
 }

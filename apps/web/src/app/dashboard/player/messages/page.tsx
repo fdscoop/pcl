@@ -367,7 +367,7 @@ export default function PlayerMessagesPage() {
  )}
 
  {/* Desktop: Side-by-side layout | Mobile: Full height toggle */}
- <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-3 sm:gap-4 min-h-0">
+ <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(320px,1fr)_2fr] gap-3 sm:gap-4 min-h-0">
  {/* Conversations List - Full height on mobile */}
  <Card className={`flex flex-col border-orange-200 bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden min-h-0 ${mobileView === 'chat' ? 'hidden lg:flex' : 'flex'}`}>
  <CardHeader className="shrink-0 bg-gradient-to-r from-orange-500 to-amber-500 py-2.5 sm:py-3 px-3 sm:px-4">

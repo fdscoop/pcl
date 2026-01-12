@@ -699,7 +699,7 @@ export default function ScoutPlayersPage() {
 
  <CardContent className="space-y-4 sm:space-y-6 pt-0 px-0 sm:px-6 pb-6 bg-white">
  {/* Player Photo Section - Responsive: Hero on mobile, Side-by-side on desktop */}
- <div className="lg:grid lg:grid-cols-[400px_1fr] lg:gap-6 lg:px-6 lg:pt-6">
+ <div className="lg:grid lg:grid-cols-[minmax(350px,1fr)_2fr] lg:gap-6 lg:px-6 lg:pt-6">
  {/* Player Photo */}
  {viewModal.player.photo_url && (
  <div className="relative w-full">

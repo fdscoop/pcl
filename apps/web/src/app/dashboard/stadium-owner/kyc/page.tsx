@@ -159,7 +159,7 @@ export default function KYCPage() {
  )
 
  return (
- <div className="space-y-5">
+ <div className="space-y-5 w-full max-w-full overflow-x-hidden">
  <div className="flex items-center gap-3 mb-5">
  <Button variant="ghost" size="sm" onClick={() => router.back()} className="h-8 text-slate-600 hover:bg-slate-100 ">
  <ArrowLeft className="w-4 h-4 mr-1.5" />

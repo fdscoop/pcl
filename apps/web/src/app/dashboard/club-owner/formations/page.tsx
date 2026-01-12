@@ -466,6 +466,16 @@ export default function FormationsPage() {
    substitutePlayers: Player[]
  }) => {
    try {
+     console.log('🏃 Mobile save lineup started:', {
+       lineupName,
+       matchId: data.matchId,
+       format: data.format,
+       formation: data.formation,
+       assignmentsCount: Object.keys(data.assignments).length,
+       selectedPlayersCount: data.selectedPlayers.size,
+       substitutesCount: data.substitutePlayers.length
+     })
+
      const supabase = createClient()
 
      // Convert format key to match format
@@ -480,18 +490,26 @@ export default function FormationsPage() {
    const assignedPlayers = Object.entries(data.assignments)
      .filter(([, player]) => player !== null)
      .map(([positionKey, player]) => ({
-       player_id: player!.id,
+       player_id: player!.players.id,  // Use player!.players.id instead of player!.id
        position_key: positionKey,
        is_starter: true
      }))
 
    const substituteData = data.substitutePlayers.map((player, index) => ({
-     player_id: player.id,
+     player_id: player.players.id,  // Use player.players.id instead of player.id
      position_key: `SUB_${index + 1}`,
      is_starter: false
    }))
 
    const allPlayers = [...assignedPlayers, ...substituteData]
+
+   console.log('🎯 Player data processed:', {
+     assignedPlayersCount: assignedPlayers.length,
+     substituteDataCount: substituteData.length,
+     allPlayersCount: allPlayers.length,
+     sampleAssignedPlayer: assignedPlayers[0],
+     sampleSubstitute: substituteData[0]
+   })
 
    // Check if lineup exists for this match/format
    const query = supabase
@@ -506,13 +524,21 @@ export default function FormationsPage() {
      query.is('match_id', null)
    }
 
-   const { data: existingLineup } = await query.maybeSingle()
+   const { data: existingLineup, error: queryError } = await query.maybeSingle()
+   
+   if (queryError) {
+     console.error('❌ Error querying existing lineup:', queryError)
+     throw new Error('Failed to check for existing lineup')
+   }
+
+   console.log('🔍 Existing lineup check:', existingLineup ? `Found: ${existingLineup.id}` : 'None found')
 
    let lineupId: string
 
    if (existingLineup) {
      // Update existing lineup
-     await supabase
+     console.log('📝 Updating existing lineup:', existingLineup.id)
+     const { error: updateError } = await supabase
        .from('team_lineups')
        .update({
          lineup_name: lineupName,
@@ -522,10 +548,16 @@ export default function FormationsPage() {
        })
        .eq('id', existingLineup.id)
      
+     if (updateError) {
+       console.error('❌ Error updating lineup:', updateError)
+       throw new Error('Failed to update lineup')
+     }
+     
      lineupId = existingLineup.id
    } else {
      // Insert new lineup
-     const { data: newLineup } = await supabase
+     console.log('➕ Creating new lineup')
+     const { data: newLineup, error: insertError } = await supabase
        .from('team_lineups')
        .insert({
          team_id: team?.id,
@@ -538,16 +570,28 @@ export default function FormationsPage() {
        .select('id')
        .single()
      
+     if (insertError) {
+       console.error('❌ Error creating lineup:', insertError)
+       throw new Error('Failed to create lineup')
+     }
+     
      lineupId = newLineup?.id
+     console.log('✅ New lineup created with ID:', lineupId)
    }
 
    // Update team_lineup_players table for relational data and validation
    if (lineupId) {
+     console.log('🔄 Updating team_lineup_players for lineup:', lineupId)
      // First, delete existing players for this lineup
-     await supabase
+     const { error: deleteError } = await supabase
        .from('team_lineup_players')
        .delete()
        .eq('lineup_id', lineupId)
+
+     if (deleteError) {
+       console.error('❌ Error deleting existing lineup players:', deleteError)
+       throw new Error('Failed to clear existing lineup data')
+     }
 
      // Insert all players into team_lineup_players
      const playersToInsert = allPlayers.map((player, index) => ({
@@ -562,14 +606,19 @@ export default function FormationsPage() {
      }))
 
      if (playersToInsert.length > 0) {
+       console.log('💾 Inserting players into team_lineup_players:', {
+         count: playersToInsert.length,
+         samplePlayer: playersToInsert[0]
+       })
        const { error: playersError } = await supabase
          .from('team_lineup_players')
          .insert(playersToInsert)
        
        if (playersError) {
-         console.error('Error inserting team_lineup_players:', playersError)
+         console.error('❌ Error inserting team_lineup_players:', playersError)
          throw new Error('Failed to save player lineup data')
        }
+       console.log('✅ Successfully inserted team_lineup_players')
      }
    }
 
@@ -778,10 +827,10 @@ export default function FormationsPage() {
  return (
  <Card
  key={match.id}
- className={`group cursor-pointer transition-all duration-300 border-2 overflow-hidden rounded-xl sm:rounded-2xl ${
+ className={`group cursor-pointer transition-all duration-300 overflow-hidden rounded-xl sm:rounded-2xl ${
  isSelected
- ? 'border-teal-500 shadow-xl shadow-teal-100 scale-[1.02]'
- : 'border-transparent hover:border-teal-200 hover:shadow-lg'
+ ? 'border-2 border-teal-500 shadow-xl shadow-teal-100 scale-[1.02]'
+ : 'border border-gray-200 sm:border-transparent hover:border-teal-200 hover:shadow-lg'
  }`}
  onClick={() => setSelectedMatch(isSelected ? null : match)}
  >

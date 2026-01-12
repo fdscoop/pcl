@@ -171,7 +171,9 @@ export default function MatchesPage() {
  .eq('club_id', clubData.id)
  .eq('status', 'active')
 
- setContractedPlayersCount(count || 0)
+ const localContractedPlayersCount = count || 0
+ setContractedPlayersCount(localContractedPlayersCount)
+ console.log('🔍 Contracted players count:', localContractedPlayersCount)
 
  // Get teams
  const { data: teamsData } = await supabase
@@ -183,10 +185,21 @@ export default function MatchesPage() {
  console.log('🔍 Teams data:', teamsData)
  setTeams(teamsData || [])
 
+ // Test database schema - check what columns exist in team_lineups
+ console.log('🔍 Testing team_lineups table structure...')
+ const { data: schemaTest, error: schemaError } = await supabase
+ .from('team_lineups')
+ .select('*')
+ .limit(1)
+ 
+ console.log('🔍 team_lineups table sample:', { schemaTest, schemaError })
+
  // Get upcoming matches
  let matchesData: any[] = []
  if (teamsData && teamsData.length > 0) {
  const teamIds = teamsData.map(t => t.id).join(',')
+ 
+ console.log('🔍 Querying matches for team IDs:', teamIds)
  
  const { data: matches, error: matchesError } = await supabase
  .from('matches')
@@ -204,6 +217,8 @@ export default function MatchesPage() {
  .is('canceled_at', null) // Only show non-canceled matches
  .order('match_date')
  .limit(10)
+ 
+ console.log('🔍 Raw matches query result:', { matches, matchesError })
  
  if (matchesError) {
  console.error('❌ Error querying matches:', matchesError)
@@ -312,47 +327,67 @@ export default function MatchesPage() {
 
  // Check if club has enough players for this format
  const minPlayersRequired = getMinPlayers(match.match_format)
- const hasEnoughPlayers = contractedPlayersCount >= minPlayersRequired
+ const hasEnoughPlayers = localContractedPlayersCount >= minPlayersRequired
 
  // If not enough players, don't show lineup status at all
  if (!hasEnoughPlayers) {
  return { ...match, has_lineup: undefined }
  }
 
- // First, check if lineup exists for this specific match
- const { data: matchSpecificLineup } = await supabase
- .from('team_lineups')
- .select('id')
- .eq('team_id', userTeamId)
- .eq('match_id', match.id)
- .eq('format', match.match_format)
- .limit(1)
- .maybeSingle()
+                // Check if lineup exists for this specific match
+                // First check the main team_lineups table
+                const { data: matchSpecificLineup, error: lineupError } = await supabase
+                  .from('team_lineups')
+                  .select('id, lineup_data')
+                  .eq('team_id', userTeamId)
+                  .eq('match_id', match.id)
+                  .eq('format', match.match_format)
+                  .limit(1)
+                  .maybeSingle()
 
- // If no match-specific lineup, check for template lineup (match_id = null)
- let hasLineup = !!matchSpecificLineup
+                // If we have a lineup record, also verify it has players
+                let hasValidLineup = false
+                if (matchSpecificLineup) {
+                  // Check if lineup_data has players OR if relational data exists
+                  const hasJsonData = matchSpecificLineup.lineup_data && 
+                    Array.isArray(matchSpecificLineup.lineup_data) && 
+                    matchSpecificLineup.lineup_data.length > 0
 
- if (!matchSpecificLineup) {
- const { data: templateLineup } = await supabase
- .from('team_lineups')
- .select('id')
- .eq('team_id', userTeamId)
- .is('match_id', null)
- .eq('format', match.match_format)
- .limit(1)
- .maybeSingle()
+                  if (hasJsonData) {
+                    hasValidLineup = true
+                  } else {
+                    // Fallback: check relational data
+                    const { data: relationPlayers } = await supabase
+                      .from('team_lineup_players')
+                      .select('id')
+                      .eq('lineup_id', matchSpecificLineup.id)
+                      .limit(1)
+                    
+                    hasValidLineup = !!relationPlayers && relationPlayers.length > 0
+                  }
+                }
 
- // If template exists, we'll consider it as "has lineup"
- // (it will be assigned to the match when user accesses formations page)
- hasLineup = !!templateLineup
- }
+                // Debug logging
+                console.log(`🔍 Lineup check for match ${match.id}:`, {
+                  userTeamId,
+                  matchId: match.id,
+                  format: match.match_format,
+                  contractedPlayers: localContractedPlayersCount,
+                  minPlayersRequired: getMinPlayers(match.match_format),
+                  hasEnoughPlayers: localContractedPlayersCount >= getMinPlayers(match.match_format),
+                  lineupRecord: !!matchSpecificLineup,
+                  hasValidLineup,
+                  jsonDataLength: matchSpecificLineup?.lineup_data?.length || 0,
+                  error: lineupError
+                })
 
- return {
+                return {
  ...match,
- has_lineup: hasLineup
+ has_lineup: hasValidLineup
  }
  })
  )
+ console.log('🔍 Lineup checks completed, final results:', lineupChecks)
  matchesData = lineupChecks
  }
  }
@@ -403,6 +438,7 @@ export default function MatchesPage() {
  }
  }
 
+ console.log('🔍 Final matchesData before setting state:', matchesData)
  setMatches(matchesData)
 
  } catch (error) {
@@ -521,35 +557,53 @@ export default function MatchesPage() {
  return { ...match, has_lineup: undefined }
  }
 
- // First, check if lineup exists for this specific match
- const { data: matchSpecificLineup } = await supabase
- .from('team_lineups')
- .select('id')
- .eq('team_id', userTeamId)
- .eq('match_id', match.id)
- .eq('format', match.match_format)
- .limit(1)
- .maybeSingle()
+        // Check if lineup exists for this specific match
+        // First check the main team_lineups table  
+        const { data: matchSpecificLineup, error: lineupError } = await supabase
+          .from('team_lineups')
+          .select('id, lineup_data')
+          .eq('team_id', userTeamId)
+          .eq('match_id', match.id)
+          .eq('format', match.match_format)
+          .limit(1)
+          .maybeSingle()
 
- // If no match-specific lineup, check for template lineup (match_id = null)
- let hasLineup = !!matchSpecificLineup
+        // If we have a lineup record, also verify it has players
+        let hasValidLineup = false
+        if (matchSpecificLineup) {
+          // Check if lineup_data has players OR if relational data exists
+          const hasJsonData = matchSpecificLineup.lineup_data && 
+            Array.isArray(matchSpecificLineup.lineup_data) && 
+            matchSpecificLineup.lineup_data.length > 0
 
- if (!matchSpecificLineup) {
- const { data: templateLineup } = await supabase
- .from('team_lineups')
- .select('id')
- .eq('team_id', userTeamId)
- .is('match_id', null)
- .eq('format', match.match_format)
- .limit(1)
- .maybeSingle()
+          if (hasJsonData) {
+            hasValidLineup = true
+          } else {
+            // Fallback: check relational data
+            const { data: relationPlayers } = await supabase
+              .from('team_lineup_players')
+              .select('id')
+              .eq('lineup_id', matchSpecificLineup.id)
+              .limit(1)
+            
+            hasValidLineup = !!relationPlayers && relationPlayers.length > 0
+          }
+        }
 
- hasLineup = !!templateLineup
- }
+        // Debug logging
+        console.log(`🔄 Refresh lineup check for match ${match.id}:`, {
+          userTeamId,
+          matchId: match.id,
+          format: match.match_format,
+          lineupRecord: !!matchSpecificLineup,
+          hasValidLineup,
+          jsonDataLength: matchSpecificLineup?.lineup_data?.length || 0,
+          error: lineupError
+        })
 
- return {
+        return {
  ...match,
- has_lineup: hasLineup
+ has_lineup: hasValidLineup
  }
  })
  )
@@ -578,63 +632,35 @@ export default function MatchesPage() {
  return
  }
 
- // First, check if lineup exists for this specific match
- const { data: matchSpecificLineup } = await supabase
- .from('team_lineups')
- .select(`
- *,
- team_lineup_players (
- *,
- players (
- id,
- unique_player_id,
- position,
- photo_url,
- users (
- first_name,
- last_name
- )
- )
- )
- `)
- .eq('team_id', userTeamId)
- .eq('match_id', match.id)
- .eq('format', match.match_format)
- .limit(1)
- .maybeSingle()
+    // Only check if lineup exists for this specific match
+    // Do not fall back to template lineups - this matches our new card display logic
+    const { data: matchSpecificLineup } = await supabase
+      .from('team_lineups')
+      .select(`
+        *,
+        team_lineup_players (
+          *,
+          players (
+            id,
+            unique_player_id,
+            position,
+            photo_url,
+            users (
+              first_name,
+              last_name
+            )
+          )
+        )
+      `)
+      .eq('team_id', userTeamId)
+      .eq('match_id', match.id)
+      .eq('format', match.match_format)
+      .limit(1)
+      .maybeSingle()
 
- // If no match-specific lineup, check for template lineup (match_id = null)
- let userLineup = matchSpecificLineup
-
- if (!matchSpecificLineup) {
- const { data: templateLineup } = await supabase
- .from('team_lineups')
- .select(`
- *,
- team_lineup_players (
- *,
- players (
- id,
- unique_player_id,
- position,
- photo_url,
- users (
- first_name,
- last_name
- )
- )
- )
- `)
- .eq('team_id', userTeamId)
- .is('match_id', null)
- .eq('format', match.match_format)
- .limit(1)
- .maybeSingle()
-
- userLineup = templateLineup
- }
-
- // Set the user's lineup as homeTeamLineup for the modal
+    // Only use match-specific lineup - no template fallback
+    // This ensures modal shows accurate status and encourages specific lineup declaration
+    const userLineup = matchSpecificLineup // Set the user's lineup as homeTeamLineup for the modal
  // (The modal variable name is misleading but we're using it to show the user's lineup)
  setHomeTeamLineup(userLineup)
  setAwayTeamLineup(null) // We don't need opponent's lineup for this feature
@@ -875,7 +901,7 @@ export default function MatchesPage() {
  <div>
  <div className="mb-4 sm:mb-5">
  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Your Upcoming Matches</h2>
- <p className="text-xs sm:text-sm text-slate-600">Click on a match card to view details and declare your Playing XI</p>
+ <p className="text-xs sm:text-sm text-slate-600">Click on a match card to view details and declare your Playing XI for that specific match</p>
  </div>
  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
  {matches.map((match) => {
@@ -1167,17 +1193,55 @@ export default function MatchesPage() {
  {/* Lineup Status */}
  {typeof match.has_lineup !== 'undefined' && (
  <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${
- match.has_lineup ? 'border-green-100' : 'border-red-100'
+ match.has_lineup ? 'border-emerald-100' : 'border-amber-100'
  }`}>
  {match.has_lineup ? (
- <div className="flex items-center gap-2 text-green-700 bg-green-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg">
+ <div className="space-y-3">
+ <div className="flex items-center gap-2 text-emerald-700 bg-gradient-to-r from-emerald-50 to-teal-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-emerald-200">
  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
  <span className="text-[10px] sm:text-xs font-semibold">Playing XI Ready</span>
  </div>
+ <div className="flex gap-2">
+ <Button
+ onClick={(e) => {
+ e.stopPropagation()
+ router.push(`/dashboard/club-owner/formations?match=${match.id}`)
+ }}
+ variant="outline"
+ size="sm"
+ className="flex-1 h-8 text-xs border-emerald-300 hover:border-emerald-400 hover:bg-emerald-50 text-emerald-700 font-medium"
+ >
+ ✏️ Update Lineup
+ </Button>
+ <Button
+ onClick={(e) => {
+ e.stopPropagation()
+ setSelectedMatch(match)
+ setShowMatchDetails(true)
+ }}
+ variant="outline"
+ size="sm"
+ className="flex-1 h-8 text-xs border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-600 font-medium"
+ >
+ 📋 View Details
+ </Button>
+ </div>
+ </div>
  ) : (
- <div className="flex items-center gap-2 text-red-700 bg-red-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg">
+ <div className="space-y-3">
+ <div className="flex items-center gap-2 text-amber-700 bg-gradient-to-r from-amber-50 to-orange-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-amber-200">
  <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
- <span className="text-[10px] sm:text-xs font-semibold">Playing XI Not Declared</span>
+ <span className="text-[10px] sm:text-xs font-semibold">Playing XI Pending</span>
+ </div>
+ <Button
+ onClick={(e) => {
+ e.stopPropagation()
+ router.push(`/dashboard/club-owner/formations?match=${match.id}`)
+ }}
+ className="w-full h-9 text-sm bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+ >
+ ⚡ Declare Playing XI
+ </Button>
  </div>
  )}
  </div>
@@ -1211,76 +1275,85 @@ export default function MatchesPage() {
 
  {/* Match Details Modal */}
  {showMatchDetails && selectedMatch && (
- <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
- <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-slate-300 rounded-2xl">
- <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 sm:pb-4">
+ <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+ <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 rounded-2xl bg-white">
+ <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 sm:pb-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
  <div>
- <CardTitle className="text-base sm:text-lg">Match Details</CardTitle>
- <CardDescription className="text-xs sm:text-sm">
+ <CardTitle className="text-base sm:text-lg text-slate-800">Match Details</CardTitle>
+ <CardDescription className="text-xs sm:text-sm text-slate-600">
  {selectedMatch.home_club_name} vs {selectedMatch.away_club_name}
  </CardDescription>
  </div>
  <button
  onClick={() => setShowMatchDetails(false)}
- className="text-slate-500 hover:text-slate-700 p-1"
+ className="text-slate-400 hover:text-slate-600 hover:bg-slate-200 p-2 rounded-full transition-colors"
  >
  ✕
  </button>
  </CardHeader>
 
- <CardContent className="space-y-4 sm:space-y-6">
+ <CardContent className="space-y-4 sm:space-y-6 pt-4 sm:pt-6">
  {/* Match Info */}
  <div className="grid grid-cols-2 gap-3 sm:gap-4">
- <div>
- <p className="text-xs sm:text-sm text-slate-600">Date</p>
- <p className="font-semibold text-sm sm:text-base">{selectedMatch.match_date}</p>
+ <div className="bg-slate-50 rounded-xl p-3">
+ <p className="text-xs sm:text-sm text-slate-500 font-medium">Date</p>
+ <p className="font-semibold text-sm sm:text-base text-slate-800">{selectedMatch.match_date}</p>
  </div>
- <div>
- <p className="text-xs sm:text-sm text-slate-600">Time</p>
- <p className="font-semibold text-sm sm:text-base">{selectedMatch.match_time}</p>
+ <div className="bg-slate-50 rounded-xl p-3">
+ <p className="text-xs sm:text-sm text-slate-500 font-medium">Time</p>
+ <p className="font-semibold text-sm sm:text-base text-slate-800">{selectedMatch.match_time}</p>
  </div>
- <div>
- <p className="text-xs sm:text-sm text-slate-600">Format</p>
- <p className="font-semibold text-sm sm:text-base">{selectedMatch.match_format}</p>
+ <div className="bg-slate-50 rounded-xl p-3">
+ <p className="text-xs sm:text-sm text-slate-500 font-medium">Format</p>
+ <p className="font-semibold text-sm sm:text-base text-slate-800">{selectedMatch.match_format}</p>
  </div>
- <div>
- <p className="text-xs sm:text-sm text-slate-600">Stadium</p>
- <p className="font-semibold text-sm sm:text-base">{selectedMatch.stadium?.stadium_name || 'N/A'}</p>
+ <div className="bg-slate-50 rounded-xl p-3">
+ <p className="text-xs sm:text-sm text-slate-500 font-medium">Stadium</p>
+ <p className="font-semibold text-sm sm:text-base text-slate-800">{selectedMatch.stadium?.stadium_name || 'N/A'}</p>
  </div>
  </div>
 
  {/* Formation Tab */}
- <div className="border-t pt-4 sm:pt-6">
- <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+ <div className="border-t border-slate-200 pt-4 sm:pt-6">
+ <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-slate-800">
  Playing XI Status
  {!homeTeamLineup && (
- <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] sm:text-xs">
- Not Ready
+ <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] sm:text-xs font-semibold">
+ Pending
  </Badge>
  )}
  {homeTeamLineup && (
- <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] sm:text-xs">
- Ready
+ <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] sm:text-xs font-semibold">
+ ✓ Ready
  </Badge>
  )}
  </h3>
 
  {!homeTeamLineup ? (
- <Alert className="mb-3 sm:mb-4 border-red-300 bg-red-50 rounded-xl">
- <Info className="h-4 w-4 text-red-800" />
- <AlertTitle className="text-red-800 text-sm">Playing XI Not Ready</AlertTitle>
- <AlertDescription className="text-red-700 text-xs sm:text-sm">
- You haven't declared your playing XI for this match yet. Please set up your formation and select your starting lineup before the match begins.
+ <Alert className="mb-3 sm:mb-4 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
+ <Info className="h-4 w-4 text-amber-600" />
+ <AlertTitle className="text-amber-800 text-sm font-semibold">Playing XI Not Declared</AlertTitle>
+ <AlertDescription className="text-amber-700 text-xs sm:text-sm">
+ You need to declare your Playing XI specifically for this match. Each match requires its own lineup declaration - template formations are not automatically applied.
  </AlertDescription>
  </Alert>
  ) : (
- <div className="bg-green-50 border border-green-200 p-3 sm:p-4 rounded-xl mb-3 sm:mb-4">
+ <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-3 sm:p-4 rounded-xl mb-3 sm:mb-4">
  <div className="flex items-start gap-2 sm:gap-3">
- <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mt-0.5" />
+ <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+ <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+ </div>
  <div className="flex-1">
- <p className="text-xs sm:text-sm font-semibold text-green-800 mb-1">Playing XI Ready</p>
- <p className="text-xs sm:text-sm text-green-700 mb-2">Formation: {homeTeamLineup.formation}</p>
- <p className="text-[10px] sm:text-xs text-green-600">Declared on: {new Date(homeTeamLineup.created_at).toLocaleDateString()}</p>
+ <p className="text-xs sm:text-sm font-semibold text-emerald-800 mb-1">Playing XI Ready</p>
+ <p className="text-xs sm:text-sm text-emerald-700 mb-1">
+ <span className="font-medium">Formation:</span> {homeTeamLineup.formation}
+ </p>
+ <p className="text-xs sm:text-sm text-emerald-700 mb-2">
+ <span className="font-medium">Players:</span> {homeTeamLineup.team_lineup_players?.length || 0} selected
+ </p>
+ <p className="text-[10px] sm:text-xs text-emerald-600">
+ Declared on: {new Date(homeTeamLineup.created_at).toLocaleDateString()}
+ </p>
  </div>
  </div>
  </div>
@@ -1288,14 +1361,18 @@ export default function MatchesPage() {
 
  <div className="mt-3 sm:mt-4">
  <Button
- className="w-full text-sm"
+ className={`w-full text-sm font-semibold py-3 rounded-xl transition-all shadow-md hover:shadow-lg ${
+ homeTeamLineup 
+ ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300' 
+ : 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white border-0'
+ }`}
  variant={homeTeamLineup ? 'outline' : 'default'}
  onClick={() => {
  setShowMatchDetails(false)
  router.push(`/dashboard/club-owner/formations?match=${selectedMatch.id}`)
  }}
  >
- {homeTeamLineup ? 'Update Playing XI' : 'Declare Playing XI Now'}
+ {homeTeamLineup ? '✏️ Update Playing XI' : '⚡ Declare Playing XI Now'}
  </Button>
  </div>
  </div>

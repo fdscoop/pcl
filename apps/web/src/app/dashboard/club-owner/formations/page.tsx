@@ -8,6 +8,7 @@ import { MobileFormationBuilder } from '@/components/MobileFormationBuilder'
 import { useMobileDetection } from '@/hooks/useMobileDetection'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Calendar, MapPin, Clock, CheckCircle2, Info } from 'lucide-react'
 import { notifyLineupAnnounced } from '@/services/matchNotificationService'
 import { useToast } from '@/context/ToastContext'
@@ -263,35 +264,41 @@ export default function FormationsPage() {
  if (enrichedMatches.length > 0) {
  const lineupChecks = await Promise.all(
  enrichedMatches.map(async (match) => {
- // First, check if lineup exists for this specific match
+ // Check if lineup exists for this specific match with valid data
  const { data: matchSpecificLineup } = await supabase
  .from('team_lineups')
- .select('id')
+ .select('id, lineup_data')
  .eq('team_id', teamData.id)
  .eq('match_id', match.id)
  .eq('format', match.match_format)
  .limit(1)
  .maybeSingle()
 
- // If no match-specific lineup, check for template lineup (match_id = null)
- let hasLineup = !!matchSpecificLineup
+ // Verify lineup has actual player data
+ let hasValidLineup = false
+ if (matchSpecificLineup) {
+ // Check if lineup_data has players
+ const hasJsonData = matchSpecificLineup.lineup_data && 
+ Array.isArray(matchSpecificLineup.lineup_data) && 
+ matchSpecificLineup.lineup_data.length > 0
 
- if (!matchSpecificLineup) {
- const { data: templateLineup } = await supabase
- .from('team_lineups')
+ if (hasJsonData) {
+ hasValidLineup = true
+ } else {
+ // Fallback: check relational data in team_lineup_players
+ const { data: relationPlayers } = await supabase
+ .from('team_lineup_players')
  .select('id')
- .eq('team_id', teamData.id)
- .is('match_id', null)
- .eq('format', match.match_format)
+ .eq('lineup_id', matchSpecificLineup.id)
  .limit(1)
- .maybeSingle()
-
- hasLineup = !!templateLineup
+ 
+ hasValidLineup = !!relationPlayers && relationPlayers.length > 0
+ }
  }
 
  return {
  ...match,
- has_lineup: hasLineup
+ has_lineup: hasValidLineup
  }
  })
  )
@@ -338,35 +345,41 @@ export default function FormationsPage() {
 
  const lineupChecks = await Promise.all(
  matches.map(async (match) => {
- // First, check if lineup exists for this specific match
+ // Check if lineup exists for this specific match with valid data
  const { data: matchSpecificLineup } = await supabase
  .from('team_lineups')
- .select('id')
+ .select('id, lineup_data')
  .eq('team_id', team.id)
  .eq('match_id', match.id)
  .eq('format', match.match_format)
  .limit(1)
  .maybeSingle()
 
- // If no match-specific lineup, check for template lineup (match_id = null)
- let hasLineup = !!matchSpecificLineup
+ // Verify lineup has actual player data
+ let hasValidLineup = false
+ if (matchSpecificLineup) {
+ // Check if lineup_data has players
+ const hasJsonData = matchSpecificLineup.lineup_data && 
+ Array.isArray(matchSpecificLineup.lineup_data) && 
+ matchSpecificLineup.lineup_data.length > 0
 
- if (!matchSpecificLineup) {
- const { data: templateLineup } = await supabase
- .from('team_lineups')
+ if (hasJsonData) {
+ hasValidLineup = true
+ } else {
+ // Fallback: check relational data in team_lineup_players
+ const { data: relationPlayers } = await supabase
+ .from('team_lineup_players')
  .select('id')
- .eq('team_id', team.id)
- .is('match_id', null)
- .eq('format', match.match_format)
+ .eq('lineup_id', matchSpecificLineup.id)
  .limit(1)
- .maybeSingle()
-
- hasLineup = !!templateLineup
+ 
+ hasValidLineup = !!relationPlayers && relationPlayers.length > 0
+ }
  }
 
  return {
  ...match,
- has_lineup: hasLineup
+ has_lineup: hasValidLineup
  }
  })
  )
@@ -495,6 +508,8 @@ export default function FormationsPage() {
 
    const { data: existingLineup } = await query.maybeSingle()
 
+   let lineupId: string
+
    if (existingLineup) {
      // Update existing lineup
      await supabase
@@ -506,9 +521,11 @@ export default function FormationsPage() {
          updated_at: new Date().toISOString()
        })
        .eq('id', existingLineup.id)
+     
+     lineupId = existingLineup.id
    } else {
      // Insert new lineup
-     await supabase
+     const { data: newLineup } = await supabase
        .from('team_lineups')
        .insert({
          team_id: team?.id,
@@ -518,6 +535,42 @@ export default function FormationsPage() {
          formation: data.formation,
          lineup_data: allPlayers
        })
+       .select('id')
+       .single()
+     
+     lineupId = newLineup?.id
+   }
+
+   // Update team_lineup_players table for relational data and validation
+   if (lineupId) {
+     // First, delete existing players for this lineup
+     await supabase
+       .from('team_lineup_players')
+       .delete()
+       .eq('lineup_id', lineupId)
+
+     // Insert all players into team_lineup_players
+     const playersToInsert = allPlayers.map((player, index) => ({
+       lineup_id: lineupId,
+       player_id: player.player_id,
+       position_on_field: player.position_key,
+       position_x: null, // Position coordinates not stored in current format
+       position_y: null, // Position coordinates not stored in current format
+       jersey_number: null, // Jersey numbers not stored in current format
+       is_starter: player.is_starter,
+       substitute_order: !player.is_starter ? (index + 1) : null
+     }))
+
+     if (playersToInsert.length > 0) {
+       const { error: playersError } = await supabase
+         .from('team_lineup_players')
+         .insert(playersToInsert)
+       
+       if (playersError) {
+         console.error('Error inserting team_lineup_players:', playersError)
+         throw new Error('Failed to save player lineup data')
+       }
+     }
    }
 
    // Send push notifications to players (only for match-specific lineups)
@@ -869,17 +922,41 @@ export default function FormationsPage() {
  {/* Lineup Status */}
  {typeof match.has_lineup !== 'undefined' && (
  <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${
- match.has_lineup ? 'border-green-100' : 'border-red-100'
+ match.has_lineup ? 'border-emerald-100' : 'border-amber-100'
  }`}>
  {match.has_lineup ? (
- <div className="flex items-center gap-2 text-green-700 bg-green-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg">
+ <div className="space-y-3">
+ <div className="flex items-center gap-2 text-emerald-700 bg-gradient-to-r from-emerald-50 to-teal-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-emerald-200">
  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
  <span className="text-[10px] sm:text-xs font-semibold">Playing XI Ready</span>
  </div>
+ <Button
+ onClick={(e) => {
+ e.stopPropagation()
+ setSelectedMatch(match)
+ }}
+ variant="outline"
+ size="sm"
+ className="w-full h-8 text-xs border-emerald-300 hover:border-emerald-400 hover:bg-emerald-50 text-emerald-700 font-medium"
+ >
+ ✏️ Update This Lineup
+ </Button>
+ </div>
  ) : (
- <div className="flex items-center gap-2 text-red-700 bg-red-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg">
+ <div className="space-y-3">
+ <div className="flex items-center gap-2 text-amber-700 bg-gradient-to-r from-amber-50 to-orange-50 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-amber-200">
  <Info className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
- <span className="text-[10px] sm:text-xs font-semibold">Playing XI Not Declared</span>
+ <span className="text-[10px] sm:text-xs font-semibold">Playing XI Pending</span>
+ </div>
+ <Button
+ onClick={(e) => {
+ e.stopPropagation()
+ setSelectedMatch(match)
+ }}
+ className="w-full h-9 text-sm bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+ >
+ ⚡ Declare Playing XI
+ </Button>
  </div>
  )}
  </div>

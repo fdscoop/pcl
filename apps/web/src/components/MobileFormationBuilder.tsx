@@ -468,15 +468,21 @@ export function MobileFormationBuilder({
   }
 
   const handleSave = async (lineupName: string) => {
-    await onSaveLineup(lineupName, {
-      matchId: selectedMatch?.id,
-      format: selectedFormat,
-      formation: selectedFormation,
-      assignments,
-      selectedPlayers,
-      substitutePlayers
-    })
-    setShowSaveDialog(false)
+    try {
+      await onSaveLineup(lineupName, {
+        matchId: selectedMatch?.id,
+        format: selectedFormat,
+        formation: selectedFormation,
+        assignments,
+        selectedPlayers,
+        substitutePlayers
+      })
+      setShowSaveDialog(false)
+    } catch (error) {
+      console.error('❌ Mobile save error:', error)
+      setShowSaveDialog(false)
+      // Error toast will be shown by the parent handler
+    }
   }
 
   // Swap functionality

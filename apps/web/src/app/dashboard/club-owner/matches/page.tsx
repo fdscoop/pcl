@@ -914,7 +914,7 @@ export default function MatchesPage() {
  <Card
  key={match.id}
  onClick={() => loadMatchDetails(match)}
- className="group cursor-pointer transition-all duration-300 border-2 border-transparent hover:border-teal-200 hover:shadow-xl overflow-hidden rounded-2xl"
+ className="group cursor-pointer transition-all duration-300 overflow-hidden rounded-2xl border border-gray-200 sm:border-transparent hover:border-teal-200 hover:shadow-xl"
  >
  {/* Top Accent Bar */}
  <div className={`h-1 sm:h-1.5 ${

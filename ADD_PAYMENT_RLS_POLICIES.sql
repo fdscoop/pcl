@@ -66,6 +66,25 @@ CREATE POLICY "Admins can update payments"
     )
   );
 
+-- Club owners can update their own payment records
+CREATE POLICY "Club owners can update their payment records"
+  ON payments FOR UPDATE
+  TO authenticated
+  USING (
+    paid_by = auth.uid()
+    AND club_id IN (
+      SELECT id FROM clubs
+      WHERE owner_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    paid_by = auth.uid()
+    AND club_id IN (
+      SELECT id FROM clubs
+      WHERE owner_id = auth.uid()
+    )
+  );
+
 
 -- ========================================
 -- BOOKINGS POLICIES

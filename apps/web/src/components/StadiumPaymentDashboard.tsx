@@ -92,12 +92,12 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
   const hasNoData = !stats || (stats.totalMatches === 0 && stats.completedPayments === 0 && stats.pendingPayments === 0)
 
   return (
-    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
+    <div className="space-y-6 w-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Payment Dashboard</h1>
-          <p className="text-sm text-gray-600">Track your stadium revenue and earnings</p>
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Payment Dashboard</h1>
+          <p className="text-xs sm:text-sm text-gray-600">Track your stadium revenue and earnings</p>
         </div>
         <Button onClick={refetchAll} variant="outline" size="sm" className="flex-shrink-0">
           <RefreshCw className="h-4 w-4 mr-1" />
@@ -203,14 +203,14 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
       </div>
 
       {/* Payout Status */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="text-sm font-medium text-green-800">Paid Out</p>
-                <p className="text-xl font-bold text-green-600">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-green-800 truncate">Paid Out</p>
+                <p className="text-base sm:text-xl font-bold text-green-600 truncate">
                   {formatCurrency(stats?.completedPayout || 0)}
                 </p>
               </div>
@@ -219,12 +219,12 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
         </Card>
         
         <Card className="bg-yellow-50 border-yellow-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Hourglass className="h-8 w-8 text-yellow-600" />
-              <div>
-                <p className="text-sm font-medium text-yellow-800">Pending Payout</p>
-                <p className="text-xl font-bold text-yellow-600">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Hourglass className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-yellow-800 truncate">Pending Payout</p>
+                <p className="text-base sm:text-xl font-bold text-yellow-600 truncate">
                   {formatCurrency(stats?.pendingPayout || 0)}
                 </p>
               </div>
@@ -232,13 +232,13 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
           </CardContent>
         </Card>
         
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="text-sm font-medium text-blue-800">Payment Status</p>
-                <p className="text-sm text-blue-600">
+        <Card className="bg-blue-50 border-blue-200 sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-blue-800 truncate">Payment Status</p>
+                <p className="text-xs sm:text-sm text-blue-600 truncate">
                   {stats?.completedPayments || 0} completed • {stats?.pendingPayments || 0} pending
                 </p>
               </div>
@@ -248,44 +248,44 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
       </div>
 
       {/* Recent Bookings */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3 px-3 sm:px-6">
+          <CardTitle className="text-base sm:text-lg font-semibold flex items-center gap-2">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
             Recent Match Bookings
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Latest matches at your stadium with payment details
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        <CardContent className="px-3 sm:px-6 pb-4">
+          <div className="space-y-2 sm:space-y-3">
             {recentBookings.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No match bookings found yet</p>
-                <p className="text-sm mt-1">When clubs book your stadium, they'll appear here</p>
+              <div className="text-center py-6 sm:py-8 text-gray-500">
+                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No match bookings found yet</p>
+                <p className="text-xs sm:text-sm mt-1">When clubs book your stadium, they'll appear here</p>
               </div>
             ) : (
               recentBookings.map((booking) => (
                 <div 
                   key={booking.id}
-                  className="p-3 sm:p-4 bg-gray-50 rounded-lg border"
+                  className="p-2.5 sm:p-4 bg-gray-50 rounded-lg border"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <p className="font-medium text-gray-900 text-sm truncate">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                        <p className="font-medium text-gray-900 text-xs sm:text-sm truncate max-w-[200px] sm:max-w-none">
                           {booking.homeTeam} vs {booking.awayTeam}
                         </p>
                         <Badge 
                           variant={booking.paymentStatus === 'completed' ? 'default' : 'secondary'}
-                          className="text-xs flex-shrink-0"
+                          className="text-[10px] sm:text-xs flex-shrink-0"
                         >
                           {booking.paymentStatus}
                         </Badge>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-600">
+                      <p className="text-[10px] sm:text-sm text-gray-600 truncate">
                         {new Date(booking.matchDate).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
@@ -294,10 +294,10 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
                       </p>
                     </div>
                     <div className="text-left sm:text-right flex-shrink-0">
-                      <p className="font-semibold text-green-600">
+                      <p className="font-semibold text-green-600 text-sm sm:text-base">
                         {formatCurrency(booking.netPayout)}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-[10px] sm:text-xs text-gray-500">
                         Net (gross: {formatCurrency(booking.grossAmount)})
                       </p>
                     </div>
@@ -306,16 +306,16 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
                   {/* Show referee & staff fees for reference */}
                   {(booking.refereeFee > 0 || booking.staffFee > 0) && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
-                      <p className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
+                      <p className="text-[10px] sm:text-xs text-gray-500 flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          Total payment: {formatCurrency(booking.totalMatchPayment)}
+                          <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
+                          Total: {formatCurrency(booking.totalMatchPayment)}
                         </span>
                         {booking.refereeFee > 0 && (
-                          <span>• Referee: {formatCurrency(booking.refereeFee)}</span>
+                          <span className="hidden sm:inline">• Referee: {formatCurrency(booking.refereeFee)}</span>
                         )}
                         {booking.staffFee > 0 && (
-                          <span>• Staff: {formatCurrency(booking.staffFee)}</span>
+                          <span className="hidden sm:inline">• Staff: {formatCurrency(booking.staffFee)}</span>
                         )}
                       </p>
                     </div>
@@ -328,13 +328,13 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
       </Card>
 
       {/* Commission Explanation */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-2">How Payment Works</h3>
-              <div className="space-y-2 text-sm text-blue-800">
+      <Card className="bg-blue-50 border-blue-200 overflow-hidden">
+        <CardContent className="p-3 sm:p-6">
+          <div className="flex items-start gap-2 sm:gap-3">
+            <Info className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-blue-900 mb-2 text-sm sm:text-base">How Payment Works</h3>
+              <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-blue-800">
                 <p>
                   <strong>1. Club pays for match:</strong> Total includes stadium fee + referee fee + staff fee
                 </p>
@@ -344,7 +344,7 @@ export function StadiumPaymentDashboard({ userId }: StadiumPaymentDashboardProps
                 <p>
                   <strong>3. Your earnings:</strong> You receive {100 - commissionRate}% of the stadium booking fee
                 </p>
-                <p className="text-xs text-blue-600 mt-2">
+                <p className="text-[10px] sm:text-xs text-blue-600 mt-2">
                   Note: Referee and staff fees are paid separately to them. You only see them here for reference.
                 </p>
               </div>

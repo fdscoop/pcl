@@ -280,9 +280,9 @@ export default function StadiumOwnerDashboard() {
  const kycComplete = kycProgress === 3
 
  return (
- <div className="space-y-5 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+ <div className="space-y-5 sm:space-y-6 w-full overflow-hidden">
  {/* Welcome Header */}
- <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-500 to-amber-500 p-5 sm:p-6 text-white shadow-xl shadow-orange-500/25">
+ <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-orange-500 to-amber-500 p-5 sm:p-6 lg:p-8 text-white shadow-xl shadow-orange-500/25">
  <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
  <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-400/30 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4" />
  
@@ -294,7 +294,7 @@ export default function StadiumOwnerDashboard() {
  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1.5">
  Welcome back, {userData?.first_name}! 🏟️
  </h1>
- <p className="text-white/80 text-xs sm:text-sm max-w-lg">
+ <p className="text-white/80 text-xs sm:text-sm lg:text-base max-w-lg">
  Manage your stadiums, track bookings, and grow your business all in one place.
  </p>
  </div>

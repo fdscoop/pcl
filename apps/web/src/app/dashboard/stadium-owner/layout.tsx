@@ -315,9 +315,11 @@ export default function StadiumOwnerLayout({
  </nav>
 
       {/* Main Content */}
-      <main className="lg:ml-[280px] min-h-screen pt-14 pb-20 lg:pt-0 lg:pb-0 w-full max-w-full overflow-x-hidden">
-        <div className="p-4 sm:p-5 lg:p-6 w-full max-w-7xl mx-auto overflow-x-hidden">
-          {children}
+      <main className="lg:ml-[280px] min-h-screen pt-14 pb-20 lg:pt-0 lg:pb-0">
+        <div className="p-4 sm:p-5 lg:p-6 xl:p-8 w-full max-w-[calc(100vw-280px)] lg:max-w-none overflow-x-hidden box-border">
+          <div className="max-w-7xl mx-auto w-full">
+            {children}
+          </div>
         </div>
       </main>
     </div>

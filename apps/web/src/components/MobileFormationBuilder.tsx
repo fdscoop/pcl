@@ -356,7 +356,7 @@ export function MobileFormationBuilder({
     }
   }, [selectedMatch?.id, selectedFormat, teamId])
 
-  // Set format from match when selected
+  // Set format from match when selected and check if format is already declared
   useEffect(() => {
     if (selectedMatch) {
       const formatMap: Record<string, '5s' | '7s' | '11s'> = {
@@ -370,6 +370,19 @@ export function MobileFormationBuilder({
         const formationsForFormat = FORMATIONS[matchFormat]
         setSelectedFormation(Object.keys(formationsForFormat)[0])
       }
+      
+      // Check if this match already has a lineup declared
+      if (selectedMatch.has_lineup) {
+        setFormatDeclared(true)
+        setDeclaredFormat(matchFormat)
+      } else {
+        setFormatDeclared(false)
+        setDeclaredFormat(null)
+      }
+    } else {
+      // Reset format declaration status when no match is selected (template mode)
+      setFormatDeclared(false)
+      setDeclaredFormat(null)
     }
   }, [selectedMatch])
 
@@ -567,14 +580,31 @@ export function MobileFormationBuilder({
           {/* Option to skip match selection - Use native button for better mobile touch support */}
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
               setSelectedMatch(null)
+              // Add haptic feedback for mobile
+              if ('vibrate' in navigator) {
+                navigator.vibrate(30)
+              }
             }}
-            className={`w-full p-4 rounded-xl border-2 text-left transition-all active:scale-[0.98] touch-manipulation ${
+            onTouchStart={(e) => {
+              e.currentTarget.style.transform = 'scale(0.98)'
+            }}
+            onTouchEnd={(e) => {
+              e.currentTarget.style.transform = 'scale(1)'
+            }}
+            className={`relative z-10 w-full p-4 rounded-xl border-2 text-left transition-all duration-200 touch-manipulation cursor-pointer ${
               selectedMatch === null && currentStep > 1
                 ? 'border-blue-500 bg-blue-50 shadow-md'
-                : 'border-gray-200 bg-white active:border-gray-300'
+                : 'border-gray-200 bg-white hover:border-gray-300 active:border-gray-400'
             }`}
+            style={{
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none',
+              touchAction: 'manipulation'
+            }}
           >
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center text-2xl bg-gray-100">

@@ -361,6 +361,7 @@ export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat
  const [availablePlayers, setAvailablePlayers] = useState<Player[]>(players)
  const [substitutePlayers, setSubstitutePlayers] = useState<Player[]>([])
  const [showSaveDialog, setShowSaveDialog] = useState<boolean>(false)
+ const [formatDeclared, setFormatDeclared] = useState<boolean>(false)
 
  // Update format when match is selected
  useEffect(() => {
@@ -904,6 +905,9 @@ export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat
  type: 'success',
  duration: 3000
  })
+
+ // Set format as declared after successful save
+ setFormatDeclared(true)
 
  // Notify other pages that lineup was updated using localStorage
  localStorage.setItem('lineupUpdated', JSON.stringify({
@@ -1528,12 +1532,12 @@ export function FormationBuilder({ players, clubId, teamId, matchId, matchFormat
  <Button
  variant="outline"
  size="sm"
- className="border-green-500 text-green-700 hover:bg-green-50"
+ className={formatDeclared ? "border-gray-300 text-gray-500" : "border-green-500 text-green-700 hover:bg-green-50"}
  onClick={handleSaveLineup}
- disabled={!teamId || Object.keys(assignments).length === 0}
+ disabled={!teamId || Object.keys(assignments).length === 0 || formatDeclared}
  >
  <Save className="w-3 h-3 mr-1" />
- Save Lineup
+ {formatDeclared ? "Lineup Locked" : "Save Lineup"}
  </Button>
  </div>
  {swapMode && firstSwapPlayer && (

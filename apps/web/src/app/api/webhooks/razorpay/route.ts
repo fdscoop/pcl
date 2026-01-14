@@ -25,10 +25,14 @@ const supabaseAdmin = createClient(
 )
 
 export async function POST(request: NextRequest) {
+  console.log('🎯 WEBHOOK ENDPOINT HIT - NEW VERSION')
+  
   try {
     // Get raw body for signature verification
     const body = await request.text()
     const signature = request.headers.get('x-razorpay-signature')
+
+    console.log('🎯 WEBHOOK: Received signature:', signature ? 'present' : 'missing')
 
     if (!signature) {
       console.error('Missing Razorpay signature')

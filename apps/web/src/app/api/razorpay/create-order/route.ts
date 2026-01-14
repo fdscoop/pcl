@@ -30,6 +30,22 @@ export async function POST(request: NextRequest) {
     console.log('🎯 Creating payment record and Razorpay order...')
     console.log('💰 Amount:', amount, 'Currency:', currency, 'Receipt:', receipt)
 
+    // Calculate amount breakdown (commission structure)
+    const totalAmount = amount // in paise
+    const platformCommission = Math.round(totalAmount * 0.10) // 10% platform fee
+    const paymentGatewayFee = Math.round(totalAmount * 0.02) // ~2% payment gateway fee
+    const netAmount = totalAmount - platformCommission - paymentGatewayFee
+    
+    const amountBreakdown = {
+      total_amount: totalAmount,
+      platform_commission: platformCommission,
+      platform_commission_percentage: 10,
+      payment_gateway_fee: paymentGatewayFee,
+      payment_gateway_fee_percentage: 2,
+      net_amount: netAmount,
+      currency: currency
+    }
+
     // 1️⃣ First create the payment record in our database
     const { data: paymentRecord, error: paymentError } = await supabaseServiceRole
       .from('payments')
@@ -40,7 +56,12 @@ export async function POST(request: NextRequest) {
           status: 'pending',
           payment_gateway: 'razorpay',
           club_id: notes?.club_id || null,
+          paid_by: notes?.paid_by || null, // User ID who initiated payment
           match_id: notes?.match_id || null, // If provided
+          stadium_id: notes?.stadium_id || null, // Stadium for the match
+          receipt: receipt, // Store the receipt ID
+          notes: notes || null, // Store the notes object
+          amount_breakdown: amountBreakdown, // Commission breakdown
           created_at: new Date().toISOString()
         }
       ])

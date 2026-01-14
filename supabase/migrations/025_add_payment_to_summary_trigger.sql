@@ -33,13 +33,12 @@ BEGIN
   v_payment_date := DATE(NEW.completed_at);
 
   -- ===== STADIUM OWNER PAYOUT =====
-  -- Get stadium owner from match->stadium relationship
-  IF NEW.match_id IS NOT NULL THEN
+  -- Get stadium owner directly from payments.stadium_id (added in migration 020)
+  IF NEW.stadium_id IS NOT NULL THEN
     SELECT s.owner_id
     INTO v_stadium_owner_id
-    FROM matches m
-    JOIN stadiums s ON m.stadium_id = s.id
-    WHERE m.id = NEW.match_id;
+    FROM stadiums s
+    WHERE s.id = NEW.stadium_id;
 
     -- Extract stadium amounts from amount_breakdown
     IF NEW.amount_breakdown IS NOT NULL THEN

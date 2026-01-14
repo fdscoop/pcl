@@ -901,10 +901,14 @@ export function CreateFriendlyMatch({
  setPaymentProcessing(true)
 
  try {
+ // Get current user for paid_by field
+ const { data: userData } = await supabase.auth.getUser()
+ const currentUserId = userData?.user?.id
+
  const amount = RazorpayService.rupeesToPaise(budget.totalCost)
  const receipt = RazorpayService.generateReceipt('MATCH')
  
- console.log('Payment data:', { amount, receipt })
+ console.log('Payment data:', { amount, receipt, paid_by: currentUserId })
  
  const paymentData = {
  amount: amount,
@@ -920,6 +924,7 @@ export function CreateFriendlyMatch({
  match_format: formData.matchFormat,
  stadium_id: formData.stadiumId,
  club_id: club.id,
+ paid_by: currentUserId, // User ID who initiated payment
  match_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '',
  match_time: formData.matchTime
  }

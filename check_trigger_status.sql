@@ -11,7 +11,7 @@ SELECT
   CASE tgenabled 
     WHEN 'O' THEN '✅ Enabled'
     WHEN 'D' THEN '❌ Disabled'
-    ELSE '⚠️ Unknown: ' || tgenabled
+    ELSE '⚠️ Unknown: ' || tgenabled::text
   END as status
 FROM pg_trigger 
 WHERE tgname = 'trigger_create_pending_payout_summaries';
@@ -41,7 +41,7 @@ SELECT
   CASE 
     WHEN p.amount_breakdown IS NULL THEN '❌ No amount_breakdown'
     WHEN p.amount_breakdown->>'stadium' IS NULL THEN '❌ No stadium key'
-    ELSE '✅ Has stadium: ' || (p.amount_breakdown->>'stadium')
+    ELSE '✅ Has stadium: ' || (p.amount_breakdown->>'stadium')::text
   END as breakdown_check,
   s.owner_id,
   CASE 

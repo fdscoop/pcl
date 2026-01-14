@@ -229,6 +229,9 @@ async function handlePaymentCaptured(payment: any) {
       throw matchError
     }
 
+    // 5. Create payouts automatically
+    await createAutomaticPayouts(paymentRecord, match, breakdown)
+
     console.log('✅ Payment webhook processed successfully')
   } catch (error) {
     console.error('Error in handlePaymentCaptured:', error)
@@ -320,6 +323,139 @@ async function handleRefundProcessed(refund: any) {
     console.log('✅ Refund processed successfully')
   } catch (error) {
     console.error('Error in handleRefundProcessed:', error)
+    throw error
+  }
+}
+
+/**
+ * Create payouts automatically when payment is captured
+ * Creates separate payout records for:
+ * - Stadium owner
+ * - Referee
+ * - Staff members
+ */
+async function createAutomaticPayouts(
+  payment: any,
+  match: any,
+  breakdown: any
+) {
+  console.log('Creating automatic payouts for payment:', payment.id)
+
+  try {
+    const payouts: any[] = []
+    const currentDate = new Date()
+    const today = currentDate.toISOString().split('T')[0]
+    
+    // Determine payout period (current month)
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const payout_period_start = new Date(year, month, 1).toISOString().split('T')[0]
+    const payout_period_end = new Date(year, month + 1, 0).toISOString().split('T')[0]
+
+    // 1. Stadium owner payout
+    if (breakdown?.stadium && match.stadium?.owner_id) {
+      const stadiumAmount = breakdown.stadium
+      const stadiumCommission = breakdown.stadium_commission || 0
+      const netAmount = stadiumAmount - stadiumCommission
+
+      payouts.push({
+        user_id: match.stadium.owner_id,
+        user_role: 'stadium_owner',
+        amount: Math.round(netAmount), // in paise
+        status: 'pending',
+        payout_period_start: payout_period_start,
+        payout_period_end: payout_period_end,
+        match_ids: [match.id],
+        booking_ids: [],
+        payment_id: payment.id,
+        notes: `Payout for match ${match.id} - Stadium booking`,
+        created_at: currentDate.toISOString(),
+        updated_at: currentDate.toISOString()
+      })
+    }
+
+    // 2. Referee payout
+    if (breakdown?.referee && match.referee_id) {
+      const refereeAmount = breakdown.referee
+      const refereeCommission = breakdown.referee_commission || 0
+      const netAmount = refereeAmount - refereeCommission
+
+      // Get referee user_id
+      const { data: referee } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('id', match.referee_id)
+        .single()
+
+      if (referee) {
+        payouts.push({
+          user_id: referee.id,
+          user_role: 'referee',
+          amount: Math.round(netAmount), // in paise
+          status: 'pending',
+          payout_period_start: payout_period_start,
+          payout_period_end: payout_period_end,
+          match_ids: [match.id],
+          booking_ids: [],
+          payment_id: payment.id,
+          notes: `Payout for match ${match.id} - Referee service`,
+          created_at: currentDate.toISOString(),
+          updated_at: currentDate.toISOString()
+        })
+      }
+    }
+
+    // 3. Staff payouts - split among staff members
+    if (breakdown?.staff && match.staff_ids && Array.isArray(match.staff_ids) && match.staff_ids.length > 0) {
+      const staffAmount = breakdown.staff
+      const staffCommission = breakdown.staff_commission || 0
+      const totalNetAmount = staffAmount - staffCommission
+      const amountPerStaff = Math.round(totalNetAmount / match.staff_ids.length)
+
+      // Get staff user IDs
+      const { data: staffMembers } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .in('id', match.staff_ids)
+
+      if (staffMembers) {
+        staffMembers.forEach((staff: any) => {
+          payouts.push({
+            user_id: staff.id,
+            user_role: 'staff',
+            amount: amountPerStaff, // in paise
+            status: 'pending',
+            payout_period_start: payout_period_start,
+            payout_period_end: payout_period_end,
+            match_ids: [match.id],
+            booking_ids: [],
+            payment_id: payment.id,
+            notes: `Payout for match ${match.id} - Staff service`,
+            created_at: currentDate.toISOString(),
+            updated_at: currentDate.toISOString()
+          })
+        })
+      }
+    }
+
+    // Insert all payouts
+    if (payouts.length > 0) {
+      const { error: payoutError } = await supabaseAdmin
+        .from('payouts')
+        .insert(payouts)
+
+      if (payoutError) {
+        console.error('Error creating payouts:', payoutError)
+        throw payoutError
+      }
+
+      console.log(`✅ Created ${payouts.length} payout records`)
+      console.log('Payouts will auto-update pending_payouts_summary via trigger')
+    } else {
+      console.warn('No payouts created - missing breakdown or recipient IDs')
+    }
+  } catch (error) {
+    console.error('Error in createAutomaticPayouts:', error)
     throw error
   }
 }

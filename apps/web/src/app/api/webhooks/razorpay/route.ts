@@ -337,7 +337,9 @@ async function updatePendingPayoutsSummary(
   match: any,
   breakdown: any
 ) {
-  console.log('Updating pending_payouts_summary for payment:', payment.id)
+  console.log('🎯 updatePendingPayoutsSummary called for payment:', payment.id)
+  console.log('🎯 Match ID:', match.id)
+  console.log('🎯 Breakdown:', breakdown)
 
   try {
     const currentDate = new Date()
@@ -346,11 +348,26 @@ async function updatePendingPayoutsSummary(
     const payout_period_start = new Date(year, month, 1).toISOString().split('T')[0]
     const payout_period_end = new Date(year, month + 1, 0).toISOString().split('T')[0]
 
+    console.log(`🎯 Payout period: ${payout_period_start} to ${payout_period_end}`)
+
     // 1. Stadium owner summary
     if (breakdown?.stadium && match.stadium?.owner_id) {
       const stadiumAmount = breakdown.stadium
       const stadiumCommission = breakdown.stadium_commission || 0
       const netAmount = Math.round(stadiumAmount - stadiumCommission)
+
+      // Check if record exists and get current values
+      const { data: existingRecord } = await supabaseAdmin
+        .from('pending_payouts_summary')
+        .select('total_pending_amount, total_pending_count')
+        .eq('user_id', match.stadium.owner_id)
+        .eq('user_role', 'stadium_owner')
+        .eq('payout_period_start', payout_period_start)
+        .eq('payout_period_end', payout_period_end)
+        .single()
+
+      const newAmount = (existingRecord?.total_pending_amount || 0) + netAmount
+      const newCount = (existingRecord?.total_pending_count || 0) + 1
 
       const { error: stadiumError } = await supabaseAdmin
         .from('pending_payouts_summary')
@@ -360,8 +377,8 @@ async function updatePendingPayoutsSummary(
             user_role: 'stadium_owner',
             payout_period_start: payout_period_start,
             payout_period_end: payout_period_end,
-            total_pending_amount: netAmount,
-            total_pending_count: 1,
+            total_pending_amount: newAmount,
+            total_pending_count: newCount,
             last_updated: currentDate.toISOString(),
             created_at: currentDate.toISOString()
           },
@@ -372,6 +389,8 @@ async function updatePendingPayoutsSummary(
 
       if (stadiumError) {
         console.error('Error upserting stadium summary:', stadiumError)
+      } else {
+        console.log(`✅ Stadium summary updated: ${newAmount} paise (${newCount} matches)`)
       }
     }
 
@@ -388,6 +407,19 @@ async function updatePendingPayoutsSummary(
         const refereeCommission = breakdown.referee_commission || 0
         const netAmount = Math.round(refereeAmount - refereeCommission)
 
+        // Check if record exists and get current values
+        const { data: existingRecord } = await supabaseAdmin
+          .from('pending_payouts_summary')
+          .select('total_pending_amount, total_pending_count')
+          .eq('user_id', referee.id)
+          .eq('user_role', 'referee')
+          .eq('payout_period_start', payout_period_start)
+          .eq('payout_period_end', payout_period_end)
+          .single()
+
+        const newAmount = (existingRecord?.total_pending_amount || 0) + netAmount
+        const newCount = (existingRecord?.total_pending_count || 0) + 1
+
         const { error: refereeError } = await supabaseAdmin
           .from('pending_payouts_summary')
           .upsert(
@@ -396,8 +428,8 @@ async function updatePendingPayoutsSummary(
               user_role: 'referee',
               payout_period_start: payout_period_start,
               payout_period_end: payout_period_end,
-              total_pending_amount: netAmount,
-              total_pending_count: 1,
+              total_pending_amount: newAmount,
+              total_pending_count: newCount,
               last_updated: currentDate.toISOString(),
               created_at: currentDate.toISOString()
             },
@@ -408,6 +440,8 @@ async function updatePendingPayoutsSummary(
 
         if (refereeError) {
           console.error('Error upserting referee summary:', refereeError)
+        } else {
+          console.log(`✅ Referee summary updated: ${newAmount} paise (${newCount} matches)`)
         }
       }
     }
@@ -426,6 +460,19 @@ async function updatePendingPayoutsSummary(
         const amountPerStaff = Math.round(totalNetAmount / match.staff_ids.length)
 
         for (const staff of staffMembers) {
+          // Check if record exists and get current values
+          const { data: existingRecord } = await supabaseAdmin
+            .from('pending_payouts_summary')
+            .select('total_pending_amount, total_pending_count')
+            .eq('user_id', staff.id)
+            .eq('user_role', 'staff')
+            .eq('payout_period_start', payout_period_start)
+            .eq('payout_period_end', payout_period_end)
+            .single()
+
+          const newAmount = (existingRecord?.total_pending_amount || 0) + amountPerStaff
+          const newCount = (existingRecord?.total_pending_count || 0) + 1
+
           const { error: staffError } = await supabaseAdmin
             .from('pending_payouts_summary')
             .upsert(
@@ -434,8 +481,8 @@ async function updatePendingPayoutsSummary(
                 user_role: 'staff',
                 payout_period_start: payout_period_start,
                 payout_period_end: payout_period_end,
-                total_pending_amount: amountPerStaff,
-                total_pending_count: 1,
+                total_pending_amount: newAmount,
+                total_pending_count: newCount,
                 last_updated: currentDate.toISOString(),
                 created_at: currentDate.toISOString()
               },
@@ -446,6 +493,8 @@ async function updatePendingPayoutsSummary(
 
           if (staffError) {
             console.error('Error upserting staff summary:', staffError)
+          } else {
+            console.log(`✅ Staff summary updated: ${newAmount} paise (${newCount} matches) for ${staff.id}`)
           }
         }
       }

@@ -232,6 +232,9 @@ async function handlePaymentCaptured(payment: any) {
     // 5. Update pending_payouts_summary with payment amounts
     await updatePendingPayoutsSummary(paymentRecord, match, breakdown)
 
+    // 6. Create payouts records for manual admin processing
+    await createAutomaticPayouts(paymentRecord, match, breakdown)
+
     console.log('✅ Payment webhook processed successfully')
   } catch (error) {
     console.error('Error in handlePaymentCaptured:', error)

@@ -126,6 +126,25 @@ async function handlePaymentCaptured(payment: any) {
 
     console.log('Payment updated successfully:', paymentRecord.id)
 
+    // 🎯 EARLY UPDATE: Update pending_payouts_summary immediately after payment success
+    try {
+      console.log('🎯 CALLING updatePendingPayoutsSummary EARLY')
+      // Get basic match details for summary update
+      const { data: basicMatch } = await supabaseAdmin
+        .from('matches')
+        .select('*, stadium:stadiums(id, owner_id)')
+        .eq('payment_id', paymentRecord.id)
+        .single()
+
+      if (basicMatch) {
+        await updatePendingPayoutsSummary(paymentRecord, basicMatch, paymentRecord.amount_breakdown)
+      } else {
+        console.log('🎯 No match found yet for payment, will try later')
+      }
+    } catch (summaryError) {
+      console.error('🚨 Early summary update failed:', summaryError)
+    }
+
     // 2. Get match details including referee and staff IDs
     const { data: match } = await supabaseAdmin
       .from('matches')

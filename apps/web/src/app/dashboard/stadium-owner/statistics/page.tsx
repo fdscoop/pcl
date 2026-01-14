@@ -77,7 +77,7 @@ export default function StatisticsPage() {
  .select(`
  *, 
  stadium:stadiums(stadium_name, hourly_rate),
- payments(id, amount, status, amount_breakdown, completed_at)
+ payments!matches_payment_id_fkey(id, amount, status, amount_breakdown, completed_at)
  `)
  .in('stadium_id', stadiumIds)
 

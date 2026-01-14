@@ -94,7 +94,7 @@ export default function StadiumsPage() {
  .select(`
  id, 
  match_date,
- payments(amount, status, amount_breakdown)
+ payments!matches_payment_id_fkey(amount, status, amount_breakdown)
  `)
  .eq('stadium_id', stadium.id)
 

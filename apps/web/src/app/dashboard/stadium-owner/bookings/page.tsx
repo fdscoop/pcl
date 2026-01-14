@@ -114,7 +114,7 @@ export default function BookingsPage() {
  team_name,
  club:clubs(id, club_name, logo_url)
  ),
- payments(id, amount, status, amount_breakdown)
+ payments!matches_payment_id_fkey(id, amount, status, amount_breakdown)
  `)
  .in('stadium_id', stadiumIds)
  .order('match_date', { ascending: true })

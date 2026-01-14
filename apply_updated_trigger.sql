@@ -50,11 +50,7 @@ BEGIN
     INTO v_match
     FROM matches
     WHERE id = NEW.match_id;
-    
-    -- If match not found, v_match will be null
-    IF NOT FOUND THEN
-      v_match := NULL;
-    END IF;
+    -- If match not found, v_match will automatically be null
   END IF;
 
   -- ===== STADIUM OWNER PAYOUT =====

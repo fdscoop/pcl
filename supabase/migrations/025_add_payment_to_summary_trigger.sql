@@ -50,6 +50,11 @@ BEGIN
     INTO v_match
     FROM matches
     WHERE id = NEW.match_id;
+    
+    -- If match not found, v_match will be null
+    IF NOT FOUND THEN
+      v_match := NULL;
+    END IF;
   END IF;
 
   -- ===== STADIUM OWNER PAYOUT =====
@@ -89,7 +94,7 @@ BEGIN
 
   -- ===== REFEREE PAYOUTS =====
   -- Referees share 25% of net_amount (split equally)
-  IF v_match.referee_ids IS NOT NULL AND array_length(v_match.referee_ids, 1) > 0 THEN
+  IF v_match IS NOT NULL AND v_match.referee_ids IS NOT NULL AND array_length(v_match.referee_ids, 1) > 0 THEN
     v_referee_count := array_length(v_match.referee_ids, 1);
     v_referee_share := FLOOR((v_net_amount * v_referee_percentage) / v_referee_count);
 
@@ -123,7 +128,7 @@ BEGIN
 
   -- ===== STAFF PAYOUTS =====
   -- Staff share 15% of net_amount (split equally)
-  IF v_match.staff_ids IS NOT NULL AND array_length(v_match.staff_ids, 1) > 0 THEN
+  IF v_match IS NOT NULL AND v_match.staff_ids IS NOT NULL AND array_length(v_match.staff_ids, 1) > 0 THEN
     v_staff_count := array_length(v_match.staff_ids, 1);
     v_staff_share := FLOOR((v_net_amount * v_staff_percentage) / v_staff_count);
 

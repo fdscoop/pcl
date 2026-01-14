@@ -12,6 +12,11 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_emails BOOLEAN DEFAULT fals
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_language TEXT DEFAULT 'English';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'UTC+5:30 (India Standard Time)';
 
+-- Add account status for deactivation
+ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status TEXT DEFAULT 'active';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivated_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deactivation_reason TEXT;
+
 -- Add comment
 COMMENT ON COLUMN users.email_notifications IS 'Enable email notifications for all activities';
 COMMENT ON COLUMN users.booking_alerts IS 'Enable alerts for new bookings';
@@ -19,6 +24,9 @@ COMMENT ON COLUMN users.payout_notifications IS 'Enable payout and payment notif
 COMMENT ON COLUMN users.marketing_emails IS 'Enable marketing and promotional emails';
 COMMENT ON COLUMN users.preferred_language IS 'User preferred language for interface';
 COMMENT ON COLUMN users.timezone IS 'User timezone for date/time display';
+COMMENT ON COLUMN users.account_status IS 'Account status: active, deactivated, suspended';
+COMMENT ON COLUMN users.deactivated_at IS 'Timestamp when account was deactivated';
+COMMENT ON COLUMN users.deactivation_reason IS 'Reason provided for account deactivation';
 
 -- Create index for faster queries on notification preferences
 CREATE INDEX IF NOT EXISTS idx_users_notifications ON users(id) WHERE email_notifications = true OR booking_alerts = true;

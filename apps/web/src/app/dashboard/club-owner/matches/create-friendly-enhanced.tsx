@@ -885,6 +885,8 @@ export function CreateFriendlyMatch({
  const handlePayment = async () => {
  if (paymentProcessing || paymentCompleted) return
 
+ const supabase = createClient()
+
  // Debug information
  console.log('=== PAYMENT DEBUG INFO ===')
  console.log('Platform:', {

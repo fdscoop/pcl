@@ -126,14 +126,17 @@ serve(async (req: Request) => {
       // payment record id in notes when opening checkout so the webhook can
       // directly map the Razorpay payment to our payments row.
       const notes = payment?.notes || {};
+      const order_id = payment?.order_id; // Razorpay order_id from payment entity
       console.log("📋 Payment notes:", JSON.stringify(notes, null, 2));
+      console.log("📋 Razorpay order_id:", order_id);
+      console.log("📋 Razorpay payment_id:", payment.id);
       let paymentRow = null;
 
-      if (notes?.payment_id) {
-        console.log("🔍 Updating payment by notes.payment_id:", notes.payment_id);
+      // PRIORITY 1: Try by razorpay_order_id (most reliable - always set at order creation)
+      if (order_id) {
+        console.log("🔍 Updating payment by razorpay_order_id:", order_id);
         
-        // If frontend passed our payment id into Razorpay notes, update by id
-        const { error: updErr } = await supabase
+        const { error: updErr, count } = await supabase
           .from("payments")
           .update({
             status: payment.captured ? "completed" : "pending",
@@ -143,33 +146,36 @@ serve(async (req: Request) => {
             webhook_received: true,
             webhook_data: JSON.stringify(payment),
             webhook_received_at: new Date().toISOString(),
+            completed_at: payment.captured ? new Date().toISOString() : null,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", notes.payment_id);
+          .eq("razorpay_order_id", order_id);
 
         if (updErr) {
-          console.error("❌ Error updating payment by id:", updErr);
-          return new Response("Database update error", { 
-            status: 500,
-            headers: corsHeaders 
-          });
+          console.error("❌ Error updating payment by razorpay_order_id:", updErr);
         } else {
-          console.log("✅ Payment updated by id:", notes.payment_id);
+          console.log("✅ Payment updated by razorpay_order_id:", order_id);
         }
 
         // Fetch the payment row we just updated
         const { data: fetched, error: fetchErr } = await supabase
           .from("payments")
           .select("*")
-          .eq("id", notes.payment_id)
+          .eq("razorpay_order_id", order_id)
           .maybeSingle();
 
-        if (fetchErr) console.error('❌ Error fetching payment by id:', fetchErr);
+        if (fetchErr) console.error('❌ Error fetching payment by razorpay_order_id:', fetchErr);
         paymentRow = fetched || null;
-      } else {
-        console.log("🔍 No payment_id in notes, trying by razorpay_payment_id");
         
-        // Fallback: try to update by razorpay_payment_id (in case we already set it earlier)
+        if (paymentRow) {
+          console.log("✅ Payment row found by order_id:", paymentRow.id);
+        }
+      }
+      
+      // PRIORITY 2: Try by notes.payment_id (if frontend passed it)
+      if (!paymentRow && notes?.payment_id) {
+        console.log("🔍 Trying by notes.payment_id:", notes.payment_id);
+        
         const { error: updErr } = await supabase
           .from("payments")
           .update({
@@ -180,16 +186,31 @@ serve(async (req: Request) => {
             webhook_received: true,
             webhook_data: JSON.stringify(payment),
             webhook_received_at: new Date().toISOString(),
+            completed_at: payment.captured ? new Date().toISOString() : null,
             updated_at: new Date().toISOString(),
           })
-          .eq("razorpay_payment_id", payment.id);
+          .eq("id", notes.payment_id);
 
         if (updErr) {
-          console.error("❌ Error updating payment by razorpay_payment_id:", updErr);
+          console.error("❌ Error updating payment by notes.payment_id:", updErr);
         } else {
-          console.log("✅ Payment updated by razorpay_payment_id:", payment.id);
+          console.log("✅ Payment updated by notes.payment_id:", notes.payment_id);
         }
 
+        const { data: fetched, error: fetchErr } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("id", notes.payment_id)
+          .maybeSingle();
+
+        if (fetchErr) console.error('❌ Error fetching payment by notes.payment_id:', fetchErr);
+        paymentRow = fetched || null;
+      }
+      
+      // PRIORITY 3: Fallback to razorpay_payment_id (unlikely to work on first webhook)
+      if (!paymentRow) {
+        console.log("🔍 Fallback: trying by razorpay_payment_id:", payment.id);
+        
         const { data: fetched, error: fetchErr } = await supabase
           .from("payments")
           .select("*")
@@ -198,6 +219,10 @@ serve(async (req: Request) => {
 
         if (fetchErr) console.error('❌ Error fetching payment by razorpay_payment_id:', fetchErr);
         paymentRow = fetched || null;
+      }
+      
+      if (!paymentRow) {
+        console.error("❌ Could not find payment record for order_id:", order_id, "payment_id:", payment.id);
       }
 
       // If we located a payment row and it references a match, attempt to finalize

@@ -203,6 +203,15 @@ serve(async (req: Request) => {
       // If we located a payment row and it references a match, attempt to finalize
       // the match (mark confirmed). Handle any DB errors gracefully.
       if (paymentRow && paymentRow.match_id) {
+        // 🎯 ADD: Update pending_payouts_summary when payment captured
+        try {
+          console.log("🎯 Updating pending_payouts_summary for payment:", paymentRow.id);
+          await updatePendingPayoutsSummary(paymentRow);
+        } catch (summaryErr) {
+          console.error("❌ Error updating pending_payouts_summary:", summaryErr);
+          // Don't fail the webhook for this, just log it
+        }
+
         try {
           const { error: matchErr } = await supabase
             .from('matches')
@@ -399,4 +408,177 @@ async function verifyRazorpaySignature(
 function bufferToHex(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+// ---------------- Pending Payouts Summary Update Helper ----------------
+
+async function updatePendingPayoutsSummary(paymentRow: any) {
+  console.log("🎯 updatePendingPayoutsSummary called for payment:", paymentRow.id);
+  console.log("🎯 Payment match_id:", paymentRow.match_id);
+  console.log("🎯 Payment amount_breakdown:", paymentRow.amount_breakdown);
+
+  if (!paymentRow.match_id) {
+    console.log("🎯 No match_id, skipping summary update");
+    return;
+  }
+
+  try {
+    // Get match details with stadium info
+    const { data: match, error: matchError } = await supabase
+      .from('matches')
+      .select('*, stadium:stadiums(id, owner_id)')
+      .eq('id', paymentRow.match_id)
+      .single();
+
+    if (matchError || !match) {
+      console.error("❌ Error fetching match:", matchError);
+      return;
+    }
+
+    const breakdown = paymentRow.amount_breakdown || {};
+    console.log("🎯 Match found:", match.id);
+    console.log("🎯 Amount breakdown:", breakdown);
+
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const payout_period_start = new Date(year, month, 1).toISOString().split('T')[0];
+    const payout_period_end = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+    console.log(`🎯 Payout period: ${payout_period_start} to ${payout_period_end}`);
+
+    // 1. Stadium owner summary
+    if (breakdown?.stadium && match.stadium?.owner_id) {
+      const stadiumAmount = breakdown.stadium;
+      const stadiumCommission = breakdown.stadium_commission || 0;
+      const netAmount = Math.round(stadiumAmount - stadiumCommission);
+
+      console.log(`🎯 Stadium: amount=${stadiumAmount}, commission=${stadiumCommission}, net=${netAmount}`);
+
+      // Get existing record
+      const { data: existingRecord } = await supabase
+        .from('pending_payouts_summary')
+        .select('total_pending_amount, total_pending_count')
+        .eq('user_id', match.stadium.owner_id)
+        .eq('user_role', 'stadium_owner')
+        .eq('payout_period_start', payout_period_start)
+        .eq('payout_period_end', payout_period_end)
+        .single();
+
+      const newAmount = (existingRecord?.total_pending_amount || 0) + netAmount;
+      const newCount = (existingRecord?.total_pending_count || 0) + 1;
+
+      const { error: stadiumError } = await supabase
+        .from('pending_payouts_summary')
+        .upsert({
+          user_id: match.stadium.owner_id,
+          user_role: 'stadium_owner',
+          payout_period_start: payout_period_start,
+          payout_period_end: payout_period_end,
+          total_pending_amount: newAmount,
+          total_pending_count: newCount,
+          last_updated: currentDate.toISOString()
+        }, {
+          onConflict: 'user_id,payout_period_start,payout_period_end'
+        });
+
+      if (stadiumError) {
+        console.error("❌ Stadium summary error:", stadiumError);
+      } else {
+        console.log(`✅ Stadium summary updated: ${newAmount} paise (${newCount} matches)`);
+      }
+    }
+
+    // 2. Referee summary
+    if (breakdown?.referee && match.referee_id) {
+      const refereeAmount = breakdown.referee;
+      const refereeCommission = breakdown.referee_commission || 0;
+      const netAmount = Math.round(refereeAmount - refereeCommission);
+
+      console.log(`🎯 Referee: amount=${refereeAmount}, commission=${refereeCommission}, net=${netAmount}`);
+
+      // Get existing record
+      const { data: existingRecord } = await supabase
+        .from('pending_payouts_summary')
+        .select('total_pending_amount, total_pending_count')
+        .eq('user_id', match.referee_id)
+        .eq('user_role', 'referee')
+        .eq('payout_period_start', payout_period_start)
+        .eq('payout_period_end', payout_period_end)
+        .single();
+
+      const newAmount = (existingRecord?.total_pending_amount || 0) + netAmount;
+      const newCount = (existingRecord?.total_pending_count || 0) + 1;
+
+      const { error: refereeError } = await supabase
+        .from('pending_payouts_summary')
+        .upsert({
+          user_id: match.referee_id,
+          user_role: 'referee',
+          payout_period_start: payout_period_start,
+          payout_period_end: payout_period_end,
+          total_pending_amount: newAmount,
+          total_pending_count: newCount,
+          last_updated: currentDate.toISOString()
+        }, {
+          onConflict: 'user_id,payout_period_start,payout_period_end'
+        });
+
+      if (refereeError) {
+        console.error("❌ Referee summary error:", refereeError);
+      } else {
+        console.log(`✅ Referee summary updated: ${newAmount} paise (${newCount} matches)`);
+      }
+    }
+
+    // 3. Staff summary
+    if (breakdown?.staff && match.staff_ids && Array.isArray(match.staff_ids) && match.staff_ids.length > 0) {
+      const staffAmount = breakdown.staff;
+      const staffCommission = breakdown.staff_commission || 0;
+      const totalNetAmount = staffAmount - staffCommission;
+      const amountPerStaff = Math.round(totalNetAmount / match.staff_ids.length);
+
+      console.log(`🎯 Staff: amount=${staffAmount}, commission=${staffCommission}, total_net=${totalNetAmount}, per_staff=${amountPerStaff}`);
+
+      for (const staffId of match.staff_ids) {
+        // Get existing record
+        const { data: existingRecord } = await supabase
+          .from('pending_payouts_summary')
+          .select('total_pending_amount, total_pending_count')
+          .eq('user_id', staffId)
+          .eq('user_role', 'staff')
+          .eq('payout_period_start', payout_period_start)
+          .eq('payout_period_end', payout_period_end)
+          .single();
+
+        const newAmount = (existingRecord?.total_pending_amount || 0) + amountPerStaff;
+        const newCount = (existingRecord?.total_pending_count || 0) + 1;
+
+        const { error: staffError } = await supabase
+          .from('pending_payouts_summary')
+          .upsert({
+            user_id: staffId,
+            user_role: 'staff',
+            payout_period_start: payout_period_start,
+            payout_period_end: payout_period_end,
+            total_pending_amount: newAmount,
+            total_pending_count: newCount,
+            last_updated: currentDate.toISOString()
+          }, {
+            onConflict: 'user_id,payout_period_start,payout_period_end'
+          });
+
+        if (staffError) {
+          console.error(`❌ Staff summary error for ${staffId}:`, staffError);
+        } else {
+          console.log(`✅ Staff summary updated for ${staffId}: ${newAmount} paise (${newCount} matches)`);
+        }
+      }
+    }
+
+    console.log("✅ pending_payouts_summary update completed");
+  } catch (error) {
+    console.error("❌ Error in updatePendingPayoutsSummary:", error);
+    throw error;
+  }
 }

@@ -229,8 +229,8 @@ async function handlePaymentCaptured(payment: any) {
       throw matchError
     }
 
-    // 5. Create payouts automatically
-    await createAutomaticPayouts(paymentRecord, match, breakdown)
+    // 5. Update pending_payouts_summary with payment amounts
+    await updatePendingPayoutsSummary(paymentRecord, match, breakdown)
 
     console.log('✅ Payment webhook processed successfully')
   } catch (error) {
@@ -266,6 +266,194 @@ async function handlePaymentFailed(payment: any) {
     console.log('✅ Payment failure recorded')
   } catch (error) {
     console.error('Error in handlePaymentFailed:', error)
+    throw error
+  }
+}
+
+/**
+ * Handle refund processing
+ */
+async function handleRefundProcessed(refund: any) {
+  console.log('Processing refund.processed:', refund.id)
+
+  const { payment_id, amount, status } = refund
+
+  try {
+    // Find payment by razorpay_payment_id
+    const { data: payment } = await supabaseAdmin
+      .from('payments')
+      .select('*')
+      .eq('razorpay_payment_id', payment_id)
+      .single()
+
+    if (!payment) {
+      console.error('Payment not found for refund:', payment_id)
+      return
+    }
+
+    // Calculate refund status
+    const totalRefunded = (payment.refunded_amount || 0) + amount
+    const refundStatus = totalRefunded >= payment.amount ? 'full' : 'partial'
+
+    // Update payment record
+    await supabaseAdmin
+      .from('payments')
+      .update({
+        status: 'refunded',
+        refund_status: refundStatus,
+        refunded_amount: totalRefunded,
+        refunded_at: new Date().toISOString(),
+        webhook_received: true,
+        webhook_data: refund,
+        webhook_received_at: new Date().toISOString()
+      })
+      .eq('id', payment.id)
+
+    // Mark associated bookings as cancelled and refund processed
+    await supabaseAdmin
+      .from('bookings')
+      .update({
+        status: 'cancelled',
+        refund_processed: true,
+        refund_amount: amount, // This will be proportional, calculated elsewhere
+        cancelled_at: new Date().toISOString()
+      })
+      .eq('payment_id', payment.id)
+
+    console.log('✅ Refund processed successfully')
+  } catch (error) {
+    console.error('Error in handleRefundProcessed:', error)
+    throw error
+  }
+}
+
+/**
+ * Update pending_payouts_summary when payment is captured
+ * Adds payment amounts to existing summary records
+ * Creates new summary records if they don't exist
+ */
+async function updatePendingPayoutsSummary(
+  payment: any,
+  match: any,
+  breakdown: any
+) {
+  console.log('Updating pending_payouts_summary for payment:', payment.id)
+
+  try {
+    const currentDate = new Date()
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const payout_period_start = new Date(year, month, 1).toISOString().split('T')[0]
+    const payout_period_end = new Date(year, month + 1, 0).toISOString().split('T')[0]
+
+    // 1. Stadium owner summary
+    if (breakdown?.stadium && match.stadium?.owner_id) {
+      const stadiumAmount = breakdown.stadium
+      const stadiumCommission = breakdown.stadium_commission || 0
+      const netAmount = Math.round(stadiumAmount - stadiumCommission)
+
+      const { error: stadiumError } = await supabaseAdmin
+        .from('pending_payouts_summary')
+        .upsert(
+          {
+            user_id: match.stadium.owner_id,
+            user_role: 'stadium_owner',
+            payout_period_start: payout_period_start,
+            payout_period_end: payout_period_end,
+            total_pending_amount: netAmount,
+            total_pending_count: 1,
+            last_updated: currentDate.toISOString(),
+            created_at: currentDate.toISOString()
+          },
+          {
+            onConflict: 'user_id,payout_period_start,payout_period_end'
+          }
+        )
+
+      if (stadiumError) {
+        console.error('Error upserting stadium summary:', stadiumError)
+      }
+    }
+
+    // 2. Referee summary
+    if (breakdown?.referee && match.referee_id) {
+      const { data: referee } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .eq('id', match.referee_id)
+        .single()
+
+      if (referee) {
+        const refereeAmount = breakdown.referee
+        const refereeCommission = breakdown.referee_commission || 0
+        const netAmount = Math.round(refereeAmount - refereeCommission)
+
+        const { error: refereeError } = await supabaseAdmin
+          .from('pending_payouts_summary')
+          .upsert(
+            {
+              user_id: referee.id,
+              user_role: 'referee',
+              payout_period_start: payout_period_start,
+              payout_period_end: payout_period_end,
+              total_pending_amount: netAmount,
+              total_pending_count: 1,
+              last_updated: currentDate.toISOString(),
+              created_at: currentDate.toISOString()
+            },
+            {
+              onConflict: 'user_id,payout_period_start,payout_period_end'
+            }
+          )
+
+        if (refereeError) {
+          console.error('Error upserting referee summary:', refereeError)
+        }
+      }
+    }
+
+    // 3. Staff summary
+    if (breakdown?.staff && match.staff_ids && Array.isArray(match.staff_ids) && match.staff_ids.length > 0) {
+      const { data: staffMembers } = await supabaseAdmin
+        .from('users')
+        .select('id')
+        .in('id', match.staff_ids)
+
+      if (staffMembers && staffMembers.length > 0) {
+        const staffAmount = breakdown.staff
+        const staffCommission = breakdown.staff_commission || 0
+        const totalNetAmount = staffAmount - staffCommission
+        const amountPerStaff = Math.round(totalNetAmount / match.staff_ids.length)
+
+        for (const staff of staffMembers) {
+          const { error: staffError } = await supabaseAdmin
+            .from('pending_payouts_summary')
+            .upsert(
+              {
+                user_id: staff.id,
+                user_role: 'staff',
+                payout_period_start: payout_period_start,
+                payout_period_end: payout_period_end,
+                total_pending_amount: amountPerStaff,
+                total_pending_count: 1,
+                last_updated: currentDate.toISOString(),
+                created_at: currentDate.toISOString()
+              },
+              {
+                onConflict: 'user_id,payout_period_start,payout_period_end'
+              }
+            )
+
+          if (staffError) {
+            console.error('Error upserting staff summary:', staffError)
+          }
+        }
+      }
+    }
+
+    console.log('✅ pending_payouts_summary updated successfully')
+  } catch (error) {
+    console.error('Error in updatePendingPayoutsSummary:', error)
     throw error
   }
 }

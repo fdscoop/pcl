@@ -25,6 +25,8 @@ interface UserSettings {
  phone: string
  bio: string
  profile_photo_url: string
+ preferred_language: string
+ timezone: string
 }
 
 interface NotificationSettings {
@@ -41,7 +43,9 @@ export default function SettingsPage() {
  email: '',
  phone: '',
  bio: '',
- profile_photo_url: ''
+ profile_photo_url: '',
+ preferred_language: 'English',
+ timezone: 'UTC+5:30 (India Standard Time)'
  })
  const [notifications, setNotifications] = useState<NotificationSettings>({
  emailNotifications: true,
@@ -78,7 +82,9 @@ export default function SettingsPage() {
  email: data.email || '',
  phone: data.phone || '',
  bio: data.bio || '',
- profile_photo_url: data.profile_photo_url || ''
+ profile_photo_url: data.profile_photo_url || '',
+ preferred_language: data.preferred_language || 'English',
+ timezone: data.timezone || 'UTC+5:30 (India Standard Time)'
  })
  // Phase 2: Load notification preferences from database
  setNotifications({
@@ -115,6 +121,8 @@ export default function SettingsPage() {
  last_name: userSettings.last_name,
  phone: userSettings.phone,
  bio: userSettings.bio,
+ preferred_language: userSettings.preferred_language,
+ timezone: userSettings.timezone,
  updated_at: new Date().toISOString()
  })
  .eq('id', user.id)
@@ -484,10 +492,16 @@ export default function SettingsPage() {
  Choose your preferred language
  </p>
  </div>
- <select className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/20 transition-colors">
- <option>English</option>
- <option>Spanish</option>
- <option>French</option>
+ <select 
+ value={userSettings.preferred_language}
+ onChange={(e) => setUserSettings({ ...userSettings, preferred_language: e.target.value })}
+ className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/20 transition-colors"
+ >
+ <option value="English">English</option>
+ <option value="Spanish">Spanish</option>
+ <option value="French">French</option>
+ <option value="Hindi">Hindi</option>
+ <option value="Kannada">Kannada</option>
  </select>
  </div>
 
@@ -498,11 +512,18 @@ export default function SettingsPage() {
  Set your local timezone
  </p>
  </div>
- <select className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/20 transition-colors">
- <option>UTC+5:30 (India Standard Time)</option>
- <option>UTC-5 (Eastern Time)</option>
- <option>UTC-6 (Central Time)</option>
- <option>UTC-8 (Pacific Time)</option>
+ <select 
+ value={userSettings.timezone}
+ onChange={(e) => setUserSettings({ ...userSettings, timezone: e.target.value })}
+ className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-800 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500/20 transition-colors"
+ >
+ <option value="UTC+5:30 (India Standard Time)">UTC+5:30 (India Standard Time)</option>
+ <option value="UTC-5 (Eastern Time)">UTC-5 (Eastern Time)</option>
+ <option value="UTC-6 (Central Time)">UTC-6 (Central Time)</option>
+ <option value="UTC-7 (Mountain Time)">UTC-7 (Mountain Time)</option>
+ <option value="UTC-8 (Pacific Time)">UTC-8 (Pacific Time)</option>
+ <option value="UTC+0 (Greenwich Mean Time)">UTC+0 (Greenwich Mean Time)</option>
+ <option value="UTC+1 (Central European Time)">UTC+1 (Central European Time)</option>
  </select>
  </div>
  </CardContent>

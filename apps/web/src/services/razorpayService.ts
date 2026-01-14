@@ -110,17 +110,20 @@ class RazorpayService {
    * This polls the database to check if webhook has updated the payment record
    */
   async pollPaymentStatus(paymentResponse: PaymentResponse): Promise<boolean> {
-    console.log('🔄 Polling payment status for:', paymentResponse.razorpay_payment_id)
+    console.log('🔄 Polling payment status for payment:', paymentResponse.razorpay_payment_id)
+    console.log('🔄 Order ID:', paymentResponse.razorpay_order_id)
     
     const maxAttempts = 10 // Poll for up to 10 seconds
     const pollInterval = 1000 // 1 second intervals
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        console.log(`📊 Poll attempt ${attempt}/${maxAttempts} for payment:`, paymentResponse.razorpay_payment_id)
+        console.log(`📊 Poll attempt ${attempt}/${maxAttempts}`)
         
         // Query payment record directly from database
-        const response = await fetch(`/api/payments/check-status?payment_id=${paymentResponse.razorpay_payment_id}`, {
+        // Use order_id since payment record is created with order_id first,
+        // payment_id is added by webhook later
+        const response = await fetch(`/api/payments/check-status?payment_id=${paymentResponse.razorpay_payment_id}&order_id=${paymentResponse.razorpay_order_id}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'

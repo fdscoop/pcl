@@ -25,12 +25,27 @@ export async function GET(request: NextRequest) {
 
     console.log('🔍 Checking payment status for:', payment_id)
 
-    // Query payment record by razorpay_payment_id
-    const { data, error } = await supabase
+    // First try to find by razorpay_payment_id (if webhook has processed)
+    let { data, error } = await supabase
       .from('payments')
       .select('id, status, razorpay_payment_id, razorpay_order_id, amount, completed_at')
       .eq('razorpay_payment_id', payment_id)
       .single()
+
+    // If not found by razorpay_payment_id, try by razorpay_order_id
+    // This handles the case where payment is checked before webhook processes
+    if (error?.code === 'PGRST116') {
+      console.log('🔄 Payment not found by razorpay_payment_id, trying razorpay_order_id...')
+      
+      const result = await supabase
+        .from('payments')
+        .select('id, status, razorpay_payment_id, razorpay_order_id, amount, completed_at')
+        .eq('razorpay_order_id', payment_id)
+        .single()
+      
+      data = result.data
+      error = result.error
+    }
 
     if (error) {
       console.error('❌ Error querying payment:', error)
@@ -38,7 +53,8 @@ export async function GET(request: NextRequest) {
         { 
           error: 'Payment not found', 
           details: error.message,
-          status: 'not_found'
+          status: 'not_found',
+          hint: 'Payment may still be processing. Please try again in a few seconds.'
         },
         { status: 404 }
       )

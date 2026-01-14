@@ -126,7 +126,7 @@ export default function StadiumOwnerDashboard() {
  team_name,
  club:clubs(club_name)
  ),
- payments(
+ payments!matches_payment_id_fkey(
  id,
  amount,
  status,

@@ -105,7 +105,7 @@ export async function getStadiumPaymentStats(
         match_date,
         status,
         stadium_id,
-        payments (
+        payments!matches_payment_id_fkey (
           id,
           amount,
           status,
@@ -251,7 +251,7 @@ export async function getStadiumRecentBookings(
           team_name,
           clubs (club_name)
         ),
-        payments (
+        payments!matches_payment_id_fkey (
           id,
           amount,
           status,

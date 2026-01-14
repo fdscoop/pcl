@@ -267,14 +267,16 @@ export async function getStadiumRecentBookings(
     if (error) throw error
     if (!matches) return []
     
-    return matches.map((match: any) => {
-      const payment = match.payments?.[0]
-      const breakdown = payment?.amount_breakdown || {}
-      
-      // Get stadium fee from breakdown or estimate
-      const stadiumFee = breakdown.stadium || (payment?.amount ? Math.round(payment.amount * 0.6) : 0)
-      const commission = breakdown.stadium_commission || Math.round(stadiumFee * COMMISSION_RATES.stadium)
-      const netPayout = stadiumFee - commission
+    return matches
+      .filter((match: any) => match.payments?.[0]) // Only include matches with payment records
+      .map((match: any) => {
+        const payment = match.payments?.[0]
+        const breakdown = payment?.amount_breakdown || {}
+        
+        // Get stadium fee from breakdown or estimate
+        const stadiumFee = breakdown.stadium || (payment?.amount ? Math.round(payment.amount * 0.6) : 0)
+        const commission = breakdown.stadium_commission || Math.round(stadiumFee * COMMISSION_RATES.stadium)
+        const netPayout = stadiumFee - commission
       
       // Get team names - handle array format from Supabase
       const homeTeam = Array.isArray(match.home_team) 

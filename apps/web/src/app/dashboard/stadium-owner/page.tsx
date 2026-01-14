@@ -170,6 +170,12 @@ export default function StadiumOwnerDashboard() {
  const todayStr = today.toISOString().split('T')[0]
  const todayBookings = matches.filter((m: any) => m.match_date === todayStr).length
 
+ // Calculate pending bookings (Phase 1 fix - actually count scheduled matches)
+ const pendingBookings = matches.filter((m: any) => {
+ const matchDate = new Date(m.match_date)
+ return matchDate >= today && (m.status === 'scheduled' || m.status === 'confirmed')
+ }).length
+
  // Recent bookings for display (last 5) - convert matches to booking format
  const recentMatchBookings = matches.slice(0, 5).map((match: any) => ({
  id: match.id,
@@ -178,7 +184,8 @@ export default function StadiumOwnerDashboard() {
  end_time: match.match_time || '00:00',
  stadium: match.stadium,
  home_team: match.home_team,
- away_team: match.away_team
+ away_team: match.away_team,
+ payment_status: match.payments?.[0]?.status || 'pending' // Include payment status
  }))
  
  setRecentBookings(recentMatchBookings)
@@ -189,7 +196,7 @@ export default function StadiumOwnerDashboard() {
  totalBookings,
  monthRevenue,
  todayBookings,
- pendingBookings: 0 // Can be implemented if you add match status
+ pendingBookings // Now properly calculated
  })
 
  // Check KYC status - fetch fresh data to ensure latest values

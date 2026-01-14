@@ -18,7 +18,9 @@ import {
  Eye,
  MoreVertical,
  Star,
- Sparkles
+ Sparkles,
+ Calendar,
+ TrendingUp
 } from 'lucide-react'
 import { useToast } from '@/context/ToastContext'
 import StadiumFormModal from '@/components/stadium-owner/StadiumFormModal'
@@ -41,6 +43,10 @@ interface Stadium {
 
 interface StadiumWithPhotos extends Stadium {
  photos: string[]
+ // Phase 2: Add performance metrics
+ bookingCount?: number
+ totalRevenue?: number
+ lastBookingDate?: string
 }
 
 export default function StadiumsPage() {
@@ -70,9 +76,10 @@ export default function StadiumsPage() {
 
  if (error) throw error
 
- // Fetch photos for each stadium
- const stadiumsWithPhotos = await Promise.all(
+ // Phase 2: Fetch photos and performance metrics for each stadium
+ const stadiumsWithData = await Promise.all(
  (data || []).map(async (stadium) => {
+ // Fetch photos
  const { data: photoData, error: photoError } = await supabase
  .from('stadium_photos')
  .select('photo_data')
@@ -81,14 +88,46 @@ export default function StadiumsPage() {
 
  const photos = photoError ? [] : (photoData || []).map(p => p.photo_data)
 
+ // Fetch matches and payments for this stadium
+ const { data: matchData } = await supabase
+ .from('matches')
+ .select(`
+ id, 
+ match_date,
+ payments(amount, status, amount_breakdown)
+ `)
+ .eq('stadium_id', stadium.id)
+
+ const bookingCount = matchData?.length || 0
+ 
+ // Calculate total revenue from actual payment data
+ const totalRevenue = matchData?.reduce((sum, match: any) => {
+ const payment = match.payments?.[0]
+ if (payment && payment.amount_breakdown?.stadium) {
+ // Use actual payment data (in paise, convert to rupees)
+ const grossRevenue = payment.amount_breakdown.stadium / 100
+ return sum + grossRevenue * 0.9 // Net after 10% commission
+ }
+ return sum
+ }, 0) || 0
+
+ // Get last booking date
+ const sortedMatches = matchData?.sort((a: any, b: any) => 
+ new Date(b.match_date).getTime() - new Date(a.match_date).getTime()
+ )
+ const lastBookingDate = sortedMatches?.[0]?.match_date || null
+
  return {
  ...stadium,
- photos
+ photos,
+ bookingCount,
+ totalRevenue,
+ lastBookingDate
  }
  })
  )
 
- setStadiums(stadiumsWithPhotos)
+ setStadiums(stadiumsWithData)
  } catch (error) {
  console.error('Error loading stadiums:', error)
  addToast({
@@ -292,13 +331,32 @@ export default function StadiumsPage() {
  </p>
  )}
 
- {/* Stats Row */}
- <div className="flex items-center justify-between text-[11px]">
- <div className="flex items-center gap-1 text-slate-500 ">
- <Users className="h-3 w-3" />
- <span>{stadium.capacity || 'N/A'} capacity</span>
+ {/* Stats Row - Phase 2: Add performance metrics */}
+ <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+ <div className="flex flex-col items-center p-1.5 bg-slate-50 rounded-lg">
+ <Users className="h-3 w-3 text-slate-400 mb-0.5" />
+ <span className="font-bold text-slate-700">{stadium.capacity || 'N/A'}</span>
+ <span className="text-slate-400">capacity</span>
+ </div>
+ <div className="flex flex-col items-center p-1.5 bg-orange-50 rounded-lg">
+ <Calendar className="h-3 w-3 text-orange-500 mb-0.5" />
+ <span className="font-bold text-orange-600">{stadium.bookingCount || 0}</span>
+ <span className="text-slate-400">bookings</span>
+ </div>
+ <div className="flex flex-col items-center p-1.5 bg-emerald-50 rounded-lg">
+ <TrendingUp className="h-3 w-3 text-emerald-500 mb-0.5" />
+ <span className="font-bold text-emerald-600">₹{((stadium.totalRevenue || 0) / 1000).toFixed(1)}k</span>
+ <span className="text-slate-400">revenue</span>
  </div>
  </div>
+
+ {/* Last Booking Info */}
+ {stadium.lastBookingDate && (
+ <div className="text-[10px] text-slate-500 flex items-center gap-1 pt-1">
+ <span className="font-medium">Last booking:</span>
+ <span>{new Date(stadium.lastBookingDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+ </div>
+ )}
 
  {/* Amenities */}
  {stadium.amenities && stadium.amenities.length > 0 && (

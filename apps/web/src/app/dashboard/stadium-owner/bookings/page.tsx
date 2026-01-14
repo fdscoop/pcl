@@ -16,7 +16,9 @@ import {
  Users,
  Filter,
  CalendarDays,
- ArrowUpRight
+ ArrowUpRight,
+ DollarSign,
+ CreditCard
 } from 'lucide-react'
 import { useToast } from '@/context/ToastContext'
 
@@ -52,6 +54,18 @@ interface Booking {
  logo_url: string | null
  }
  }
+ // Phase 1: Add payment data
+ payment?: {
+ id: string
+ amount: number
+ status: string
+ amount_breakdown?: {
+ stadium?: number
+ referee?: number
+ staff?: number
+ commission?: number
+ }
+ } | null
 }
 
 export default function BookingsPage() {
@@ -84,7 +98,7 @@ export default function BookingsPage() {
 
  const stadiumIds = stadiums.map(s => s.id)
 
- // Get all matches (bookings) for these stadiums
+ // Get all matches (bookings) for these stadiums with payment data (Phase 1)
  const { data, error } = await supabase
  .from('matches')
  .select(`
@@ -99,7 +113,8 @@ export default function BookingsPage() {
  id, 
  team_name,
  club:clubs(id, club_name, logo_url)
- )
+ ),
+ payments(id, amount, status, amount_breakdown)
  `)
  .in('stadium_id', stadiumIds)
  .order('match_date', { ascending: true })
@@ -107,7 +122,13 @@ export default function BookingsPage() {
 
  if (error) throw error
 
- setBookings(data || [])
+ // Transform data to include payment as single object instead of array
+ const transformedBookings = (data || []).map((booking: any) => ({
+ ...booking,
+ payment: booking.payments?.[0] || null
+ }))
+
+ setBookings(transformedBookings)
  } catch (error) {
  console.error('Error loading bookings:', error)
  addToast({
@@ -420,6 +441,35 @@ export default function BookingsPage() {
  <div>
  <p className="text-[10px] text-slate-500 uppercase tracking-wide">Time</p>
  <p className="font-semibold text-xs text-slate-800 ">{formatTime(booking.match_time)}</p>
+ </div>
+ </div>
+ </div>
+
+ {/* Payment Status - Phase 1 */}
+ <div className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-lg">
+ <div className={`p-1.5 rounded-lg ${booking.payment?.status === 'completed' ? 'bg-emerald-100' : 'bg-amber-100'}`}>
+ <DollarSign className={`h-3.5 w-3.5 ${booking.payment?.status === 'completed' ? 'text-emerald-600' : 'text-amber-600'}`} />
+ </div>
+ <div className="flex-1">
+ <p className="text-[10px] text-slate-500 uppercase tracking-wide">Payment</p>
+ <div className="flex items-center justify-between">
+ <p className="font-semibold text-xs text-slate-800">
+ {booking.payment?.amount_breakdown?.stadium 
+ ? `₹${(booking.payment.amount_breakdown.stadium / 100).toLocaleString('en-IN')}`
+ : booking.stadium?.hourly_rate 
+ ? `₹${(booking.stadium.hourly_rate * 2).toLocaleString('en-IN')}` 
+ : 'N/A'}
+ </p>
+ <Badge 
+ className={`text-[9px] ${
+ booking.payment?.status === 'completed' 
+ ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+ : 'bg-amber-100 text-amber-700 border-amber-200'
+ }`}
+ variant="outline"
+ >
+ {booking.payment?.status === 'completed' ? 'Paid' : 'Pending'}
+ </Badge>
  </div>
  </div>
  </div>

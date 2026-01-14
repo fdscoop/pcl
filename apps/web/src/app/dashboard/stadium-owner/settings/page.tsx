@@ -80,6 +80,13 @@ export default function SettingsPage() {
  bio: data.bio || '',
  profile_photo_url: data.profile_photo_url || ''
  })
+ // Phase 2: Load notification preferences from database
+ setNotifications({
+ emailNotifications: data.email_notifications ?? true,
+ bookingAlerts: data.booking_alerts ?? true,
+ payoutNotifications: data.payout_notifications ?? true,
+ marketingEmails: data.marketing_emails ?? false
+ })
  }
  } catch (error) {
  console.error('Error loading settings:', error)
@@ -131,17 +138,56 @@ export default function SettingsPage() {
  }
  }
 
- const handleNotificationChange = (key: keyof NotificationSettings) => {
+ const handleNotificationChange = async (key: keyof NotificationSettings) => {
+ const newValue = !notifications[key]
+ 
+ // Optimistically update UI
  setNotifications(prev => ({
  ...prev,
- [key]: !prev[key]
+ [key]: newValue
  }))
+
+ // Phase 2: Save notification preferences to database
+ try {
+ const { data: { user } } = await supabase.auth.getUser()
+ if (!user) return
+
+ // Map frontend key names to database column names
+ const columnMap: Record<keyof NotificationSettings, string> = {
+ emailNotifications: 'email_notifications',
+ bookingAlerts: 'booking_alerts',
+ payoutNotifications: 'payout_notifications',
+ marketingEmails: 'marketing_emails'
+ }
+
+ const { error } = await supabase
+ .from('users')
+ .update({
+ [columnMap[key]]: newValue,
+ updated_at: new Date().toISOString()
+ })
+ .eq('id', user.id)
+
+ if (error) throw error
 
  addToast({
  title: 'Settings Updated',
  description: 'Notification preferences have been saved',
  type: 'success'
  })
+ } catch (error) {
+ // Revert on error
+ setNotifications(prev => ({
+ ...prev,
+ [key]: !newValue
+ }))
+ console.error('Error saving notification settings:', error)
+ addToast({
+ title: 'Error',
+ description: 'Failed to save notification preferences',
+ type: 'error'
+ })
+ }
  }
 
  if (loading) {

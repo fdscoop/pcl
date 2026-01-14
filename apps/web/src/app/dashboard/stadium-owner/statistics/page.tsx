@@ -71,39 +71,57 @@ export default function StatisticsPage() {
  return
  }
 
- // Get bookings (matches)
+ // Get bookings (matches) with payment data
  const { data: bookings } = await supabase
  .from('matches')
- .select('*, stadium:stadiums(stadium_name, hourly_rate)')
+ .select(`
+ *, 
+ stadium:stadiums(stadium_name, hourly_rate),
+ payments(id, amount, status, amount_breakdown, completed_at)
+ `)
  .in('stadium_id', stadiumIds)
 
  const totalBookings = bookings?.length || 0
  const today = new Date()
  today.setHours(0, 0, 0, 0)
 
+ // Calculate booking statuses
  const upcomingBookings = bookings?.filter(
- b => new Date(b.match_date) >= today
+ b => new Date(b.match_date) >= today && b.status !== 'completed' && b.status !== 'cancelled'
  ).length || 0
 
  const completedBookings = bookings?.filter(
  b => new Date(b.match_date) < today || b.status === 'completed'
  ).length || 0
 
- // Calculate revenue (estimate based on match format duration)
+ // Calculate revenue from ACTUAL payment data (Phase 1 fix)
+ const COMMISSION_RATE = 0.10 // 10% platform fee
+
+ const calculateRevenueFromPayment = (booking: any) => {
+ const payment = booking.payments?.[0]
+ if (payment && payment.amount_breakdown?.stadium) {
+ // Use actual payment data (in paise, convert to rupees)
+ const grossRevenue = payment.amount_breakdown.stadium / 100
+ return grossRevenue * (1 - COMMISSION_RATE) // Net revenue after commission
+ }
+ // Fallback: estimate from hourly rate if no payment data
  const getMatchDuration = (format: string) => {
  switch (format?.toLowerCase()) {
- case '5-a-side': return 1 // 1 hour
- case '7-a-side': return 1.5 // 1.5 hours
- case '9-a-side': return 2 // 2 hours
- case '11-a-side': return 3 // 3 hours
- default: return 2 // Default 2 hours
+ case '5-a-side': return 1
+ case '7-a-side': return 1.5
+ case '9-a-side': return 2
+ case '11-a-side': return 3
+ default: return 2
  }
  }
-
- const totalRevenue = bookings?.reduce((sum, booking) => {
  const hours = getMatchDuration(booking.match_format)
  const rate = booking.stadium?.hourly_rate || 0
- return sum + (hours * rate)
+ return (hours * rate) * (1 - COMMISSION_RATE) // Net revenue after commission
+ }
+
+ // Total revenue (net after 10% commission)
+ const totalRevenue = bookings?.reduce((sum, booking) => {
+ return sum + calculateRevenueFromPayment(booking)
  }, 0) || 0
 
  // Monthly revenue
@@ -115,18 +133,22 @@ export default function StatisticsPage() {
  bookingDate.getMonth() === currentMonth &&
  bookingDate.getFullYear() === currentYear
  ) {
- const hours = getMatchDuration(booking.match_format)
- const rate = booking.stadium?.hourly_rate || 0
- return sum + (hours * rate)
+ return sum + calculateRevenueFromPayment(booking)
  }
  return sum
  }, 0) || 0
 
- // Calculate occupancy rate (simplified - based on booked vs total possible slots per day)
- // Assuming stadiums can have up to 12 slots per day (8am-8pm)
- const stadiumCount = stadiums?.length || 0
- const totalPossibleSlots = stadiumCount * 30 * 12 // stadiums * days in month * slots per day
- const occupancyRate = totalPossibleSlots > 0 ? (totalBookings / totalPossibleSlots) * 100 : 0
+ // Calculate occupancy rate based on actual bookings vs available days (Phase 1 fix)
+ // More realistic: completed matches / total days in last 30 days * stadium count
+ const last30Days = 30
+ const avgBookingsPerStadiumPerMonth = stadiumIds.length > 0 
+ ? completedBookings / stadiumIds.length 
+ : 0
+ // Assume a stadium could have ~2 matches per day max
+ const maxPossibleMatches = last30Days * 2 
+ const occupancyRate = maxPossibleMatches > 0 
+ ? Math.min((avgBookingsPerStadiumPerMonth / maxPossibleMatches) * 100, 100) 
+ : 0
 
  // Find most popular stadium
  const stadiumBookingCounts: { [key: string]: number } = {}
@@ -151,7 +173,7 @@ export default function StatisticsPage() {
  color: colors[index % colors.length]
  }))
 
- // Revenue by month (last 6 months)
+ // Revenue by month (last 6 months) - using actual payment data
  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
  const revenueByMonth: { label: string; value: number }[] = []
  const currentDate = new Date()
@@ -165,9 +187,7 @@ export default function StatisticsPage() {
  const monthRevenue = bookings?.reduce((sum, booking) => {
  const bookingDate = new Date(booking.match_date)
  if (bookingDate.getMonth() === monthIndex && bookingDate.getFullYear() === year) {
- const hours = getMatchDuration(booking.match_format)
- const rate = booking.stadium?.hourly_rate || 0
- return sum + (hours * rate)
+ return sum + calculateRevenueFromPayment(booking)
  }
  return sum
  }, 0) || 0

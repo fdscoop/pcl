@@ -117,6 +117,7 @@ export default function BookingsPage() {
  payments!matches_payment_id_fkey(id, amount, status, amount_breakdown)
  `)
  .in('stadium_id', stadiumIds)
+ .eq('status', 'scheduled')
  .order('match_date', { ascending: true })
  .order('match_time', { ascending: true })
 

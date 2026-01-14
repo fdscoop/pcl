@@ -97,6 +97,7 @@ export default function StadiumsPage() {
  payments!matches_payment_id_fkey(amount, status, amount_breakdown)
  `)
  .eq('stadium_id', stadium.id)
+ .eq('status', 'scheduled')
 
  const bookingCount = matchData?.length || 0
  

@@ -134,6 +134,7 @@ export default function StadiumOwnerDashboard() {
  )
  `)
  .in('stadium_id', stadiumIds)
+ .eq('status', 'scheduled')
  .order('match_date', { ascending: false })
 
  if (matchesError) {

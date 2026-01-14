@@ -80,6 +80,7 @@ export default function StatisticsPage() {
  payments!matches_payment_id_fkey(id, amount, status, amount_breakdown, completed_at)
  `)
  .in('stadium_id', stadiumIds)
+ .eq('status', 'scheduled')
 
  const totalBookings = bookings?.length || 0
  const today = new Date()

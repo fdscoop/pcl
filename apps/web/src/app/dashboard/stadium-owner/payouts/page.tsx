@@ -20,6 +20,8 @@ import {
 import { useToast } from '@/context/ToastContext'
 import Link from 'next/link'
 import { useStadiumPaymentData } from '@/hooks/useStadiumPayments'
+import { useEnhancedStadiumDashboard } from '@/hooks/useEnhancedStadiumDashboard'
+import { PendingPayoutsWidget } from '@/components/PendingPayoutsWidget'
 import { formatCurrency, getCommissionRate } from '@/services/stadiumPaymentService'
 
 interface PayoutAccount {
@@ -128,6 +130,13 @@ export default function PayoutsPage() {
  Refresh
  </Button>
  </div>
+
+ {/* Enhanced Pending Payouts Widget - Real-time data from pending_payouts_summary */}
+ {user && (
+ <div className="mb-6">
+ <PendingPayoutsWidget userId={user.id} />
+ </div>
+ )}
 
  {/* Stats Grid - Using actual payment data */}
  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

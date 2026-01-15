@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StadiumPaymentDashboard } from '@/components/StadiumPaymentDashboard'
+import { PendingPayoutsWidget, CurrentMonthPendingWidget } from '@/components/PendingPayoutsWidget'
 import { 
  Building2, 
  Calendar, 
@@ -690,6 +691,18 @@ export default function StadiumOwnerDashboard() {
  <span className="text-[10px] sm:text-xs font-semibold text-slate-600 ">KYC</span>
  </Button>
  </div>
+
+ {/* Pending Payouts Widget - Real-time data from pending_payouts_summary */}
+ {user && (
+ <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+ <div className="lg:col-span-2">
+ <PendingPayoutsWidget userId={user.id} />
+ </div>
+ <div className="lg:col-span-1">
+ <CurrentMonthPendingWidget userId={user.id} />
+ </div>
+ </div>
+ )}
 
  {/* Payment Dashboard - Dynamic Data from Payments Table */}
  {user && (

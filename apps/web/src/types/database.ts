@@ -181,6 +181,7 @@ export interface Stadium {
  country?: string;
  capacity?: number;
  surface_type?: string;
+ registration_status?: string;
  amenities?: string[];
  hourly_rate?: number;
  photo_urls?: string[];

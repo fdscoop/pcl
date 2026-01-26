@@ -180,6 +180,7 @@ export interface Stadium {
  state?: string;
  country?: string;
  capacity?: number;
+ surface_type?: string;
  amenities?: string[];
  hourly_rate?: number;
  photo_urls?: string[];

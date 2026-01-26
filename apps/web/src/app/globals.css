@@ -1101,3 +1101,261 @@ body.mobile-app {
     padding-bottom: max(env(safe-area-inset-bottom), 16px);
   }
 }
+
+/* ========================================
+   LANDING PAGE ENHANCED ANIMATIONS
+   ======================================== */
+
+/* Glassmorphism effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-card-dark {
+  background: rgba(13, 27, 62, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 3D Card tilt effect */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease-out;
+}
+
+.card-3d:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-8px);
+}
+
+/* Gradient border effect */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(var(--background), var(--background)) padding-box,
+              linear-gradient(135deg, rgb(var(--accent)), rgb(var(--primary))) border-box;
+  border: 2px solid transparent;
+  border-radius: 12px;
+}
+
+.gradient-border-animated {
+  position: relative;
+  background: linear-gradient(var(--background), var(--background)) padding-box,
+              linear-gradient(var(--gradient-angle, 135deg), rgb(var(--accent)), rgb(var(--primary)), rgb(var(--accent))) border-box;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  animation: gradient-rotate 3s linear infinite;
+}
+
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 135deg;
+  inherits: false;
+}
+
+@keyframes gradient-rotate {
+  0% { --gradient-angle: 0deg; }
+  100% { --gradient-angle: 360deg; }
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float 5s ease-in-out infinite;
+}
+
+/* Glow pulse animation */
+@keyframes glow-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(255, 140, 66, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(255, 140, 66, 0.6);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Gradient text animation */
+.gradient-text-animated {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--primary)),
+    rgb(var(--accent)),
+    rgb(var(--primary))
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-text-flow 3s linear infinite;
+}
+
+@keyframes gradient-text-flow {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Stat card enhanced hover */
+.stat-card-enhanced {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: translateY(0);
+}
+
+.stat-card-enhanced:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 140, 66, 0.2);
+}
+
+/* Hero gradient overlay animation */
+.hero-gradient-animated {
+  background: linear-gradient(
+    135deg,
+    rgba(13, 27, 62, 0.8) 0%,
+    rgba(13, 27, 62, 0.6) 50%,
+    rgba(255, 140, 66, 0.3) 100%
+  );
+  background-size: 200% 200%;
+  animation: hero-gradient-shift 8s ease infinite;
+}
+
+@keyframes hero-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Badge shimmer effect */
+.badge-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer-slide 2s infinite;
+}
+
+@keyframes shimmer-slide {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Match card live indicator */
+.live-indicator {
+  position: relative;
+}
+
+.live-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.4);
+  animation: live-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes live-ping {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  75%, 100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* Pricing card featured highlight */
+.pricing-featured {
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-featured::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--primary)));
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Timeline animation */
+.timeline-line {
+  position: relative;
+}
+
+.timeline-line::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--accent)),
+    rgb(var(--primary))
+  );
+  transform: translateX(-50%);
+}
+
+/* CTA section gradient animation */
+.cta-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--brand-dark-blue)) 0%,
+    rgb(var(--brand-dark-blue-light)) 50%,
+    rgb(var(--accent)) 100%
+  );
+  background-size: 200% 200%;
+  animation: cta-gradient-flow 6s ease infinite;
+}
+
+@keyframes cta-gradient-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Scroll reveal animation classes */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children animations */
+.stagger-children > *:nth-child(1) { transition-delay: 0ms; }
+.stagger-children > *:nth-child(2) { transition-delay: 100ms; }
+.stagger-children > *:nth-child(3) { transition-delay: 200ms; }
+.stagger-children > *:nth-child(4) { transition-delay: 300ms; }
+.stagger-children > *:nth-child(5) { transition-delay: 400ms; }
+.stagger-children > *:nth-child(6) { transition-delay: 500ms; }

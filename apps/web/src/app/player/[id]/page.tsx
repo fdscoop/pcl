@@ -257,7 +257,7 @@ export default function PlayerDetailPage() {
  <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
  {/* Player Hero Section */}
  <div className="mb-8">
- <Card className="relative overflow-hidden">
+ <Card className="glass-card stat-card-enhanced relative overflow-hidden">
  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10"></div>
  <CardContent className="relative p-8">
  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -328,19 +328,19 @@ export default function PlayerDetailPage() {
 
  {/* Key Stats */}
  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
- <div className="text-center p-4 bg-card/50 rounded-lg border">
+ <div className="glass-card stat-card-enhanced text-center p-4 rounded-xl">
  <div className="text-2xl font-bold text-accent">{player.total_matches_played}</div>
  <div className="text-sm text-muted-foreground">Matches</div>
  </div>
- <div className="text-center p-4 bg-card/50 rounded-lg border">
+ <div className="glass-card stat-card-enhanced text-center p-4 rounded-xl">
  <div className="text-2xl font-bold text-primary">{player.total_goals_scored}</div>
  <div className="text-sm text-muted-foreground">Goals</div>
  </div>
- <div className="text-center p-4 bg-card/50 rounded-lg border">
+ <div className="glass-card stat-card-enhanced text-center p-4 rounded-xl">
  <div className="text-2xl font-bold text-success">{player.total_assists}</div>
  <div className="text-sm text-muted-foreground">Assists</div>
  </div>
- <div className="text-center p-4 bg-card/50 rounded-lg border">
+ <div className="glass-card stat-card-enhanced text-center p-4 rounded-xl">
  <div className="text-2xl font-bold text-warning">{(player.player_rating || 0).toFixed(1)}</div>
  <div className="text-sm text-muted-foreground">Rating</div>
  </div>

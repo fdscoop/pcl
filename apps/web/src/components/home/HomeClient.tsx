@@ -2939,12 +2939,9 @@ export default function HomeClient() {
                                         </a>
                                     </li>
                                     <li>
-                                        <button
-                                            onClick={() => setIsContactModalOpen(true)}
-                                            className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
-                                        >
-                                            Contact Support
-                                        </button>
+                                        <a href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                            Contact Us
+                                        </a>
                                     </li>
                                 </ul>
                             </div>
@@ -2966,6 +2963,11 @@ export default function HomeClient() {
                                     <li>
                                         <a href="/legal/terms-and-conditions" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                                             Terms & Conditions
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/legal/refund-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                            Refund Policy
                                         </a>
                                     </li>
                                     <li>

@@ -68,21 +68,21 @@ export default function ContactPage() {
       icon: <Mail className="w-6 h-6" />,
       title: 'Email',
       primary: 'support@professionalclubleague.com',
-      secondary: 'info@professionalclubleague.com',
+      secondary: 'fdscoop@gmx.com',
       description: 'We typically respond within 24 hours'
     },
     {
       icon: <Phone className="w-6 h-6" />,
       title: 'Phone',
-      primary: '+91 (0) 123-456-7890',
+      primary: '+91 6282829881',
       secondary: 'Mon-Sat: 9:00 AM - 6:00 PM IST',
       description: 'For urgent queries'
     },
     {
       icon: <MapPin className="w-6 h-6" />,
       title: 'Office Address',
-      primary: 'Professional Club League',
-      secondary: 'Kerala, India',
+      primary: 'FDS COOP LLP, Kolichal PO',
+      secondary: 'Kanhangad, Kasaragod, Kerala 671312',
       description: 'Visit by appointment only'
     },
     {
@@ -387,10 +387,10 @@ export default function ContactPage() {
                   For urgent platform issues affecting live matches or tournaments:
                 </p>
                 <a 
-                  href="tel:+911234567890"
+                  href="tel:+916282829881"
                   className="text-sm font-semibold text-orange-800 dark:text-orange-200 hover:underline"
                 >
-                  📞 +91 123-456-7890
+                  📞 +91 6282829881
                 </a>
                 <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
                   Available during support hours

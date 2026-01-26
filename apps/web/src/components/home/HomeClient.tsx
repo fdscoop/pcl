@@ -2984,7 +2984,7 @@ export default function HomeClient() {
                                 <div className="space-y-3 text-sm text-muted-foreground">
                                     <div>
                                         <p className="font-semibold text-foreground">FDS COOP LLP</p>
-                                        <p className="text-xs mt-0.5">CIN: AAU-1337</p>
+                                        <p className="text-xs mt-0.5">Professional Club League (PCL)</p>
                                     </div>
                                     <div>
                                         <p className="font-semibold text-foreground">StartupIndia</p>
@@ -3003,7 +3003,7 @@ export default function HomeClient() {
                     <div className="border-t border-border py-6">
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
                             <p className="text-center sm:text-left">
-                                &copy; 2025 Professional Club League by FDS COOP LLP. All rights reserved.
+                                &copy; 2025 FDS COOP LLP. Professional Club League (PCL). All rights reserved.
                             </p>
                             <p className="flex items-center gap-1.5">
                                 Made with <span className="text-red-500 animate-pulse">❤</span> in India

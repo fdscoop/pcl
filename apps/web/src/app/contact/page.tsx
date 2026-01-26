@@ -122,10 +122,10 @@ export default function ContactPage() {
   ]
 
   const companyInfo = [
-    { label: 'Legal Name', value: 'Professional Club League' },
+    { label: 'Company Name', value: 'FDS COOP LLP' },
+    { label: 'Product', value: 'Professional Club League (PCL)' },
     { label: 'Startup India ID', value: 'DIPP69878' },
-    { label: 'KSUM ID', value: 'DIPP69878/2020/KSUM1031' },
-    { label: 'Registration', value: 'Kerala Startup Mission' }
+    { label: 'KSUM ID', value: 'DIPP69878/2020/KSUM1031' }
   ]
 
   return (
@@ -139,7 +139,7 @@ export default function ContactPage() {
           </div>
           <p className="text-lg sm:text-xl text-foreground max-w-3xl">
             Have questions? We're here to help. Get in touch with our team for support, 
-            inquiries, or feedback about the PCL platform.
+            inquiries, or feedback about Professional Club League (PCL), a product by FDS COOP LLP.
           </p>
         </div>
       </div>

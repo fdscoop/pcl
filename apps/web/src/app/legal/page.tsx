@@ -95,7 +95,7 @@ export default function LegalIndexPage() {
  Transparency and Compliance
  </h2>
  <p className="text-lg text-gray-600 max-w-3xl mx-auto">
- Professional Club League is committed to operating with complete transparency and 
+ FDS COOP LLP is committed to operating with complete transparency and 
  legal compliance. Our comprehensive legal documentation ensures all stakeholders 
  understand their rights, responsibilities, and the standards we maintain.
  </p>
@@ -203,7 +203,8 @@ export default function LegalIndexPage() {
  
  <div className="mt-8 p-4 bg-gray-50 rounded-lg text-center">
  <p className="text-sm text-gray-600">
- <strong>Professional Club League (PCL)</strong><br />
+ <strong>FDS COOP LLP</strong><br />
+              Professional Club League (PCL)<br />
  Startup ID: DIPP69878 | KSUM ID: DIPP69878/2020/KSUM1031<br />
  Last Updated: December 25, 2025
  </p>

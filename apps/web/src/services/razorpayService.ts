@@ -186,7 +186,7 @@ class RazorpayService {
         key: this.keyId,
         amount: order.amount,
         currency: order.currency,
-        name: 'Professional Club League',
+        name: 'FDS COOP LLP',
         description: description,
         order_id: order.id,
         prefill: {

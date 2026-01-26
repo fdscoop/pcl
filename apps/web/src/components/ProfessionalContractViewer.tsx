@@ -399,7 +399,7 @@ export function ProfessionalContractViewer({
  <div className="text-center text-xs text-slate-500 border-t pt-6">
  <p>This contract is governed by professional football league regulations</p>
  <p>Generated on {new Date().toLocaleDateString('en-IN')} | Contract ID: {contract.id.slice(0, 8).toUpperCase()}</p>
- <p>Professional Club League © 2025 | Drug-Free Sport Initiative</p>
+ <p>FDS COOP LLP - Professional Club League (PCL) © 2025 | Drug-Free Sport Initiative</p>
  </div>
  </div>
  </div>

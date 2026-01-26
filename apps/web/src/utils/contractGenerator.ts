@@ -503,7 +503,7 @@ export function generateContractHTML(data: ContractGenerationData): string {
  <div class="footer">
  <p>This contract is governed by professional football league regulations</p>
  <p>Generated on ${new Date().toLocaleDateString('en-IN')} | Contract ID: ${data.contractId.slice(0, 8).toUpperCase()}</p>
- <p>Professional Club League © 2025 | Drug-Free Sport Initiative</p>
+ <p>FDS COOP LLP - Professional Club League (PCL) © 2025 | Drug-Free Sport Initiative</p>
  </div>
  </div>
  </div>

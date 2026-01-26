@@ -11,7 +11,8 @@ import {
  Gavel, 
  Scale,
  CheckCircle,
- ArrowRight
+ ArrowRight,
+ MessageSquare
 } from 'lucide-react'
 
 export default function LegalIndexPage() {
@@ -36,6 +37,13 @@ export default function LegalIndexPage() {
  icon: <CreditCard className="h-8 w-8 text-green-600" />,
  href: "/legal/refund-policy",
  topics: ["Stadium Bookings", "Tournament Fees", "Membership Refunds", "Processing Times"]
+ },
+ {
+ title: "Contact Us",
+ description: "Get in touch with our support team for assistance",
+ icon: <MessageSquare className="h-8 w-8 text-cyan-600" />,
+ href: "/contact",
+ topics: ["Support", "Inquiries", "Feedback", "Emergency Contact"]
  },
  {
  title: "Membership Policies",

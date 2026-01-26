@@ -41,6 +41,9 @@ export interface EnhancedStadiumStats {
   // State
   loading: boolean
   error: string | null
+  
+  // Actions
+  refetchAll: () => Promise<void>
 }
 
 /**

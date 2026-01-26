@@ -113,9 +113,11 @@ export function useEnhancedStadiumDashboard(userId: string | null): EnhancedStad
   }, [fetchPendingData])
 
   // Refresh all data
-  const refetchAll = useCallback(() => {
-    refetchPayments()
-    fetchPendingData()
+  const refetchAll = useCallback(async () => {
+    await Promise.all([
+      refetchPayments(),
+      fetchPendingData()
+    ])
   }, [refetchPayments, fetchPendingData])
 
   // Calculate combined metrics

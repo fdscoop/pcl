@@ -1126,7 +1126,7 @@ export default function HomeClient() {
                                             <div className="pt-3 border-t border-border space-y-2">
                                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                                     <span>📅</span>
-                                                    <span>{matchDate.toLocaleDateString('en-IN', {
+                                                    <span>{matchDateTime.toLocaleDateString('en-IN', {
                                                         weekday: 'short',
                                                         day: 'numeric',
                                                         month: 'short',
@@ -1234,8 +1234,8 @@ export default function HomeClient() {
                                                     alt={club.club_name}
                                                     className="h-16 w-16 object-cover rounded-xl border-4 border-white shadow-lg bg-white"
                                                     onError={(e) => {
-                                                        (e.target as HTMLImageElement).src = ''
-                                                            (e.target as HTMLImageElement).className = 'h-16 w-16 rounded-xl border-4 border-white shadow-lg bg-primary/20 flex items-center justify-center'
+                                                        (e.target as HTMLImageElement).src = '';
+                                                        (e.target as HTMLImageElement).className = 'h-16 w-16 rounded-xl border-4 border-white shadow-lg bg-primary/20 flex items-center justify-center'
                                                     }}
                                                 />
                                             ) : (

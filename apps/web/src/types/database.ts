@@ -57,6 +57,7 @@ export interface Club {
  total_goals_conceded?: number;
  clean_sheets?: number;
  stadium_capacity?: number;
+ total_members?: number;
  kyc_verified?: boolean;
  created_at: string;
  updated_at: string;

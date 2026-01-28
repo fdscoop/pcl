@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert } from '@/components/ui/alert'
 import { ImageUpload } from '@/components/ui/image-upload'
+import { useToast } from '@/context/ToastContext'
 
 const positions = [
  'Goalkeeper',
@@ -42,6 +43,8 @@ type PlayerProfileFormData = z.infer<typeof playerProfileSchema>
 
 export default function PlayerProfileForm() {
  const router = useRouter()
+ const { addToast } = useToast()
+ const photoUploadRef = useRef<HTMLDivElement>(null)
  const [error, setError] = useState<string | null>(null)
  const [loading, setLoading] = useState(false)
  const [initialLoading, setInitialLoading] = useState(true)
@@ -125,6 +128,28 @@ export default function PlayerProfileForm() {
  if (!photoUrl) {
  setError('Profile photo is required. Please upload a photo before submitting.')
  setLoading(false)
+ 
+ // Show toast notification with error styling
+ addToast({
+ type: 'error',
+ title: '📸 Profile Photo Required',
+ description: 'Please upload your profile photo before submitting. This is mandatory for player identification.',
+ duration: 6000
+ })
+ 
+ // Scroll to photo upload section
+ if (photoUploadRef.current) {
+ photoUploadRef.current.scrollIntoView({ 
+ behavior: 'smooth', 
+ block: 'center' 
+ })
+ // Add a visual pulse effect
+ photoUploadRef.current.classList.add('ring-4', 'ring-red-500', 'ring-offset-2')
+ setTimeout(() => {
+ photoUploadRef.current?.classList.remove('ring-4', 'ring-red-500', 'ring-offset-2')
+ }, 3000)
+ }
+ 
  return
  }
 
@@ -224,8 +249,11 @@ export default function PlayerProfileForm() {
  )}
 
  {/* Photo Upload */}
- <div className="space-y-2">
- <Label className="text-center block">Profile Photo *</Label>
+ <div 
+ ref={photoUploadRef}
+ className="space-y-2 rounded-lg p-4 transition-all duration-300"
+ >
+ <Label className="text-center block text-red-600 font-semibold">Profile Photo *</Label>
  <div className="flex justify-center py-4">
  <ImageUpload
  currentImageUrl={photoUrl}
@@ -235,8 +263,8 @@ export default function PlayerProfileForm() {
  maxSizeKB={5120}
  />
  </div>
- <p className="text-xs text-slate-500 text-center">
- Profile photo is required for player identification and verification
+ <p className="text-xs text-red-600 font-medium text-center">
+ 📸 Profile photo is required for player identification and verification
  </p>
  </div>
 

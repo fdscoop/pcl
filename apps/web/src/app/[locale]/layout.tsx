@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import './globals.css';
+import { getMessages, setRequestLocale } from 'next-intl/server';
+import { routing } from '@/i18n/routing';
+import { notFound } from 'next/navigation';
+import '../globals.css';
 import { ToastProvider } from '@/context/ToastContext';
 import CapacitorInit from '@/components/CapacitorInit';
 
@@ -21,16 +23,37 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
-export default async function RootLayout({
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function LocaleLayout({
   children,
+  params
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
-  // Get messages for the default locale
-  const messages = await getMessages();
+  const { locale } = await params;
   
+  // Validate locale
+  if (!routing.locales.includes(locale as any)) {
+    notFound();
+  }
+
+  // Enable static rendering
+  setRequestLocale(locale);
+
+  // Get messages for the current locale
+  const messages = await getMessages();
+
+  // Determine font family based on locale
+  const fontFamily = locale === 'ml' 
+    ? '"Noto Sans Malayalam", "Manjari", sans-serif'
+    : '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
   return (
-    <html lang="en" className="light">
+    <html lang={locale} className="light">
       <head>
         <meta name="theme-color" content="#0d1b3e" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -43,8 +66,9 @@ export default async function RootLayout({
           rel="stylesheet" 
         />
       </head>
-      <body className="w-full h-full min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100"
-        style={{ colorScheme: 'light' }}
+      <body 
+        className="w-full h-full min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 to-slate-100"
+        style={{ colorScheme: 'light', fontFamily }}
       >
         <CapacitorInit>
           <NextIntlClientProvider messages={messages}>

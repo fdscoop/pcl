@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "pathToPro": "Path to Pro",
+    "faqs": "FAQs",
+    "contact": "Contact",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "dashboard": "Go to Dashboard"
+  },
+  "hero": {
+    "title": "India's First Professional Club League",
+    "subtitle": "From Local Tournaments to National Glory – Build Your Football Legacy",
+    "getStarted": "Get Started Free",
+    "learnMore": "Learn More"
+  },
+  "badges": {
+    "startupIndia": "StartupIndia Recognized",
+    "ksum": "KSUM Supported",
+    "betaLaunch": "Beta Launch"
+  },
+  "roles": {
+    "players": "Players",
+    "clubs": "Clubs",
+    "referees": "Referees",
+    "stadiums": "Stadiums"
+  },
+  "stats": {
+    "registeredPlayers": "Registered Players",
+    "registeredClubs": "Registered Clubs",
+    "registeredStadiums": "Registered Stadiums",
+    "tournaments": "Tournaments",
+    "live": "Live"
+  },
+  "features": {
+    "title": "Everything You Need",
+    "subtitle": "Complete platform for players, clubs, referees, and stadiums"
+  },
+  "pricing": {
+    "title": "Simple Pricing",
+    "subtitle": "Choose the plan that fits your needs",
+    "free": "Free",
+    "premium": "Premium",
+    "perMonth": "/month"
+  },
+  "footer": {
+    "copyright": "© 2026 Pro Club League. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "language": {
+    "select": "Select Language",
+    "english": "English",
+    "malayalam": "മലയാളം"
+  }
+}

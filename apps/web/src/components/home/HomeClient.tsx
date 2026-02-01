@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,6 +10,7 @@ import TournamentStatistics from '@/components/TournamentStatistics'
 import BetaBanner from '@/components/BetaBanner'
 import ContactModal from '@/components/ContactModal'
 import AnimatedCounter from '@/components/ui/AnimatedCounter'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import type { Club, Player, Stadium } from '@/types/database'
 import {
     Menu, X, Users, Trophy, Target, Building2,
@@ -18,6 +20,7 @@ import {
 
 export default function HomeClient() {
     const router = useRouter()
+    const t = useTranslations()
     const [user, setUser] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [supabase, setSupabase] = useState<any>(null)
@@ -485,10 +488,10 @@ export default function HomeClient() {
     }
 
     const statsCards = [
-        { label: 'Registered Players', value: playerCount, Icon: Users, borderColor: 'border-t-blue-400' },
-        { label: 'Registered Clubs', value: clubCount, Icon: Trophy, borderColor: 'border-t-green-400' },
-        { label: 'Registered Stadiums', value: stadiumCount, Icon: Building2, borderColor: 'border-t-purple-400' },
-        { label: 'Tournaments', value: tournamentCount, Icon: Target, borderColor: 'border-t-orange-400' },
+        { label: t('stats.registeredPlayers'), value: playerCount, Icon: Users, borderColor: 'border-t-blue-400' },
+        { label: t('stats.registeredClubs'), value: clubCount, Icon: Trophy, borderColor: 'border-t-green-400' },
+        { label: t('stats.registeredStadiums'), value: stadiumCount, Icon: Building2, borderColor: 'border-t-purple-400' },
+        { label: t('stats.tournaments'), value: tournamentCount, Icon: Target, borderColor: 'border-t-orange-400' },
     ]
     const leaguePath = [
         {
@@ -557,27 +560,28 @@ export default function HomeClient() {
                             {/* Desktop Navigation Links */}
                             <div className="hidden md:flex items-center gap-6">
                                 <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                                    Features
+                                    {t('nav.features')}
                                 </a>
                                 <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                                    Pricing
+                                    {t('nav.pricing')}
                                 </a>
                                 <a href="#path-to-pro" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                                    Path to Pro
+                                    {t('nav.pathToPro')}
                                 </a>
                                 <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                                    FAQs
+                                    {t('nav.faqs')}
                                 </a>
                                 <button
                                     onClick={() => setIsContactModalOpen(true)}
                                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                                 >
-                                    Contact
+                                    {t('nav.contact')}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
+                            <LanguageSwitcher />
                             {user ? (
                                 <>
                                     <span className="text-sm text-muted-foreground hidden lg:inline">{user.email}</span>
@@ -598,7 +602,7 @@ export default function HomeClient() {
                                         size="sm"
                                         className="btn-lift hidden sm:flex"
                                     >
-                                        Sign Out
+                                        {t('nav.signOut')}
                                     </Button>
                                 </>
                             ) : (
@@ -609,7 +613,7 @@ export default function HomeClient() {
                                         className="btn-lift hidden sm:flex"
                                         onClick={() => router.push('/auth/login')}
                                     >
-                                        Sign In
+                                        {t('nav.signIn')}
                                     </Button>
                                     <Button
                                         variant="gradient"
@@ -617,7 +621,7 @@ export default function HomeClient() {
                                         className="btn-lift hidden sm:flex"
                                         onClick={() => router.push('/auth/signup')}
                                     >
-                                        Sign Up
+                                        {t('nav.signUp')}
                                     </Button>
                                 </>
                             )}
@@ -641,28 +645,28 @@ export default function HomeClient() {
                                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Features
+                                    {t('nav.features')}
                                 </a>
                                 <a
                                     href="#pricing"
                                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Pricing
+                                    {t('nav.pricing')}
                                 </a>
                                 <a
                                     href="#path-to-pro"
                                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    Path to Pro
+                                    {t('nav.pathToPro')}
                                 </a>
                                 <a
                                     href="#faq"
                                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    FAQs
+                                    {t('nav.faqs')}
                                 </a>
                                 <button
                                     onClick={() => {
@@ -671,7 +675,7 @@ export default function HomeClient() {
                                     }}
                                     className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors text-left"
                                 >
-                                    Contact
+                                    {t('nav.contact')}
                                 </button>
 
                                 {user ? (
@@ -692,7 +696,7 @@ export default function HomeClient() {
                                         size="sm"
                                         className="btn-lift w-full"
                                     >
-                                        Sign Out
+                                        {t('nav.signOut')}
                                     </Button>
                                 ) : (
                                     <div className="flex flex-col gap-2 pt-2 border-t border-border">
@@ -702,7 +706,7 @@ export default function HomeClient() {
                                             className="btn-lift w-full"
                                             onClick={() => router.push('/auth/login')}
                                         >
-                                            Sign In
+                                            {t('nav.signIn')}
                                         </Button>
                                         <Button
                                             variant="gradient"
@@ -710,7 +714,7 @@ export default function HomeClient() {
                                             className="btn-lift w-full"
                                             onClick={() => router.push('/auth/signup')}
                                         >
-                                            Sign Up
+                                            {t('nav.signUp')}
                                         </Button>
                                     </div>
                                 )}
@@ -739,23 +743,23 @@ export default function HomeClient() {
                                 <div className="flex flex-wrap gap-3 justify-center mb-8 animate-float-slow">
                                     <div className="badge-shimmer flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-xl border border-white/20">
                                         <Shield size={18} className="text-primary" />
-                                        <span className="text-sm font-bold text-primary">StartupIndia Recognized</span>
+                                        <span className="text-sm font-bold text-primary">{t('badges.startupIndia')}</span>
                                     </div>
                                     <div className="badge-shimmer flex items-center gap-2 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-xl border border-white/20">
                                         <Award size={18} className="text-primary" />
-                                        <span className="text-sm font-bold text-primary">KSUM Supported</span>
+                                        <span className="text-sm font-bold text-primary">{t('badges.ksum')}</span>
                                     </div>
                                     <div className="badge-shimmer flex items-center gap-2 bg-accent/90 backdrop-blur-md rounded-full px-4 py-2 shadow-xl border border-accent/20">
                                         <Sparkles size={18} className="text-white" />
-                                        <span className="text-sm font-bold text-white">Beta Launch</span>
+                                        <span className="text-sm font-bold text-white">{t('badges.betaLaunch')}</span>
                                     </div>
                                 </div>
 
                                 <h1 className="text-center text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight">
-                                    India's First Professional Club League
+                                    {t('hero.title')}
                                 </h1>
                                 <p className="text-center text-lg sm:text-xl lg:text-2xl text-white/95 mb-8 max-w-3xl mx-auto leading-relaxed font-medium">
-                                    From Local Tournaments to National Glory – Build Your Football Legacy
+                                    {t('hero.subtitle')}
                                 </p>
 
                                 {/* Prominent CTAs */}
@@ -766,7 +770,7 @@ export default function HomeClient() {
                                             className="btn-lift bg-accent hover:bg-accent-hover text-white border-0 text-lg px-8 py-6 shadow-xl"
                                             onClick={() => router.push('/auth/signup')}
                                         >
-                                            Get Started Free
+                                            {t('hero.getStarted')}
                                         </Button>
                                         <Button
                                             size="lg"
@@ -776,7 +780,7 @@ export default function HomeClient() {
                                                 document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })
                                             }}
                                         >
-                                            Learn More
+                                            {t('hero.learnMore')}
                                         </Button>
                                     </div>
                                 )}
@@ -784,19 +788,19 @@ export default function HomeClient() {
                                 <div className="flex flex-wrap gap-3 justify-center items-center text-center mx-auto">
                                     <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
                                         <Users size={20} />
-                                        <span className="font-semibold text-sm">Players</span>
+                                        <span className="font-semibold text-sm">{t('roles.players')}</span>
                                     </div>
                                     <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
                                         <Trophy size={20} />
-                                        <span className="font-semibold text-sm">Clubs</span>
+                                        <span className="font-semibold text-sm">{t('roles.clubs')}</span>
                                     </div>
                                     <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
                                         <Target size={20} />
-                                        <span className="font-semibold text-sm">Referees</span>
+                                        <span className="font-semibold text-sm">{t('roles.referees')}</span>
                                     </div>
                                     <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white">
                                         <Building2 size={20} />
-                                        <span className="font-semibold text-sm">Stadiums</span>
+                                        <span className="font-semibold text-sm">{t('roles.stadiums')}</span>
                                     </div>
                                 </div>
 
@@ -1164,7 +1168,7 @@ export default function HomeClient() {
 
                     <div className="text-center mt-8">
                         <Button variant="outline" size="lg" className="btn-lift" asChild>
-                            <a href="/matches">View All Matches</a>
+                            <a href="/matches">{t('matches.viewAll') || 'View All Matches'}</a>
                         </Button>
                     </div>
 
@@ -1174,10 +1178,10 @@ export default function HomeClient() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-16">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-                            Featured Clubs
+                            {t('featuredClubs.title') || 'Featured Clubs'}
                         </h2>
                         <p className="text-muted-foreground max-w-2xl mx-auto">
-                            Join one of our active clubs and start your competitive journey
+                            {t('featuredClubs.subtitle') || 'Join one of our active clubs and start your competitive journey'}
                         </p>
                     </div>
 
@@ -1297,7 +1301,7 @@ export default function HomeClient() {
                                                 }
                                             }}
                                         >
-                                            View Club
+                                            {t('common.view') || 'View'} {t('roles.clubs') || 'Club'}
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -1318,7 +1322,7 @@ export default function HomeClient() {
 
                     <div className="text-center mt-8">
                         <Button variant="outline" size="lg" className="btn-lift" asChild>
-                            <a href="/clubs">View All Clubs</a>
+                            <a href="/clubs">{t('featuredClubs.viewAll') || 'View All Clubs'}</a>
                         </Button>
                     </div>
                 </div>
@@ -1327,10 +1331,10 @@ export default function HomeClient() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-16">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-                            Featured Players
+                            {t('featuredPlayers.title') || 'Featured Players'}
                         </h2>
                         <p className="text-muted-foreground max-w-2xl mx-auto">
-                            Discover talented players looking for opportunities
+                            {t('featuredPlayers.subtitle') || 'Discover talented players looking for opportunities'}
                         </p>
                     </div>
 
@@ -1530,7 +1534,7 @@ export default function HomeClient() {
                                         onClick={handleLoadMorePlayers}
                                         className="btn-lift"
                                     >
-                                        Load More Players ({displayedPlayers.length} of {filteredPlayers.length})
+                                        {t('featuredPlayers.loadMore') || 'Load More Players'} ({displayedPlayers.length} of {filteredPlayers.length})
                                     </Button>
                                 </div>
                             )}
@@ -1550,10 +1554,10 @@ export default function HomeClient() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 mb-16">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-                            Available Stadiums
+                            {t('stadiums.title') || 'Available Stadiums'}
                         </h2>
                         <p className="text-muted-foreground max-w-2xl mx-auto">
-                            Book world-class venues for your matches and tournaments
+                            {t('stadiums.subtitle') || 'Book world-class venues for your matches and tournaments'}
                         </p>
                     </div>
 

@@ -1,5 +1,66 @@
 @import "tailwindcss";
 
+/* ==========================================
+   MALAYALAM FONT SUPPORT & LOCALIZATION
+   ========================================== */
+
+/* Malayalam language specific styles */
+html[lang="ml"] {
+  font-family: 'Noto Sans Malayalam', 'Manjari', sans-serif;
+}
+
+html[lang="ml"] body {
+  font-size: 15px; /* Slightly larger for Malayalam readability */
+  line-height: 1.7; /* More line height for complex scripts */
+  letter-spacing: 0.01em;
+}
+
+/* Malayalam font utility class */
+.font-malayalam {
+  font-family: 'Noto Sans Malayalam', 'Manjari', sans-serif;
+}
+
+/* Mobile-friendly Malayalam text */
+@media (max-width: 640px) {
+  html[lang="ml"] {
+    font-size: 14px;
+  }
+  
+  html[lang="ml"] h1 {
+    font-size: 1.75rem;
+    line-height: 1.4;
+  }
+  
+  html[lang="ml"] h2 {
+    font-size: 1.5rem;
+    line-height: 1.4;
+  }
+  
+  html[lang="ml"] p {
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+  
+  /* Touch-friendly button text for Malayalam */
+  html[lang="ml"] button,
+  html[lang="ml"] .btn {
+    min-height: 44px; /* Apple's recommended touch target */
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Tablet Malayalam optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  html[lang="ml"] {
+    font-size: 15px;
+  }
+}
+
+/* ==========================================
+   ORIGINAL STYLES
+   ========================================== */
+
 /* Safe area support for mobile devices (status bar and navigation bar) */
 /* We use a sticky navbar approach instead of body padding to avoid sticky positioning issues */
 

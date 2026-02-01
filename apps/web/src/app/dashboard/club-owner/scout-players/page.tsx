@@ -278,10 +278,18 @@ export default function ScoutPlayersPage() {
  })
  } else {
  const user = messageModal.player?.users
+ const playerName = user?.first_name && user?.last_name 
+ ? `${user.first_name} ${user.last_name}`
+ : user?.first_name 
+ ? user.first_name
+ : messageModal.player?.unique_player_id 
+ ? `Player ${messageModal.player.unique_player_id}`
+ : 'the player'
+ 
  addToast({
  type: 'success',
  title: 'Message Sent',
- description: `Message sent to ${user?.first_name}!`
+ description: `Message sent to ${playerName}!`
  })
  setMessageModal({ isOpen: false, player: null })
  setMessageContent('')

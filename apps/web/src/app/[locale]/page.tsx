@@ -6,8 +6,13 @@ export const metadata = {
   description: 'The complete sports management platform for clubs, players, referees, staff, and stadium owners',
 };
 
-export default async function Home() {
-  // Use English as default for root page
-  setRequestLocale('en');
+export default async function Home({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  
   return <HomeClient />;
 }

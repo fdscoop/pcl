@@ -202,23 +202,23 @@ export default function HomeClient() {
             const { data: playersData, error: playersError } = await client
                 .from('players')
                 .select(`
- id,
- user_id,
- unique_player_id,
- position,
- jersey_number,
- nationality,
- state,
- district,
- photo_url,
- total_matches_played,
- total_goals_scored,
- total_assists,
- users (
- first_name,
- last_name
- )
- `)
+                    id,
+                    user_id,
+                    unique_player_id,
+                    position,
+                    jersey_number,
+                    nationality,
+                    state,
+                    district,
+                    photo_url,
+                    total_matches_played,
+                    total_goals_scored,
+                    total_assists,
+                    users (
+                        first_name,
+                        last_name
+                    )
+                `)
                 .order('total_matches_played', { ascending: false })
                 .limit(100) // Fetch more for pagination
 
@@ -1446,7 +1446,14 @@ export default function HomeClient() {
                                                         {player.photo_url ? (
                                                             <img
                                                                 src={player.photo_url}
-                                                                alt={`${player.users?.first_name} ${player.users?.last_name}`}
+                                                                alt={player.users?.first_name && player.users?.last_name 
+                                                                    ? `${player.users.first_name} ${player.users.last_name}`
+                                                                    : player.users?.first_name 
+                                                                    ? player.users.first_name
+                                                                    : player.unique_player_id 
+                                                                    ? `Player ${player.unique_player_id}`
+                                                                    : 'Football Player'
+                                                                }
                                                                 className="h-16 w-16 object-cover rounded-full border-3 border-white shadow-lg"
                                                                 onError={(e) => {
                                                                     (e.target as HTMLImageElement).style.display = 'none'
@@ -1466,7 +1473,14 @@ export default function HomeClient() {
                                                     </div>
                                                     <div className="flex-grow min-w-0">
                                                         <CardTitle className="text-base group-hover:text-primary transition-colors truncate">
-                                                            {player.users?.first_name} {player.users?.last_name}
+                                                            {player.users?.first_name && player.users?.last_name 
+                                                                ? `${player.users.first_name} ${player.users.last_name}`
+                                                                : player.users?.first_name 
+                                                                ? player.users.first_name
+                                                                : player.unique_player_id 
+                                                                ? `Player ${player.unique_player_id}`
+                                                                : 'Football Player'
+                                                            }
                                                         </CardTitle>
                                                         {player.position && (
                                                             <div className={`${positionColor} text-white text-xs font-bold px-2 py-0.5 rounded-full inline-block mt-1`}>

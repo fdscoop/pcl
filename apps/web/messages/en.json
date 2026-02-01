@@ -38,6 +38,15 @@
     "title": "Everything You Need",
     "subtitle": "Complete platform for players, clubs, referees, and stadiums"
   },
+  "featuredPlayers": {
+    "title": "Featured Players",
+    "subtitle": "Discover talented players looking for opportunities",
+    "loadMore": "Load More Players"
+  },
+  "stadiums": {
+    "title": "Available Stadiums",
+    "subtitle": "Book world-class venues for your matches and tournaments"
+  },
   "pricing": {
     "title": "Simple Pricing",
     "subtitle": "Choose the plan that fits your needs",
